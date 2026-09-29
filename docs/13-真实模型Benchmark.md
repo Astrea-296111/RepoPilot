@@ -2,11 +2,11 @@
 
 ## 目标
 
-RepoPilot 的早期 `examples/demo_repo` + FakeLLM 只能证明 Agent Harness 能走完整流程，不能说明真实模型在未知任务上的修复能力。Mini Benchmark v2 的目标是先建立一个小而可审计的评测框架，再逐步扩展任务数量。
+RepoPilot 的早期 `examples/demo_repo` + FakeLLM 只能证明 Agent Harness 能走完整流程，不能说明真实模型在未知任务上的修复能力。本文先保留早期 5 任务的校准记录，再记录 25 任务对照与定向复测；这些都是自建小型 Python 任务，并非外部通用修复基准。
 
 ## 任务结构
 
-当前任务定义在 `eval/benchmark_tasks.json`，故障仓库位于 `benchmarks/repos/`。首批 5 个任务覆盖：
+当前任务定义在 `eval/benchmark_tasks.json`，故障仓库位于 `benchmarks/repos/`，共 25 题。下表是首批 5 题，后续增加了跨模块与共享 helper 任务：
 
 | Task | Category | Difficulty |
 | --- | --- | --- |
@@ -22,10 +22,10 @@ Agent 每次只在某一个临时仓库副本中运行，输入是该仓库和�
 
 只运行公开测试容易让 Agent 过拟合单个断言，甚至可能通过修改测试“修复”任务。因此 V2 做两层约束：
 
-1. `protected_paths=["tests"]`：Agent 结束后读取 Git 状态，只要修改公开测试，任务即不算 resolved。
+1. `protected_paths=["tests"]`：记录 Agent 是否修改公开测试，并在最终评分前恢复这些路径。当前实现**不会仅因修改过测试就判未通过**；最终评分使用原测试与隐藏测试。报告应单独披露修改测试的记录。
 2. hidden regression tests：位于主项目的 `eval/hidden_tests/`，不会复制进 Agent 的任务工作区；Agent 完成后 evaluator 才把对应 hidden test 注入临时仓库并复测。
 
-注意：当前真实 benchmark 使用 GitHub Actions 的 LocalExecutor，因此这不是密码学意义上的强隔离；模型理论上若主动逃逸工作目录并扫描 runner 文件系统，仍可能接触主项目文件。V2 的目标是避免正常 Agent 上下文直接泄露 hidden tests。更严格版本应在独立容器中运行 Agent 工具环境，并在容器退出后由宿主注入 hidden tests。
+注意：当前真实 benchmark 使用 GitHub Actions 的 LocalExecutor，因此这不是强隔离；模型理论上若主动逃逸工作目录并扫描 runner 文件系统，仍可能接触主项目文件。当前设计只避免正常 Agent 上下文直接泄露 hidden tests。更严格版本应在独立容器中运行 Agent 工具环境，并在容器退出后由宿主注入 hidden tests。
 
 ## resolved 判定
 
@@ -33,7 +33,7 @@ Agent 每次只在某一个临时仓库副本中运行，输入是该仓库和�
 
 - baseline test 修复前确实失败；
 - Agent 状态为 `completed`；
-- 没有修改 protected tests；
+- 最终评分前恢复 protected tests；
 - Agent 结束后注入 hidden tests；
 - 固定 `test_command` 最终退出码为 0。
 
@@ -136,13 +136,29 @@ GitHub Actions run：`36546370324`
 - 比 one-shot 更好；
 - 达到任何 SWE-bench 成绩。
 
-当前任务太少、难度偏低、每题只跑一次，也还没有 baseline 对照。
+上面仅为早期 5 题的一轮校准记录；后续新增任务与 one-shot 对照的数据见下节。
+
+## 25 任务与四题定向复测
+
+2026-09-29 的完整 25 任务运行 [#18](https://github.com/Astrea-296111/RepoPilot/actions/runs/36562112955) 与 [#19](https://github.com/Astrea-296111/RepoPilot/actions/runs/36562212124)：Agent 分别 24/25、25/25；one-shot 两次均 21/25。两次 one-shot 的相同 4 题都因模型请求到 180 秒未返回而记为 `model_timeout`，不能将这个差值解释成修复能力差异。Agent 其中一次在 `shared_rounding_policy` 达到最大步数。
+
+为了区分模型请求超时与实际补丁问题，[#21 定向复测](https://github.com/Astrea-296111/RepoPilot/actions/runs/36568828589) 给 Agent 与 one-shot 同时设置 Qwen3.8-Max 的 `reasoning_effort=medium`、流式响应及相同的 180 秒网络读取超时，并只运行此前超时的 4 题，每题一次。
+
+| 任务 | Agent | One-shot |
+| --- | --- | --- |
+| `shared_rounding_policy` | 达到 15 步，未解出 | `old_text` 与原文件不匹配 |
+| `shared_identifier_normalization` | 解出 | `old_text` 与原文件不匹配 |
+| `relative_config_paths` | 解出 | `old_text` 与原文件不匹配 |
+| `shared_feature_flag_precedence` | 解出 | `old_text` 与原文件不匹配 |
+
+这轮配对结果为 Agent **3/4**、one-shot **0/4**；没有 `model_timeout`。Agent 中位用量 **16048.5 tokens**、耗时 **115.523 秒**；one-shot 分别为 **2112.5 tokens**、**26.57 秒**。one-shot 一次生成补丁，依赖仓库地图和 Top-K 文件；在这几题里它给出的精确 `old_text` 没有出现在对应目标文件中。Agent 能继续读文件并尝试修改，但因此成本更高。这个对照同时包含**可用上下文和交互次数差异**；需要扩大 one-shot 上下文的 ablation，才能更明确地归因 Agent Loop 的收益。
+
+本轮只复测 4 个挑选出的难题，而且每题仅一次；改变推理力度后，不能把它与 #18/#19 合并成同条件的 25 题成功率。`resolved` 也仅表示通过项目自建的固定测试与隐藏测试。
 
 ## 下一步实验设计
 
-1. 扩展到 20–30 个任务，至少 4–6 个不同代码仓库。
-2. 每任务运行 3 次，同时报告 first-run resolved 与 run-level resolved。
-3. 用同一个 Qwen3.8-Max 做 one-shot patch baseline。
-4. 加入 failure taxonomy：retrieval / planning / reasoning / protocol / loop / environment / evaluation。
-5. 加入少量 SWE-bench Verified smoke tasks。
-6. 把 Agent 工具执行放进与 evaluator 分离的容器，使 hidden tests 真正不在 Agent 可访问的文件系统中。
+1. 固定本轮模型参数，完整运行 25 题并按题重复至少 3 次，合并 shard 后报告配对结果、超时和成本；此项会产生付费模型用量。
+2. 做更强的 one-shot 对照：提供目标文件全文或扩大检索上下文，区分上下文不足与不能多轮探索。
+3. 加入少量未用于开发的外部仓库任务，并保持任务描述与隐藏断言一致。
+4. 将 Agent 工具执行与 evaluator 分离，防止工具直接访问隐藏测试。
+5. 在面试或简历中注明任务集自建、样本量和配置；不写成 SWE-bench 成绩或通用修复成功率。

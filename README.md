@@ -119,7 +119,9 @@ python eval/run_benchmark.py --runs 1
 
 当前包含 25 个 Python Bug 任务，涵盖单文件修复和共享 helper、跨模块任务。每个任务先确认原始测试失败；Agent 结束后恢复受保护测试，再注入 Agent 运行时未放入任务工作区的 hidden regression tests 进行独立复测。评测结果记录 steps、tool calls、token usage、duration、changed files 和失败类别。另有同模型 one-shot 对照；这仍是项目自建的小型任务集，不能外推到真实大型仓库。
 
-2026-09-29 的 GitHub Actions Qwen3.8-Max 实测（每任务 1 次）：**5/5 首轮 resolved**；中位数 3 个 Agent steps、4 次工具调用、3554 tokens、27.205 秒。这个数字只描述当前 5 个小型任务，不能外推为通用软件修复成功率，也不是 SWE-bench 成绩。详细方法和结果见 [docs/13-真实模型Benchmark.md](docs/13-真实模型Benchmark.md)。
+2026-09-29 的首批 5 题 GitHub Actions Qwen3.8-Max 实测（每任务 1 次）：**5/5 首轮 resolved**；中位数 3 个 Agent steps、4 次工具调用、3554 tokens、27.205 秒。这个数字只描述当时 5 个小型任务，不能外推为通用软件修复成功率，也不是 SWE-bench 成绩。详细方法和结果见 [docs/13-真实模型Benchmark.md](docs/13-真实模型Benchmark.md)。
+
+之后扩至 25 任务并加入 one-shot 对照。旧配置的两轮 25 题中，one-shot 各有 4 次模型超时；调整推理力度与流式传输后，[四题定向复测](https://github.com/Astrea-296111/RepoPilot/actions/runs/36568828589) 得到 Agent 3/4、one-shot 0/4（均无超时；one-shot 的 4 次失败均为补丁原文不匹配）。这 4 题是挑选出的难题，且两组可访问的上下文不同；详见 [评测方法与限制](docs/13-真实模型Benchmark.md)。
 
 ## 目录结构
 

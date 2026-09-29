@@ -95,4 +95,6 @@ oneshot-qwen-shard-4
 
 ## 下一阶段
 
-先定向复测之前超时的 4 个任务，确认模型完成率、失败类别和 token usage；再用相同配置对完整 25 任务运行，并视费用与稳定性决定是否使用 `runs=3`。各 shard 的 JSON 需合并并重新计算汇总，之后再用 `eval/compare_results.py` 生成 Agent vs one-shot 的 paired comparison。比较时单独列出 `model_timeout`，不要把它解释成模型无法修复代码。
+四题定向复测已在 [Actions #21](https://github.com/Astrea-296111/RepoPilot/actions/runs/36568828589) 完成：Agent 3/4、one-shot 0/4，均没有模型超时。one-shot 的失败均为精确补丁原文不匹配；Agent 未解出的任务达到步骤上限。详细限制见 [`docs/13-真实模型Benchmark.md`](13-真实模型Benchmark.md)。
+
+下一步用相同配置对完整 25 任务运行，并视费用与稳定性决定是否使用 `runs=3`。各 shard 的 JSON 需合并并重新计算汇总，之后再用 `eval/compare_results.py` 生成 Agent vs one-shot 的 paired comparison。比较时单独列出 `model_timeout` 和 `patch_failure`，并增加更强 one-shot 上下文对照。
