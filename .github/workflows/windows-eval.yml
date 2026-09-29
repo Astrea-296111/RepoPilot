@@ -71,6 +71,7 @@ jobs:
       LLM_MODEL: qwen3.8-max
       LLM_BASE_URL: ${{ inputs.region == 'singapore' && 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1' || 'https://dashscope.aliyuncs.com/compatible-mode/v1' }}
       BENCH_RUNS: ${{ inputs.runs || '1' }}
+      LLM_TIMEOUT_SECONDS: "180"
     steps:
       - uses: actions/checkout@v6
         with:
@@ -102,6 +103,7 @@ jobs:
       LLM_MODEL: qwen3.8-max
       LLM_BASE_URL: ${{ inputs.region == 'singapore' && 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1' || 'https://dashscope.aliyuncs.com/compatible-mode/v1' }}
       BENCH_RUNS: ${{ inputs.runs || '1' }}
+      LLM_TIMEOUT_SECONDS: "180"
     steps:
       - uses: actions/checkout@v6
         with:

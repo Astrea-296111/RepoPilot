@@ -15,6 +15,7 @@ from repopilot.agent.agent import RepoPilot
 from repopilot.config import Settings
 from repopilot.llm.base import FakeLLM
 from repopilot.llm.openai_compatible import OpenAICompatibleLLM
+from model_retry import RetryingLLM
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -145,7 +146,12 @@ def run_one(task: dict, run_number: int, *, fake: bool, settings: Settings, fixe
             if record["baseline_test"]["exit_code"] == 0:
                 raise RuntimeError("benchmark baseline unexpectedly passes")
 
-            inner = FakeLLM(scripted_responses(task, fixes[task["id"]])) if fake else OpenAICompatibleLLM(settings)
+            retrying = None
+            if fake:
+                inner = FakeLLM(scripted_responses(task, fixes[task["id"]]))
+            else:
+                retrying = RetryingLLM(OpenAICompatibleLLM(settings))
+                inner = retrying
             model = ObservedLLM(inner)
             state = RepoPilot(repo, model, settings, executor="local", approval="auto").run(task["task"])
             changed = git_changed_files(repo)
@@ -159,6 +165,7 @@ def run_one(task: dict, run_number: int, *, fake: bool, settings: Settings, fixe
                 "token_usage": state.token_usage, "duration_seconds": state.duration_seconds,
             }
             record["model_calls"] = model.calls
+            record["llm_transport_retries"] = retrying.retries if retrying else 0
             record["protected_modified"] = protected
             record["diff_stats"] = {"added_lines": added, "deleted_lines": deleted}
             inject_hidden_test(task, repo)

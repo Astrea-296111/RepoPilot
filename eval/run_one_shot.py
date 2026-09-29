@@ -18,6 +18,7 @@ from repopilot.context.repo_map import build_repo_map, render_repo_map
 from repopilot.context.retrieval import retrieve
 from repopilot.llm.base import FakeLLM
 from repopilot.llm.openai_compatible import OpenAICompatibleLLM
+from model_retry import RetryingLLM
 from repopilot.tools.base import Workspace
 from repopilot.tools.filesystem import ApplyPatch
 
@@ -129,7 +130,12 @@ def run_one(task: dict, run_number: int, *, fake: bool, settings: Settings, fixe
             if baseline["exit_code"] == 0:
                 raise RuntimeError("benchmark baseline unexpectedly passes")
 
-            inner = FakeLLM([fake_answer(fixes[task["id"]])]) if fake else OpenAICompatibleLLM(settings)
+            retrying = None
+            if fake:
+                inner = FakeLLM([fake_answer(fixes[task["id"]])])
+            else:
+                retrying = RetryingLLM(OpenAICompatibleLLM(settings))
+                inner = retrying
             started = time.monotonic()
             response = inner.chat(SYSTEM, build_context(repo, task, baseline))
             duration = round(time.monotonic() - started, 3)
@@ -140,6 +146,7 @@ def run_one(task: dict, run_number: int, *, fake: bool, settings: Settings, fixe
                 "total_tokens": response.prompt_tokens + response.completion_tokens,
                 "duration_seconds": duration,
             }
+            record["llm_transport_retries"] = retrying.retries if retrying else 0
             try:
                 answer = Answer.model_validate_json(response.content)
             except ValidationError as exc:
