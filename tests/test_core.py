@@ -7,6 +7,7 @@ import time
 import pytest
 from fastapi.testclient import TestClient
 from repopilot.agent.agent import RepoPilot, demo_responses, parse_action
+from repopilot.agent.planner import plan_task
 from repopilot.agent.state import AgentState, Plan
 from repopilot.api.server import app
 from repopilot.config import Settings
@@ -82,6 +83,17 @@ def test_json_validation_rejects_extra_and_missing_fields():
     assert parse_action('{"type":"tool","tool":"git_diff","arguments":{},"reason":"check"}').tool == "git_diff"
     with pytest.raises(ValueError): parse_action('{"type":"tool","tool":"unknown","arguments":{},"reason":"x"}')
     with pytest.raises(ValueError): parse_action('{"type":"final","summary":"ok"}')
+
+
+def test_planner_normalizes_pytest_console_script():
+    response = json.dumps({
+        "goal": "fix",
+        "suspected_files": ["app/users.py"],
+        "steps": ["test"],
+        "test_command": "pytest -q",
+    })
+    plan, _usage = plan_task(FakeLLM([response]), "fix", "app/users.py", [("app/users.py", 1)])
+    assert plan.test_command == "python -m pytest -q"
 
 
 def test_session_storage(repo):
