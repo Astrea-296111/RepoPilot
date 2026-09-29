@@ -33,7 +33,7 @@ permissions:
 
 jobs:
   checks:
-    name: Tests and scripted 20-task benchmark
+    name: Tests and scripted 25-task benchmark
     runs-on: windows-latest
     timeout-minutes: 30
     steps:
@@ -63,7 +63,7 @@ jobs:
           retention-days: 7
 
   qwen-agent:
-    name: Qwen3.8-Max Agent 20-task benchmark
+    name: Qwen3.8-Max Agent 25-task benchmark
     if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_real_model) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[qwen-eval]')) }}
     runs-on: windows-latest
     timeout-minutes: 90
@@ -95,7 +95,7 @@ jobs:
           retention-days: 14
 
   qwen-oneshot:
-    name: Qwen3.8-Max one-shot 20-task baseline
+    name: Qwen3.8-Max one-shot 25-task baseline
     if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_real_model) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[qwen-eval]')) }}
     runs-on: windows-latest
     timeout-minutes: 90

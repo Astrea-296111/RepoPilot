@@ -178,5 +178,50 @@
         "new_text": "    return list(dict.fromkeys(items))"
       }
     ]
+  },
+  "shared_rounding_policy": {
+    "patches": [
+      {
+        "path": "app/internal/number_ops.py",
+        "old_text": "from decimal import Decimal\n\n\ndef money(value: float) -> float:\n    return round(value, 2)",
+        "new_text": "from decimal import Decimal, ROUND_HALF_UP\n\n\ndef money(value: float) -> float:\n    return float(Decimal(str(value)).quantize(Decimal(\"0.01\"), rounding=ROUND_HALF_UP))"
+      }
+    ]
+  },
+  "shared_identifier_normalization": {
+    "patches": [
+      {
+        "path": "app/internal/value_ops.py",
+        "old_text": "def normalize(value: str) -> str:\n    return value.lower()",
+        "new_text": "def normalize(value: str) -> str:\n    return value.strip().casefold()"
+      }
+    ]
+  },
+  "shared_retry_policy": {
+    "patches": [
+      {
+        "path": "app/internal/policy.py",
+        "old_text": "def retryable(status: int) -> bool:\n    return status >= 500",
+        "new_text": "def retryable(status: int) -> bool:\n    return status == 429 or status >= 500"
+      }
+    ]
+  },
+  "relative_config_paths": {
+    "patches": [
+      {
+        "path": "app/internal/path_ops.py",
+        "old_text": "def resolve_config_path(config_file: str | Path, value: str) -> Path:\n    return Path(value).resolve()",
+        "new_text": "def resolve_config_path(config_file: str | Path, value: str) -> Path:\n    path = Path(value)\n    if path.is_absolute():\n        return path.resolve()\n    return (Path(config_file).resolve().parent / path).resolve()"
+      }
+    ]
+  },
+  "shared_feature_flag_precedence": {
+    "patches": [
+      {
+        "path": "app/internal/select.py",
+        "old_text": "def choose(default: bool, config: dict, env: dict, name: str) -> bool:\n    value = default\n    if name in env:\n        value = env[name].lower() == \"true\"\n    if name in config:\n        value = bool(config[name])\n    return value",
+        "new_text": "def choose(default: bool, config: dict, env: dict, name: str) -> bool:\n    value = default\n    if name in config:\n        value = bool(config[name])\n    if name in env:\n        value = env[name].strip().lower() == \"true\"\n    return value"
+      }
+    ]
   }
 }

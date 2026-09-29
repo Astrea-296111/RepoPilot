@@ -238,5 +238,65 @@
     "protected_paths": [
       "tests"
     ]
+  },
+  {
+    "id": "shared_rounding_policy",
+    "repo": "benchmarks/repos/shared_rounding_policy",
+    "task": "修复金额四舍五入规则：订单、退款和报表三个入口都必须使用同一套 ROUND_HALF_UP 两位小数规则，不能只修某一个入口。",
+    "hidden_test": "eval/hidden_tests/shared_rounding_policy.py",
+    "category": "shared-policy",
+    "difficulty": "hard",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
+  },
+  {
+    "id": "shared_identifier_normalization",
+    "repo": "benchmarks/repos/shared_identifier_normalization",
+    "task": "修复用户标识规范化：登录、API Key owner 查询和审计查询都必须统一去首尾空白并使用 casefold 后比较，避免各入口行为不一致。",
+    "hidden_test": "eval/hidden_tests/shared_identifier_normalization.py",
+    "category": "shared-normalization",
+    "difficulty": "hard",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
+  },
+  {
+    "id": "shared_retry_policy",
+    "repo": "benchmarks/repos/shared_retry_policy",
+    "task": "修复 HTTP 重试规则：所有客户端入口对 429 和 5xx 都应该重试，对其他 4xx 不重试；应修复共享策略而不是只在单个客户端绕过。",
+    "hidden_test": "eval/hidden_tests/shared_retry_policy.py",
+    "category": "shared-policy",
+    "difficulty": "hard",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
+  },
+  {
+    "id": "relative_config_paths",
+    "repo": "benchmarks/repos/relative_config_paths",
+    "task": "修复配置中的相对路径解析：CLI、worker 和导出任务读取配置时，相对路径都必须以配置文件所在目录为基准；绝对路径保持不变。",
+    "hidden_test": "eval/hidden_tests/relative_config_paths.py",
+    "category": "cross-module-paths",
+    "difficulty": "hard",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
+  },
+  {
+    "id": "shared_feature_flag_precedence",
+    "repo": "benchmarks/repos/shared_feature_flag_precedence",
+    "task": "修复 feature flag 优先级：环境变量覆盖配置文件，配置文件覆盖默认值；Web、后台任务和 CLI 三个入口必须保持一致。",
+    "hidden_test": "eval/hidden_tests/shared_feature_flag_precedence.py",
+    "category": "shared-configuration",
+    "difficulty": "hard",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
   }
 ]
