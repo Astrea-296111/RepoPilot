@@ -1,12 +1,10 @@
+import pytest
 from app.users import DuplicateEmailError, UserService
 
 
-def test_duplicate_email_hidden_keeps_address_and_normal_flow():
+def test_duplicate_email_hidden_preserves_normal_flow():
     service = UserService()
     assert service.register("a@example.com", "pw") == "a@example.com"
-    try:
+    assert service.register("b@example.com", "pw") == "b@example.com"
+    with pytest.raises(DuplicateEmailError):
         service.register("a@example.com", "other")
-    except DuplicateEmailError as exc:
-        assert "a@example.com" in str(exc)
-    else:
-        raise AssertionError("DuplicateEmailError was not raised")

@@ -48,7 +48,7 @@ jobs:
       - name: Project tests
         run: python -m pytest -q
       - name: Scripted five-task benchmark
-        run: python eval/run_benchmark.py --fake --runs 1
+        run: python eval/run_benchmark.py --fake --runs 1 --require-all
       - name: Upload scripted benchmark diagnostics
         if: always()
         uses: actions/upload-artifact@v6

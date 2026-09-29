@@ -271,6 +271,7 @@ def main() -> int:
     parser.add_argument("--runs", type=int, default=1, help="Runs per task")
     parser.add_argument("--limit", type=int, default=0, help="Only run the first N tasks (0 = all)")
     parser.add_argument("--task", action="append", default=[], help="Only run selected task id; repeatable")
+    parser.add_argument("--require-all", action="store_true", help="Exit non-zero when any task is unresolved")
     args = parser.parse_args()
     if not 1 <= args.runs <= 10:
         parser.error("--runs must be between 1 and 10")
@@ -306,7 +307,15 @@ def main() -> int:
     output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(report["summary"], ensure_ascii=False, indent=2))
     print(f"diagnostics={output}")
-    return 0 if all(item["resolved"] for item in records) else 1
+    infrastructure_failures = [
+        item for item in records
+        if item.get("runner_error") or item.get("failure_category") == "invalid_baseline"
+    ]
+    if infrastructure_failures:
+        return 2
+    if args.require_all and not all(item["resolved"] for item in records):
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
