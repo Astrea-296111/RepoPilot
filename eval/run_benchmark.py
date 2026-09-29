@@ -274,7 +274,11 @@ def main() -> int:
                 f"steps={details.get('steps')} tokens={tokens} duration={details.get('duration_seconds')}",
                 flush=True,
             )
-    report = {"summary": summarize(records, model_name), "records": records}
+    report = {"summary": summarize(records, model_name), "records": records,
+              "config": {"model": model_name, "base_url": settings.llm_base_url,
+                         "reasoning_effort": settings.llm_reasoning_effort or "provider_default",
+                         "stream": settings.llm_stream, "timeout_seconds": settings.llm_timeout_seconds,
+                         "runs_per_task": args.runs}}
     suffix = "fake" if args.fake else "qwen"
     shard = f"-shard{args.shard_index}" if args.shard_count > 1 else ""
     output = ROOT / "eval" / "results" / f"agent-{suffix}{shard}.json"

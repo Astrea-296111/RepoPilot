@@ -22,12 +22,27 @@ def main() -> int:
     one = json.loads(Path(args.oneshot).read_text(encoding="utf-8"))
     a_records = {(r["task_id"], r["run"]): r for r in agent["records"]}
     o_records = {(r["task_id"], r["run"]): r for r in one["records"]}
-    keys = sorted(set(a_records) & set(o_records))
+    if len(a_records) != len(agent["records"]) or len(o_records) != len(one["records"]):
+        raise SystemExit("duplicate task/run records")
+    if set(a_records) != set(o_records):
+        raise SystemExit(f"unpaired records: agent-only={len(set(a_records)-set(o_records))}, "
+                         f"oneshot-only={len(set(o_records)-set(a_records))}")
+    keys = sorted(a_records)
     if not keys:
         raise SystemExit("no paired records")
+    a_config, o_config = agent.get("config"), one.get("config")
+    if bool(a_config) != bool(o_config):
+        raise SystemExit("one report is missing model configuration")
+    if a_config:
+        shared = ("model", "base_url", "reasoning_effort", "stream", "timeout_seconds", "runs_per_task")
+        mismatched = [name for name in shared if a_config.get(name) != o_config.get(name)]
+        if mismatched:
+            raise SystemExit(f"model configuration differs: {', '.join(mismatched)}")
 
     rows = []
     counts = {"agent_only": 0, "oneshot_only": 0, "both": 0, "neither": 0}
+    comparable_counts = {name: 0 for name in counts}
+    excluded = ("model_timeout", "model_transport_failure", "environment_failure", "invalid_baseline")
     for key in keys:
         a = a_records[key]
         o = o_records[key]
@@ -42,6 +57,8 @@ def main() -> int:
         else:
             outcome = "neither"
         counts[outcome] += 1
+        if a.get("failure_category") not in excluded and o.get("failure_category") not in excluded:
+            comparable_counts[outcome] += 1
         a_info = a.get("agent") or {}
         o_call = o.get("model_call") or {}
         rows.append({
@@ -58,6 +75,8 @@ def main() -> int:
             "oneshot_duration_seconds": o_call.get("duration_seconds"),
             "agent_failure": a.get("failure_category"),
             "oneshot_failure": o.get("failure_category"),
+            "oneshot_context_files": (o.get("context") or {}).get("file_count"),
+            "oneshot_prompt_chars": (o.get("context") or {}).get("prompt_chars"),
         })
 
     a_summary = agent["summary"]
@@ -67,6 +86,10 @@ def main() -> int:
         "model": a_summary.get("model"),
         "paired_runs": len(keys),
         "paired_outcomes": counts,
+        "transport_excluded_pairs": len(keys) - sum(comparable_counts.values()),
+        "non_transport_paired_outcomes": comparable_counts,
+        "configuration": {"shared": {key: a_config.get(key) for key in shared},
+                          "oneshot_context_mode": o_config.get("context_mode")} if a_config else None,
         "agent": {
             "resolved_runs": a_summary["resolved_runs"],
             "runs": a_summary["runs"],
@@ -102,6 +125,8 @@ def main() -> int:
         f"- One-shot resolved: {o_summary['resolved_runs']}/{o_summary['runs']} ({pct(o_summary['run_resolved_rate'])})",
         f"- Delta (Agent - one-shot): {comparison['resolved_rate_delta_agent_minus_oneshot'] * 100:+.1f} pp",
         f"- Paired outcomes: agent-only={counts['agent_only']}, one-shot-only={counts['oneshot_only']}, both={counts['both']}, neither={counts['neither']}",
+        f"- Pairs excluded from behavior comparison (transport/runner): {comparison['transport_excluded_pairs']}",
+        f"- One-shot context: {o_config.get('context_mode') if o_config else 'unrecorded'}",
         f"- Median tokens: Agent={a_summary.get('median_total_tokens')}, One-shot={o_summary.get('median_total_tokens')}",
         f"- Median duration: Agent={a_summary.get('median_duration_seconds')}s, One-shot={o_summary.get('median_duration_seconds')}s",
         "",

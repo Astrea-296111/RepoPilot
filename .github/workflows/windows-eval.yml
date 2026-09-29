@@ -7,10 +7,23 @@ on:
   workflow_dispatch:
     inputs:
       run_real_model:
-        description: "Run Qwen3.8-Max agent + one-shot benchmarks (uses paid tokens)"
+        description: "Run Qwen3.8-Max benchmarks (uses paid tokens)"
         type: boolean
         required: true
         default: false
+      run_agent:
+        description: "Include Agent; uncheck for a one-shot-only ablation"
+        type: boolean
+        required: true
+        default: true
+      oneshot_context:
+        description: "One-shot input files: Top-K retrieval or all public Python files"
+        type: choice
+        required: true
+        default: retrieved
+        options:
+          - retrieved
+          - full
       runs:
         description: "Runs per benchmark task"
         type: choice
@@ -73,7 +86,7 @@ jobs:
 
   qwen-agent:
     name: Qwen3.8-Max Agent shard ${{ matrix.shard }}
-    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_real_model) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[qwen-eval]')) }}
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_real_model && inputs.run_agent) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[qwen-eval]')) }}
     runs-on: windows-latest
     timeout-minutes: 60
     strategy:
@@ -141,6 +154,7 @@ jobs:
       BENCH_SHARD: ${{ matrix.shard }}
       BENCH_SHARD_COUNT: ${{ github.event_name == 'workflow_dispatch' && inputs.task_ids != '' && '1' || '5' }}
       BENCH_TASK_IDS: ${{ inputs.task_ids || '' }}
+      BENCH_CONTEXT_MODE: ${{ inputs.oneshot_context || 'retrieved' }}
       LLM_TIMEOUT_SECONDS: "180"
       LLM_REASONING_EFFORT: medium
       LLM_STREAM: "true"
@@ -165,7 +179,7 @@ jobs:
               $taskArgs += @('--task', $id)
             }
           }
-          python eval/run_one_shot.py --runs $env:BENCH_RUNS --shard-index $env:BENCH_SHARD --shard-count $env:BENCH_SHARD_COUNT @taskArgs
+          python eval/run_one_shot.py --runs $env:BENCH_RUNS --context-mode $env:BENCH_CONTEXT_MODE --shard-index $env:BENCH_SHARD --shard-count $env:BENCH_SHARD_COUNT @taskArgs
       - name: Upload one-shot diagnostics
         if: always()
         uses: actions/upload-artifact@v6

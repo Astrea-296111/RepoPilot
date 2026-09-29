@@ -19,6 +19,8 @@
 
 手动运行时可在 `task_ids` 填写英文逗号分隔的 ID，例如 `relative_config_paths,shared_feature_flag_precedence,shared_identifier_normalization,shared_rounding_policy`。有筛选条件时，两组各用一个 job 运行同样的题目，Artifact 仍分别名为 `agent-qwen-shard-0` 和 `oneshot-qwen-shard-0`；留空则各分成 5 个 shard。未知 ID 会直接报错，避免误以为已评测该任务。完整运行与定向运行使用同一套模型参数。
 
+`oneshot_context=retrieved` 保留原 Top-K 上下文；选择 `full` 会将该题工作区内所有公开 Python 文件（包括公开测试）原文放进一次模型调用，超过 30000 字符会明确报错。`run_agent=false` 可以只跑 one-shot 做上下文消融，避免重复支付 Agent 调用。每份 JSON 的 `config` 记录模型、推理力度、流式开关、超时与上下文模式，`context` 记录逐题选中文件及 prompt 字符数。
+
 同一个仓库的 Windows evaluation 工作流按顺序排队，避免两个付费评测重叠。当前真实 Qwen 评测为 Agent 和 one-shot 同时设置 `reasoning_effort=medium`、流式响应及 180 秒的网络读取超时；请求耗时和超时类型保存在诊断 JSON 中。流式响应有利于保持长回答连接，但不能保证不超时。此配置与早期默认模型参数的结果不可直接作为同条件重复实验。
 
 示例命令：
@@ -98,3 +100,13 @@ oneshot-qwen-shard-4
 四题定向复测已在 [Actions #21](https://github.com/Astrea-296111/RepoPilot/actions/runs/36568828589) 完成：Agent 3/4、one-shot 0/4，均没有模型超时。one-shot 的失败均为精确补丁原文不匹配；Agent 未解出的任务达到步骤上限。详细限制见 [`docs/13-真实模型Benchmark.md`](13-真实模型Benchmark.md)。
 
 下一步用相同配置对完整 25 任务运行，并视费用与稳定性决定是否使用 `runs=3`。各 shard 的 JSON 需合并并重新计算汇总，之后再用 `eval/compare_results.py` 生成 Agent vs one-shot 的 paired comparison。比较时单独列出 `model_timeout` 和 `patch_failure`，并增加更强 one-shot 上下文对照。
+
+下载并解压同一次运行的所有 shard 后，分别执行：
+
+```powershell
+python eval/merge_shards.py PATH_TO_AGENT_SHARD0.json PATH_TO_AGENT_SHARD1.json ... --expected-task-count 25 --json-out eval/results/agent-merged.json
+python eval/merge_shards.py PATH_TO_ONESHOT_SHARD0.json PATH_TO_ONESHOT_SHARD1.json ... --expected-task-count 25 --json-out eval/results/oneshot-merged.json
+python eval/compare_results.py eval/results/agent-merged.json eval/results/oneshot-merged.json
+```
+
+命令里的 `...` 表示实际列出其余 shard 文件，不要原样输入。合并器会检查模型配置、重复任务、遗漏的重复次数和期望任务数；比较器要求两组 `(task_id, run)` 完全配对，并把服务/runner 故障从行为对照中单列。

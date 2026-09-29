@@ -190,6 +190,8 @@ python eval/run_benchmark.py --fake --runs 1 --require-all
 
 在仓库 **Settings → Secrets and variables → Actions** 新建 repository secret `DASHSCOPE_API_KEY`。打开 **Actions → Windows evaluation → Run workflow**；先保持 `run_real_model=false` 运行无密钥测试，再选择 `true` 和 Key 所属地域运行 Qwen3.8-Max。`task_ids` 留空运行 25 题，或填写逗号分隔的任务 ID 定向复测。真实模型会消耗 API 额度。普通 push 只跑项目测试和脚本化 25 任务 benchmark；手动开启真实模型，或提交信息显式包含 `[qwen-eval]`，才会运行付费 Qwen benchmark。详情见 [`docs/12-GitHub-Actions实测.md`](docs/12-GitHub-Actions实测.md)。
 
+为检验 Top-K 文件缺失是否影响 one-shot，可以选择 `oneshot_context=full`（该题公开 Python 文件全文），并取消 `run_agent` 仅运行这一组；报告记录实际输入文件与字符数。多个 shard 的结果用 `eval/merge_shards.py` 校验并合并，再运行 `eval/compare_results.py`，脚本会拒绝缺失配对任务或模型配置不一致的报告。
+
 ## Roadmap
 
 在相同模型配置下做每题多次重复运行，并合并 shard 做配对比较与 ablation；接入少量外部任务作为 smoke tests；BM25/Embedding 混合召回；更好的命令允许列表和审计；增量索引；容器可写区隔离及更严格资源/网络权限；认证和持久化 API 索引。

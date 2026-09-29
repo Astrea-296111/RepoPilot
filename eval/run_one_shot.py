@@ -109,16 +109,32 @@ def diff_stats(repo: Path) -> tuple[int, int]:
     return added, deleted
 
 
-def build_context(repo: Path, task: dict, baseline: dict) -> str:
+def build_context(repo: Path, task: dict, baseline: dict, mode: str = "retrieved") -> tuple[str, list[str]]:
     entries = build_repo_map(repo)
     repo_map = render_repo_map(entries, max_chars=9000)
-    ranked = retrieve(repo, entries, task["task"], top_k=4)
+    if mode == "retrieved":
+        ranked = retrieve(repo, entries, task["task"], top_k=4)
+    elif mode == "full":
+        # Include every public Python file in these small task repositories,
+        # including tests. Hidden tests are not copied into repo until grading.
+        ranked = [(path.relative_to(repo).as_posix(), None) for path in sorted(repo.rglob("*.py"))
+                  if ".git" not in path.relative_to(repo).parts and ".repopilot" not in path.relative_to(repo).parts]
+    else:
+        raise ValueError(f"unknown context mode: {mode}")
     sections = []
+    source_chars = 0
     for path, score in ranked:
         content = (repo / path).read_text(encoding="utf-8", errors="replace")
-        sections.append(f"FILE {path} score={score}\n{content[:7000]}")
+        if mode == "full":
+            source_chars += len(content)
+            if source_chars > 30000:
+                raise ValueError("full context exceeds 30000 source characters")
+            sections.append(f"FILE {path}\n{content}")
+        else:
+            sections.append(f"FILE {path} score={score}\n{content[:7000]}")
     failing = (baseline.get("stdout", "") + "\n" + baseline.get("stderr", ""))[-7000:]
-    return f"TASK:\n{task['task']}\n\nREPO MAP:\n{repo_map}\n\nFAILING TEST:\n{failing}\n\nSELECTED FILES:\n" + "\n\n".join(sections)
+    text = f"TASK:\n{task['task']}\n\nREPO MAP:\n{repo_map}\n\nFAILING TEST:\n{failing}\n\nSELECTED FILES:\n" + "\n\n".join(sections)
+    return text, [path for path, _ in ranked]
 
 
 def fake_answer(fix: dict) -> str:
@@ -137,7 +153,8 @@ def classify(record: dict) -> str | None:
     return "evaluation_failure"
 
 
-def run_one(task: dict, run_number: int, *, fake: bool, settings: Settings, fixes: dict) -> dict:
+def run_one(task: dict, run_number: int, *, fake: bool, settings: Settings, fixes: dict,
+            context_mode: str = "retrieved") -> dict:
     record = {"task_id": task["id"], "run": run_number, "category": task["category"], "difficulty": task["difficulty"], "resolved": False}
     try:
         with tempfile.TemporaryDirectory(prefix=f"oneshot-{task['id']}-") as temp:
@@ -153,9 +170,12 @@ def run_one(task: dict, run_number: int, *, fake: bool, settings: Settings, fixe
             else:
                 retrying = RetryingLLM(OpenAICompatibleLLM(settings))
                 inner = retrying
+            context, paths = build_context(repo, task, baseline, mode=context_mode)
+            record["context"] = {"mode": context_mode, "file_count": len(paths),
+                                 "source_paths": paths, "prompt_chars": len(context)}
             started = time.monotonic()
             try:
-                response = inner.chat(SYSTEM, build_context(repo, task, baseline))
+                response = inner.chat(SYSTEM, context)
             except RuntimeError as exc:
                 record["model_error"] = str(exc)
                 record["model_call"] = {"error": str(exc), "duration_seconds": round(time.monotonic() - started, 3),
@@ -246,6 +266,7 @@ def main() -> int:
     parser.add_argument("--runs", type=int, default=1)
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--task", action="append", default=[])
+    parser.add_argument("--context-mode", choices=("retrieved", "full"), default="retrieved")
     parser.add_argument("--require-all", action="store_true")
     parser.add_argument("--shard-index", type=int, default=0)
     parser.add_argument("--shard-count", type=int, default=1)
@@ -274,7 +295,7 @@ def main() -> int:
         for n in range(1,args.runs+1):
             index+=1
             print(f"[one-shot] {index}/{total} start task={task['id']} run={n}", flush=True)
-            item=run_one(task,n,fake=args.fake,settings=settings,fixes=fixes)
+            item=run_one(task,n,fake=args.fake,settings=settings,fixes=fixes,context_mode=args.context_mode)
             records.append(item)
             call=item.get("model_call") or {}
             print(
@@ -283,7 +304,11 @@ def main() -> int:
                 f"tokens={call.get('total_tokens')} duration={call.get('duration_seconds')}",
                 flush=True,
             )
-    report={"summary":summarize(records,model_name),"records":records}
+    report={"summary":summarize(records,model_name),"records":records,
+            "config":{"model":model_name,"base_url":settings.llm_base_url,
+                      "reasoning_effort":settings.llm_reasoning_effort or "provider_default",
+                      "stream":settings.llm_stream,"timeout_seconds":settings.llm_timeout_seconds,
+                      "runs_per_task":args.runs,"context_mode":args.context_mode}}
     suffix="fake" if args.fake else "qwen"
     shard=f"-shard{args.shard_index}" if args.shard_count > 1 else ""
     output=ROOT/"eval"/"results"/f"oneshot-{suffix}{shard}.json"
