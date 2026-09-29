@@ -6,7 +6,7 @@
 
 1. 打开仓库 **Settings → Secrets and variables → Actions → New repository secret**，名称填 `DASHSCOPE_API_KEY`，值填阿里云百炼 API Key。Key 所属地域需要与运行时选的地域一致。不要把 Key 发到 Issue、聊天或日志。
 2. 打开 **Actions → Windows evaluation → Run workflow**，选择 `main`。
-3. 初次验证保留 `run_real_model=false`，点击绿色 **Run workflow**。`Tests and scripted evaluation` 会运行项目测试和无密钥 FakeLLM Demo。
+3. 初次验证保留 `run_real_model=false`，点击绿色 **Run workflow**。`Tests and scripted evaluation` 会运行项目测试、无密钥 FakeLLM Demo，并上传 `fake-diagnostics` 供你预览诊断格式。
 4. 真正测 Qwen3.8-Max 时改为 `run_real_model=true`，选择 `beijing` 或 `singapore`，再点击 **Run workflow**。两个 job 会并行，真实模型的 job 名为 `Qwen3.8-Max on a temporary Demo copy`。
 
 脚本先在系统临时目录复制 `examples/demo_repo` 并初始化 Git，确认原始测试失败，然后让真实模型修复，最后独立复测和检查修改文件。此模式在可信 Demo 副本上使用 `local` 执行器和自动审批；不要把它直接改成针对不受信任的仓库执行。
