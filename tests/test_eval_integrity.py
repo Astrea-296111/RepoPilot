@@ -27,6 +27,30 @@ def test_full_context_exposes_exact_helper_source(monkeypatch):
     assert "test_hidden_eval.py" not in files
 
 
+def test_graph_context_follows_relative_import_to_shared_helper(monkeypatch):
+    monkeypatch.syspath_prepend(str(ROOT / "eval"))
+    one = importlib.import_module("run_one_shot")
+    tasks = json.loads((ROOT / "eval" / "benchmark_tasks.json").read_text(encoding="utf-8"))
+    for task_id, helper in (("shared_rounding_policy", "app/internal/number_ops.py"),
+                            ("shared_identifier_normalization", "app/internal/value_ops.py"),
+                            ("relative_config_paths", "app/internal/path_ops.py"),
+                            ("shared_feature_flag_precedence", "app/internal/select.py")):
+        task = next(item for item in tasks if item["id"] == task_id)
+        repo = ROOT / task["repo"]
+        context, files = one.build_context(repo, task, {"stdout": "", "stderr": ""}, mode="graph")
+        assert helper in files, task_id
+        assert (repo / helper).read_text(encoding="utf-8") in context
+        assert len(files) <= 4
+
+
+def test_retrieval_measure_is_offline_and_covers_all_tasks(monkeypatch):
+    monkeypatch.syspath_prepend(str(ROOT / "eval"))
+    measure = importlib.import_module("measure_retrieval").measure
+    report = measure()
+    assert report["summary"]["graph"]["tasks"] == 25
+    assert report["summary"]["graph"]["hit_all"] >= report["summary"]["retrieved"]["hit_all"]
+
+
 def test_merge_rejects_duplicate_and_missing_repeats(monkeypatch, tmp_path):
     monkeypatch.syspath_prepend(str(ROOT / "eval"))
     merge = importlib.import_module("merge_shards").merge

@@ -15,7 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from repopilot.config import Settings
 from repopilot.context.repo_map import build_repo_map, render_repo_map
-from repopilot.context.retrieval import retrieve
+from repopilot.context.retrieval import retrieve, retrieve_with_imports
 from repopilot.llm.base import FakeLLM
 from repopilot.llm.openai_compatible import OpenAICompatibleLLM
 from model_retry import RetryingLLM
@@ -114,6 +114,8 @@ def build_context(repo: Path, task: dict, baseline: dict, mode: str = "retrieved
     repo_map = render_repo_map(entries, max_chars=9000)
     if mode == "retrieved":
         ranked = retrieve(repo, entries, task["task"], top_k=4)
+    elif mode == "graph":
+        ranked = retrieve_with_imports(repo, entries, task["task"], top_k=4)
     elif mode == "full":
         # Include every public Python file in these small task repositories,
         # including tests. Hidden tests are not copied into repo until grading.
@@ -266,7 +268,7 @@ def main() -> int:
     parser.add_argument("--runs", type=int, default=1)
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--task", action="append", default=[])
-    parser.add_argument("--context-mode", choices=("retrieved", "full"), default="retrieved")
+    parser.add_argument("--context-mode", choices=("retrieved", "graph", "full"), default="retrieved")
     parser.add_argument("--require-all", action="store_true")
     parser.add_argument("--shard-index", type=int, default=0)
     parser.add_argument("--shard-count", type=int, default=1)

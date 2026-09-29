@@ -17,12 +17,13 @@ on:
         required: true
         default: true
       oneshot_context:
-        description: "One-shot input files: Top-K retrieval or all public Python files"
+        description: "One-shot input files: Top-K, import graph, or all public Python files"
         type: choice
         required: true
         default: retrieved
         options:
           - retrieved
+          - graph
           - full
       runs:
         description: "Runs per benchmark task"
@@ -73,6 +74,8 @@ jobs:
         run: python eval/run_benchmark.py --fake --runs 1 --require-all
       - name: Scripted one-shot benchmark
         run: python eval/run_one_shot.py --fake --runs 1 --require-all
+      - name: File retrieval diagnostic
+        run: python eval/measure_retrieval.py --json-out eval/results/retrieval-diagnostics.json
       - name: Upload scripted diagnostics
         if: always()
         uses: actions/upload-artifact@v6
@@ -81,6 +84,7 @@ jobs:
           path: |
             eval/results/agent-fake.json
             eval/results/oneshot-fake.json
+            eval/results/retrieval-diagnostics.json
           if-no-files-found: warn
           retention-days: 7
 

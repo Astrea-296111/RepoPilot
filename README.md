@@ -121,7 +121,7 @@ python eval/run_benchmark.py --runs 1
 
 2026-09-29 的首批 5 题 GitHub Actions Qwen3.8-Max 实测（每任务 1 次）：**5/5 首轮 resolved**；中位数 3 个 Agent steps、4 次工具调用、3554 tokens、27.205 秒。这个数字只描述当时 5 个小型任务，不能外推为通用软件修复成功率，也不是 SWE-bench 成绩。详细方法和结果见 [docs/13-真实模型Benchmark.md](docs/13-真实模型Benchmark.md)。
 
-之后扩至 25 任务并加入 one-shot 对照。旧配置的两轮 25 题中，one-shot 各有 4 次模型超时；调整推理力度与流式传输后，[四题定向复测](https://github.com/Astrea-296111/RepoPilot/actions/runs/36568828589) 得到 Agent 3/4、one-shot 0/4（均无超时；one-shot 的 4 次失败均为补丁原文不匹配）。这 4 题是挑选出的难题，且两组可访问的上下文不同；详见 [评测方法与限制](docs/13-真实模型Benchmark.md)。
+之后扩至 25 任务并加入 one-shot 对照。旧配置的两轮 25 题中，one-shot 各有 4 次模型超时；调整推理力度与流式传输后，[四题定向复测](https://github.com/Astrea-296111/RepoPilot/actions/runs/36568828589) 得到 Agent 3/4、Top-K one-shot 0/4；但[完整公开 Python 上下文复测](https://github.com/Astrea-296111/RepoPilot/actions/runs/36572978243)让 one-shot 达到 4/4。因此原始四题不能证明 Agent Loop 优于单次调用，瓶颈是上下文缺失；详见 [评测方法与限制](docs/13-真实模型Benchmark.md)。
 
 ## 目录结构
 
@@ -190,7 +190,7 @@ python eval/run_benchmark.py --fake --runs 1 --require-all
 
 在仓库 **Settings → Secrets and variables → Actions** 新建 repository secret `DASHSCOPE_API_KEY`。打开 **Actions → Windows evaluation → Run workflow**；先保持 `run_real_model=false` 运行无密钥测试，再选择 `true` 和 Key 所属地域运行 Qwen3.8-Max。`task_ids` 留空运行 25 题，或填写逗号分隔的任务 ID 定向复测。真实模型会消耗 API 额度。普通 push 只跑项目测试和脚本化 25 任务 benchmark；手动开启真实模型，或提交信息显式包含 `[qwen-eval]`，才会运行付费 Qwen benchmark。详情见 [`docs/12-GitHub-Actions实测.md`](docs/12-GitHub-Actions实测.md)。
 
-为检验 Top-K 文件缺失是否影响 one-shot，可以选择 `oneshot_context=full`（该题公开 Python 文件全文），并取消 `run_agent` 仅运行这一组；报告记录实际输入文件与字符数。多个 shard 的结果用 `eval/merge_shards.py` 校验并合并，再运行 `eval/compare_results.py`，脚本会拒绝缺失配对任务或模型配置不一致的报告。
+为检验 Top-K 文件缺失是否影响 one-shot，可选 `oneshot_context=graph`（Top-K 与直接导入的本地文件）或 `full`（该题公开 Python 文件全文），并取消 `run_agent` 仅运行这一组；报告记录实际输入文件与字符数。`python eval/measure_retrieval.py` 可离线评估已知修复文件的召回。多个 shard 的结果用 `eval/merge_shards.py` 校验并合并，再运行 `eval/compare_results.py`，脚本会拒绝缺失配对任务或模型配置不一致的报告。
 
 ## Roadmap
 

@@ -71,7 +71,7 @@ def build_repo_map(root: Path, max_files: int = 4000) -> list[FileEntry]:
                     if isinstance(node, ast.Import):
                         entry.imports.extend(alias.name for alias in node.names)
                     elif isinstance(node, ast.ImportFrom):
-                        entry.imports.append(node.module or ".")
+                        entry.imports.append("." * node.level + (node.module or ""))
                     elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                         entry.symbols.append(_signature(node))
                         if ast.get_docstring(node):
@@ -95,4 +95,3 @@ def render_repo_map(entries: list[FileEntry], max_chars: int = 12000) -> str:
         lines.extend("  " + item for item in entry.symbols[:25])
     joined = "\n".join(lines)
     return joined[:max_chars] + ("\n[map truncated]" if len(joined) > max_chars else "")
-
