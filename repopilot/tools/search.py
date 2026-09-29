@@ -22,7 +22,7 @@ class SearchCode:
         for file in files:
             for number, line in enumerate(file.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
                 if query.lower() in line.lower():
-                    matches.append(f"{file.relative_to(self.workspace.root)}:{number}: {line[:240]}")
+                    matches.append(f"{file.relative_to(self.workspace.root).as_posix()}:{number}: {line[:240]}")
                     if len(matches) >= 80:
                         return ToolResult(True, "\n".join(matches)[:12000] + "\n[results truncated]")
         return ToolResult(True, "\n".join(matches) or "No matches")

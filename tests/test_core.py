@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import time
 import pytest
 from fastapi.testclient import TestClient
@@ -99,13 +100,14 @@ def test_session_symlink_outside_workspace(repo, tmp_path):
 
 
 def test_local_command_timeout(repo):
-    result = LocalExecutor(repo).run("python -c 'import time; time.sleep(2)'", 1)
+    result = LocalExecutor(repo).run(f'"{sys.executable}" -c "import time; time.sleep(2)"', 1)
     assert result.exit_code == 124 and "timed out" in result.output
 
 
 def test_local_command_does_not_inherit_model_key(repo, monkeypatch):
     monkeypatch.setenv("LLM_API_KEY", "should-not-be-visible")
-    result = LocalExecutor(repo).run("python -c 'import os; print(os.getenv(\"LLM_API_KEY\", \"unset\"))'", 5)
+    result = LocalExecutor(repo).run(
+        f'"{sys.executable}" -c "import os; print(os.getenv(\'LLM_API_KEY\', \'unset\'))"', 5)
     assert result.ok and result.output.strip() == "unset"
 
 
@@ -162,7 +164,7 @@ def test_final_claim_cannot_override_failing_test(repo):
 
 
 def test_success_requires_git_diff(repo):
-    shutil.rmtree(repo / ".git")
+    (repo / ".git").rename(repo.parent / "git-disabled")
     state = RepoPilot(repo, FakeLLM(demo_responses()), Settings(), executor="local", approval="auto").run("fix")
     assert state.status == "failed" and state.error == "git_diff_failed"
     assert state.test_status == "passed"
