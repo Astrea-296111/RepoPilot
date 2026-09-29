@@ -1,0 +1,19 @@
+services:
+  api:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.openai.com/v1}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      REPOPILOT_API_ROOT: /workspace/repos
+      REPOPILOT_API_ALLOW_LOCAL: "1"
+    volumes:
+      - ${REPOPILOT_REPOS_DIR:-./workspaces}:/workspace/repos
+    working_dir: /workspace/project
+    user: "${REPOPILOT_HOST_UID:-10001}:${REPOPILOT_HOST_GID:-10001}"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

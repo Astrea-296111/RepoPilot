@@ -1,0 +1,3 @@
+[
+  {"id":"duplicate_email","repo":"examples/demo_repo","task":"修复重复邮箱注册错误，并确保测试通过","test_command":"python -m pytest -q","expected_files":["app/users.py"]}
+]
