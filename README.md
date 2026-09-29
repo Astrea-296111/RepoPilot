@@ -172,7 +172,7 @@ python eval/run_eval.py         # 复制 Demo、失败基线、脚本化修复�
 
 ## GitHub Actions 实测
 
-在仓库 **Settings → Secrets and variables → Actions** 新建 repository secret `DASHSCOPE_API_KEY`。打开 **Actions → Windows evaluation → Run workflow**；先保持 `run_real_model=false` 运行无密钥测试，再选择 `true` 和 Key 所属地域运行 Qwen3.8-Max。真实模型会消耗 API 额度。工作流只手动触发，使用 Windows runner，修改临时复制的 Demo 仓库；详情见 [`docs/12-GitHub-Actions实测.md`](docs/12-GitHub-Actions实测.md)。
+在仓库 **Settings → Secrets and variables → Actions** 新建 repository secret `DASHSCOPE_API_KEY`。打开 **Actions → Windows evaluation → Run workflow**；先保持 `run_real_model=false` 运行无密钥测试，再选择 `true` 和 Key 所属地域运行 Qwen3.8-Max。真实模型会消耗 API 额度。推送 `main` 只运行无密钥检查，真实模型仅手动触发；Windows runner 会修改临时复制的 Demo 仓库。详情见 [`docs/12-GitHub-Actions实测.md`](docs/12-GitHub-Actions实测.md)。
 
 ## Roadmap
 

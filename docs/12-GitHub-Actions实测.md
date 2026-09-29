@@ -1,6 +1,6 @@
 # 在 GitHub Actions 运行 RepoPilot
 
-工作流：`.github/workflows/windows-eval.yml`。只支持手动触发，基于 Windows 的 Python 3.12 环境。不会把模型 Key 写入代码或提交，也不会修改仓库中的原始 Demo。真实模型调用会产生阿里云费用。
+工作流：`.github/workflows/windows-eval.yml`。推送 `main` 时只运行无密钥检查；Qwen3.8-Max 必须手动触发。运行环境为 Windows、Python 3.12。不会把模型 Key 写入代码或提交，也不会修改仓库中的原始 Demo。真实模型调用会产生阿里云费用。
 
 ## 启动
 

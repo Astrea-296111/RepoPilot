@@ -1,6 +1,9 @@
 name: Windows evaluation
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       run_real_model:
