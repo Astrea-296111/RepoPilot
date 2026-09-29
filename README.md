@@ -170,6 +170,10 @@ python eval/run_eval.py         # 复制 Demo、失败基线、脚本化修复�
 
 `docs/07-项目完整执行流程.md` 有本次真实日志和限制，`BUILD_REPORT.md` 有构建自检。
 
+## GitHub Actions 实测
+
+在仓库 **Settings → Secrets and variables → Actions** 新建 repository secret `DASHSCOPE_API_KEY`。打开 **Actions → Windows evaluation → Run workflow**；先保持 `run_real_model=false` 运行无密钥测试，再选择 `true` 和 Key 所属地域运行 Qwen3.8-Max。真实模型会消耗 API 额度。工作流只手动触发，使用 Windows runner，修改临时复制的 Demo 仓库；详情见 [`docs/12-GitHub-Actions实测.md`](docs/12-GitHub-Actions实测.md)。
+
 ## Roadmap
 
 真实模型多任务基准与失败分析；BM25/Embedding 混合召回；更好的命令允许列表和审计；增量索引；容器可写区隔离及更严格资源/网络权限；认证和持久化 API 索引；SWE-bench 接入。V1 没有这些能力。
