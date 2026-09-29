@@ -2,32 +2,27 @@
 
 工作流：`.github/workflows/windows-eval.yml`。运行环境为 Windows、Python 3.12。不会把模型 Key 写入代码或提交。真实模型调用会产生阿里云费用。
 
-## 两类 Job
+## 当前 CI 结构
 
 ### Tests and scripted benchmark
 
-每次 push 到 `main` 都会运行：
+每次 push 到 `main` 都会运行项目测试，以及不调用真实模型的 scripted Agent / one-shot benchmark。它验证 evaluator 的仓库复制、基线失败、patch、protected tests、hidden tests 和结果汇总本身没有坏。
 
-1. `python -m pytest -q`
-2. `python eval/run_benchmark.py --fake --runs 1 --require-all`
-3. 上传 `benchmark-fake` artifact
-
-脚本化 benchmark 使用已知 patch，只用于验证 evaluator 的复制仓库、基线失败、Agent 执行、protected tests、hidden tests、汇总统计等基础设施没有坏。
-
-### Qwen3.8-Max five-task benchmark
+### 真实 Qwen benchmark
 
 只有两种情况会运行付费模型：
 
 - 手动 **Run workflow** 并设置 `run_real_model=true`
 - push 的 commit message 显式包含 `[qwen-eval]`
 
-命令为：
+当前 25 个任务会分成 **5 个 shard**。Agent 和 one-shot 各自使用 matrix，每个 shard 只处理 5 个任务；每类 matrix 最多并行 2 个 shard。这样即使以后选择每题 3 次，也不会让全部任务堆在一个长达数十分钟的单 job 里。
+
+示例命令：
 
 ```powershell
-python eval/run_benchmark.py --runs $env:BENCH_RUNS --limit 5
+python eval/run_benchmark.py --runs $env:BENCH_RUNS --shard-index $env:BENCH_SHARD --shard-count 5
+python eval/run_one_shot.py --runs $env:BENCH_RUNS --shard-index $env:BENCH_SHARD --shard-count 5
 ```
-
-手动运行时可以选择每题 1 次或 3 次。普通 push 不会调用 Qwen。
 
 ## Secret 设置
 
@@ -39,59 +34,61 @@ DASHSCOPE_API_KEY
 
 根据 Key 地域选择 Beijing 或 Singapore。不要把 Key 放进仓库、Issue、聊天记录或 artifact。
 
-## Mini Benchmark v2 的判定
+## 模型 timeout 的处理
 
-当前有 5 个任务：
+2026-09-29 的 25 任务 one-shot 运行中，`relative_config_paths` 的模型请求没有在配置时间内返回。旧版 Harness 把它记录成 `environment_failure`，又把所有 environment failure 当作 CI 基础设施错误，所以虽然其余 24/25 已完成，整个 one-shot job 仍返回非零。
 
-- exception-handling
-- boundary-condition
-- configuration
-- path-security
-- state-management
+当前版本做了三处修正：
 
-每次运行都会：
+1. `OpenAICompatibleLLM` 将 HTTP 请求超时明确报为 `模型服务请求超时`；
+2. benchmark 将它分类为 `model_timeout`，与 runner / baseline / evaluator 故障区分；
+3. evaluation-only retry 从最多 3 次改为最多 2 次，避免单个请求连续占用过长时间。
 
-1. 将对应故障仓库复制到系统临时目录；
+模型超时仍会计为该次模型 run 未 resolved，但**不会再被误判为 evaluator 崩溃**。真正的 runner error、invalid baseline 等基础设施错误仍会让 CI 返回非零。
+
+## Mini Benchmark 的判定
+
+每次任务运行都会：
+
+1. 复制对应故障仓库到临时目录；
 2. 初始化独立 Git baseline；
-3. 运行固定测试，要求 baseline 非 0；
-4. 让 RepoPilot 在临时仓库中工作；
-5. 检查 Agent 是否修改了受保护的 `tests/`；
-6. Agent 结束后才注入 `eval/hidden_tests/` 对应的 regression test；
+3. 运行固定测试并要求 baseline 非 0；
+4. 运行 RepoPilot Agent 或同模型 one-shot baseline；
+5. 检查并恢复 grader-owned protected tests；
+6. Agent/one-shot 完成后才注入 hidden regression tests；
 7. 再运行固定测试；
-8. 保存 resolved、steps、tool calls、token usage、duration、changed files、failure category。
+8. 保存 resolved、steps/tool calls、token usage、duration、changed files 和 failure category。
 
-真实模型没有解出某个任务是正常 benchmark 数据，不会因此把 CI 基础设施标成失败。Runner 错误或 baseline 本来就通过会返回非零。FakeLLM sanity check 使用 `--require-all`，任何任务未通过都会让 CI 失败。
+真实模型没有解出某个任务属于 benchmark 数据，不等于 CI 基础设施失败。
 
-## 2026-09-29 已验证结果
+## 已验证结果
 
-GitHub Actions run `36546370324`：
+早期 5 任务运行：
 
-- 项目测试：`21 passed, 1 warning`
-- Scripted 5-task benchmark：5/5
-- Qwen3.8-Max real benchmark：5/5 first-run resolved
+- Qwen3.8-Max Agent：5/5 first-run resolved
 - median steps：3
 - median tool calls：4
 - median total tokens：3554
 - median duration：27.205 s
-- failure categories：无
 
-单任务差异明显：path-security 使用 11103 tokens、约 150.986 s；说明后续不能只看平均成功数，还要分析不同任务类型的成本与轨迹。
+20 任务 Agent vs one-shot 第一轮中，两者都达到 20/20；one-shot 的中位 token / duration 更低，说明这批简单任务不足以证明 Agent Loop 有收益。因此后续又加入 5 个 shared-helper / cross-module challenge tasks，专门测试 Agent 是否能通过工具继续定位共享实现。
 
-这只是 **5 个小型 Python 任务 × 每题 1 次**，不代表通用软件工程成功率，也不是 SWE-bench。
+25 任务第一次运行里，Agent job 完成；one-shot 得到 24/25，其中唯一未完成的是模型服务请求超时，而不是行为修复错误。该结果不应解读为 Agent 已在行为能力上胜过 one-shot，需在 timeout 修复后的分片版本中重新对比。
 
 ## 查看诊断
 
-真实评测结束后下载 Artifact：
+真实评测会为每个 shard 上传独立 artifact，例如：
 
 ```text
-benchmark-qwen
-  benchmark-qwen.json
+agent-qwen-shard-0
+oneshot-qwen-shard-0
+...
+agent-qwen-shard-4
+oneshot-qwen-shard-4
 ```
 
-JSON 含 summary 和逐任务 records，可看到模型调用、计划、steps、token、duration、changed files、hidden test 输出和 failure category。当前 artifact 保留 14 天。
-
-公开仓库的 Actions 日志和 artifact 也可能公开，因此不要将私人代码、凭据或敏感任务放入这个工作流。
+每个 JSON 都包含逐任务模型调用、计划/patch、token、duration、hidden test 输出和 failure category。公开仓库的 Actions 日志和 artifact 也可能公开，因此不要放入私人代码、凭据或敏感任务。
 
 ## 下一阶段
 
-把任务集扩到 20–30 个，每题 3 次；再加入相同 Qwen3.8-Max 的 one-shot baseline，比较 Agent Loop 相比一次性 patch 的收益，并对失败做分类。
+待分片版 25 任务单次运行稳定后，再使用 workflow 的 `runs=3` 做重复实验；随后将各 shard 合并，用 `eval/compare_results.py` 生成 Agent vs one-shot 的 paired comparison。
