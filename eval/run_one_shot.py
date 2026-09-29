@@ -76,6 +76,22 @@ def protected_modified(changed_files: list[str], protected_paths: list[str]) -> 
     return [changed for changed in changed_files if any(changed == prefix[:-1] or changed.startswith(prefix) for prefix in prefixes)]
 
 
+def restore_protected_paths(repo: Path, protected_paths: list[str]) -> None:
+    """Discard agent changes to grader-owned paths before final evaluation."""
+    for path in protected_paths:
+        subprocess.run(
+            ["git", "-C", str(repo), "restore", "--source=HEAD", "--staged", "--worktree", "--", path],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        subprocess.run(
+            ["git", "-C", str(repo), "clean", "-fd", "--", path],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
 def inject_hidden_test(task: dict, repo: Path) -> None:
     source = ROOT / task["hidden_test"]
     target = repo / "tests" / "test_hidden_eval.py"
@@ -115,7 +131,6 @@ def classify(record: dict) -> str | None:
     if record.get("baseline_test", {}).get("exit_code") == 0: return "invalid_baseline"
     if record.get("protocol_error"): return "protocol_failure"
     if record.get("patch_error"): return "patch_failure"
-    if record.get("protected_modified"): return "protected_test_modified"
     if record.get("hidden_test", {}).get("exit_code") != 0: return "behavior_failure"
     return "evaluation_failure"
 
@@ -172,9 +187,10 @@ def run_one(task: dict, run_number: int, *, fake: bool, settings: Settings, fixe
             record["changed_files"] = changed
             record["protected_modified"] = protected
             record["diff_stats"] = {"added_lines": added, "deleted_lines": deleted}
+            restore_protected_paths(repo, task.get("protected_paths", []))
             inject_hidden_test(task, repo)
             record["hidden_test"] = command(task["test_command"], repo)
-            record["resolved"] = not protected and record["hidden_test"]["exit_code"] == 0
+            record["resolved"] = record["hidden_test"]["exit_code"] == 0
     except Exception as exc:
         record["runner_error"] = f"{type(exc).__name__}: {exc}"
     record["failure_category"] = classify(record)

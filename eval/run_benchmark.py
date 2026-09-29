@@ -106,6 +106,22 @@ def protected_modified(changed_files: list[str], protected_paths: list[str]) -> 
     return [changed for changed in changed_files if any(changed == prefix[:-1] or changed.startswith(prefix) for prefix in prefixes)]
 
 
+def restore_protected_paths(repo: Path, protected_paths: list[str]) -> None:
+    """Discard agent changes to grader-owned paths before final evaluation."""
+    for path in protected_paths:
+        subprocess.run(
+            ["git", "-C", str(repo), "restore", "--source=HEAD", "--staged", "--worktree", "--", path],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        subprocess.run(
+            ["git", "-C", str(repo), "clean", "-fd", "--", path],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
 def diff_stats(repo: Path) -> tuple[int, int]:
     result = subprocess.run(["git", "-C", str(repo), "diff", "--numstat"], capture_output=True, text=True, check=True)
     added = deleted = 0
@@ -127,7 +143,6 @@ def classify_failure(record: dict) -> str | None:
     if record.get("resolved"): return None
     if record.get("runner_error"): return "environment_failure"
     if record.get("baseline_test", {}).get("exit_code") == 0: return "invalid_baseline"
-    if record.get("protected_modified"): return "protected_test_modified"
     agent = record.get("agent") or {}
     error = (agent.get("error") or "").lower()
     if "loop_detection" in error or "max_steps" in error: return "loop_failure"
@@ -168,9 +183,10 @@ def run_one(task: dict, run_number: int, *, fake: bool, settings: Settings, fixe
             record["llm_transport_retries"] = retrying.retries if retrying else 0
             record["protected_modified"] = protected
             record["diff_stats"] = {"added_lines": added, "deleted_lines": deleted}
+            restore_protected_paths(repo, task.get("protected_paths", []))
             inject_hidden_test(task, repo)
             record["hidden_test"] = command(task["test_command"], repo)
-            record["resolved"] = state.status == "completed" and not protected and record["hidden_test"]["exit_code"] == 0
+            record["resolved"] = state.status == "completed" and record["hidden_test"]["exit_code"] == 0
     except Exception as exc:
         record["runner_error"] = f"{type(exc).__name__}: {exc}"
     record["failure_category"] = classify_failure(record)

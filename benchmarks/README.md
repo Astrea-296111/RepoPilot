@@ -1,9 +1,9 @@
-# RepoPilot Mini Benchmark v2
+# RepoPilot Mini Benchmark v3
 
-This directory contains deliberately buggy repositories used by the evaluation harness.
+This directory contains deliberately buggy Python repositories used by the evaluation harness.
 
-The agent receives only a fresh copy of one repository plus the task description. Hidden regression tests live under `eval/hidden_tests/` and are injected only after the agent finishes. The evaluator also rejects modifications under protected test paths.
+The agent or one-shot baseline receives a fresh repository copy and the task description. Hidden regression tests live under `eval/hidden_tests/` and are injected only after the repair attempt finishes.
 
-The initial suite contains five small Python tasks spanning exception handling, boundary conditions, configuration precedence, path safety, and multi-file state management. It is a smoke benchmark, not a claim of general software-engineering performance.
+Public `tests/` are grader-owned. A model may edit them during its repair process, but those edits are recorded and then discarded before grading. The evaluator restores the original public tests, injects the hidden regression test, and grades the resulting source patch against both. This prevents weakened tests from creating false success without unfairly penalizing an agent that adds legitimate tests while debugging.
 
-A real-model miss is recorded as benchmark data rather than treated as CI infrastructure failure. The harness exits non-zero for runner/baseline errors; `--require-all` is used by the deterministic scripted sanity check to ensure the evaluator itself stays green.
+The v3 suite contains 20 tasks across exception handling, boundary conditions, configuration, path safety, state management, normalization, parsing, authorization, recursive merge logic, and other small Python maintenance bugs. It is still a small benchmark and not a claim of general software-engineering performance.
