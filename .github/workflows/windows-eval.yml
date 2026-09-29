@@ -19,6 +19,11 @@ on:
         options:
           - "1"
           - "3"
+      task_ids:
+        description: "Optional comma-separated task IDs; leave blank for all 25"
+        type: string
+        required: false
+        default: ""
       region:
         description: "DashScope API key region"
         type: choice
@@ -30,6 +35,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: repopilot-eval-${{ github.repository }}
+  cancel-in-progress: false
 
 jobs:
   checks:
@@ -63,7 +72,7 @@ jobs:
           retention-days: 7
 
   qwen-agent:
-    name: Qwen3.8-Max Agent shard ${{ matrix.shard }}/5
+    name: Qwen3.8-Max Agent shard ${{ matrix.shard }}
     if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_real_model) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[qwen-eval]')) }}
     runs-on: windows-latest
     timeout-minutes: 60
@@ -71,13 +80,17 @@ jobs:
       fail-fast: false
       max-parallel: 2
       matrix:
-        shard: [0, 1, 2, 3, 4]
+        shard: ${{ fromJSON(github.event_name == 'workflow_dispatch' && inputs.task_ids != '' && '[0]' || '[0,1,2,3,4]') }}
     env:
       LLM_MODEL: qwen3.8-max
       LLM_BASE_URL: ${{ inputs.region == 'singapore' && 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1' || 'https://dashscope.aliyuncs.com/compatible-mode/v1' }}
       BENCH_RUNS: ${{ inputs.runs || '1' }}
       BENCH_SHARD: ${{ matrix.shard }}
+      BENCH_SHARD_COUNT: ${{ github.event_name == 'workflow_dispatch' && inputs.task_ids != '' && '1' || '5' }}
+      BENCH_TASK_IDS: ${{ inputs.task_ids || '' }}
       LLM_TIMEOUT_SECONDS: "180"
+      LLM_REASONING_EFFORT: medium
+      LLM_STREAM: "true"
     steps:
       - uses: actions/checkout@v6
         with:
@@ -90,18 +103,29 @@ jobs:
       - name: Run RepoPilot Agent benchmark shard
         env:
           LLM_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
-        run: python eval/run_benchmark.py --runs $env:BENCH_RUNS --shard-index $env:BENCH_SHARD --shard-count 5
+        run: |
+          $taskArgs = @()
+          if ($env:BENCH_TASK_IDS) {
+            foreach ($id in $env:BENCH_TASK_IDS.Split(',')) {
+              $id = $id.Trim()
+              if (-not $id) { throw "task_ids contains an empty task ID" }
+              $taskArgs += @('--task', $id)
+            }
+          }
+          python eval/run_benchmark.py --runs $env:BENCH_RUNS --shard-index $env:BENCH_SHARD --shard-count $env:BENCH_SHARD_COUNT @taskArgs
       - name: Upload Agent diagnostics
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: agent-qwen-shard-${{ matrix.shard }}
-          path: eval/results/agent-qwen-shard${{ matrix.shard }}.json
+          path: |
+            eval/results/agent-qwen-shard${{ matrix.shard }}.json
+            eval/results/agent-qwen.json
           if-no-files-found: warn
           retention-days: 14
 
   qwen-oneshot:
-    name: Qwen3.8-Max one-shot shard ${{ matrix.shard }}/5
+    name: Qwen3.8-Max one-shot shard ${{ matrix.shard }}
     if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_real_model) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[qwen-eval]')) }}
     runs-on: windows-latest
     timeout-minutes: 60
@@ -109,13 +133,17 @@ jobs:
       fail-fast: false
       max-parallel: 2
       matrix:
-        shard: [0, 1, 2, 3, 4]
+        shard: ${{ fromJSON(github.event_name == 'workflow_dispatch' && inputs.task_ids != '' && '[0]' || '[0,1,2,3,4]') }}
     env:
       LLM_MODEL: qwen3.8-max
       LLM_BASE_URL: ${{ inputs.region == 'singapore' && 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1' || 'https://dashscope.aliyuncs.com/compatible-mode/v1' }}
       BENCH_RUNS: ${{ inputs.runs || '1' }}
       BENCH_SHARD: ${{ matrix.shard }}
+      BENCH_SHARD_COUNT: ${{ github.event_name == 'workflow_dispatch' && inputs.task_ids != '' && '1' || '5' }}
+      BENCH_TASK_IDS: ${{ inputs.task_ids || '' }}
       LLM_TIMEOUT_SECONDS: "180"
+      LLM_REASONING_EFFORT: medium
+      LLM_STREAM: "true"
     steps:
       - uses: actions/checkout@v6
         with:
@@ -128,12 +156,23 @@ jobs:
       - name: Run one-shot baseline shard
         env:
           LLM_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
-        run: python eval/run_one_shot.py --runs $env:BENCH_RUNS --shard-index $env:BENCH_SHARD --shard-count 5
+        run: |
+          $taskArgs = @()
+          if ($env:BENCH_TASK_IDS) {
+            foreach ($id in $env:BENCH_TASK_IDS.Split(',')) {
+              $id = $id.Trim()
+              if (-not $id) { throw "task_ids contains an empty task ID" }
+              $taskArgs += @('--task', $id)
+            }
+          }
+          python eval/run_one_shot.py --runs $env:BENCH_RUNS --shard-index $env:BENCH_SHARD --shard-count $env:BENCH_SHARD_COUNT @taskArgs
       - name: Upload one-shot diagnostics
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: oneshot-qwen-shard-${{ matrix.shard }}
-          path: eval/results/oneshot-qwen-shard${{ matrix.shard }}.json
+          path: |
+            eval/results/oneshot-qwen-shard${{ matrix.shard }}.json
+            eval/results/oneshot-qwen.json
           if-no-files-found: warn
           retention-days: 14

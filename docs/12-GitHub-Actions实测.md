@@ -17,6 +17,10 @@
 
 当前 25 个任务会分成 **5 个 shard**。Agent 和 one-shot 各自使用 matrix，每个 shard 只处理 5 个任务；每类 matrix 最多并行 2 个 shard。这样即使以后选择每题 3 次，也不会让全部任务堆在一个长达数十分钟的单 job 里。
 
+手动运行时可在 `task_ids` 填写英文逗号分隔的 ID，例如 `relative_config_paths,shared_feature_flag_precedence,shared_identifier_normalization,shared_rounding_policy`。有筛选条件时，两组各用一个 job 运行同样的题目，Artifact 仍分别名为 `agent-qwen-shard-0` 和 `oneshot-qwen-shard-0`；留空则各分成 5 个 shard。未知 ID 会直接报错，避免误以为已评测该任务。完整运行与定向运行使用同一套模型参数。
+
+同一个仓库的 Windows evaluation 工作流按顺序排队，避免两个付费评测重叠。当前真实 Qwen 评测为 Agent 和 one-shot 同时设置 `reasoning_effort=medium`、流式响应及 180 秒的网络读取超时；请求耗时和超时类型保存在诊断 JSON 中。流式响应有利于保持长回答连接，但不能保证不超时。此配置与早期默认模型参数的结果不可直接作为同条件重复实验。
+
 示例命令：
 
 ```powershell
@@ -91,4 +95,4 @@ oneshot-qwen-shard-4
 
 ## 下一阶段
 
-待分片版 25 任务单次运行稳定后，再使用 workflow 的 `runs=3` 做重复实验；随后将各 shard 合并，用 `eval/compare_results.py` 生成 Agent vs one-shot 的 paired comparison。
+先定向复测之前超时的 4 个任务，确认模型完成率、失败类别和 token usage；再用相同配置对完整 25 任务运行，并视费用与稳定性决定是否使用 `runs=3`。各 shard 的 JSON 需合并并重新计算汇总，之后再用 `eval/compare_results.py` 生成 Agent vs one-shot 的 paired comparison。比较时单独列出 `model_timeout`，不要把它解释成模型无法修复代码。

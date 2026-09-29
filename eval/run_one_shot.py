@@ -158,6 +158,8 @@ def run_one(task: dict, run_number: int, *, fake: bool, settings: Settings, fixe
                 response = inner.chat(SYSTEM, build_context(repo, task, baseline))
             except RuntimeError as exc:
                 record["model_error"] = str(exc)
+                record["model_call"] = {"error": str(exc), "duration_seconds": round(time.monotonic() - started, 3),
+                                        "prompt_tokens": None, "completion_tokens": None, "total_tokens": None}
                 record["llm_transport_retries"] = retrying.retries if retrying else 0
                 record["failure_category"] = classify(record)
                 return record
@@ -216,6 +218,7 @@ def summarize(records: list[dict], model_name: str) -> dict:
     for item in records:
         by_category[item["category"]].append(item); by_difficulty[item["difficulty"]].append(item)
     calls = [item["model_call"] for item in records if item.get("model_call")]
+    completed_calls = [call for call in calls if call.get("total_tokens") is not None]
     return {
         "suite": "RepoPilot Mini Benchmark v3",
         "runner": "one-shot",
@@ -227,8 +230,9 @@ def summarize(records: list[dict], model_name: str) -> dict:
         "first_run_resolved": sum(1 for i in first if i["resolved"]),
         "first_run_tasks": len(first),
         "first_run_resolved_rate": round(sum(1 for i in first if i["resolved"])/len(first), 4) if first else 0,
-        "median_total_tokens": median([c["total_tokens"] for c in calls]),
-        "median_duration_seconds": median([c["duration_seconds"] for c in calls]),
+        "median_total_tokens": median([c["total_tokens"] for c in completed_calls]),
+        "median_duration_seconds": median([c["duration_seconds"] for c in completed_calls]),
+        "median_all_call_duration_seconds": median([c["duration_seconds"] for c in calls]),
         "median_patch_count": median([i["patch_count"] for i in records if i.get("patch_count") is not None]),
         "failure_categories": dict(Counter(i["failure_category"] for i in records if i["failure_category"])),
         "categories": {k: {"runs": len(v), "resolved": sum(i["resolved"] for i in v)} for k,v in sorted(by_category.items())},
@@ -251,7 +255,10 @@ def main() -> int:
         parser.error("shard index/count are invalid")
     tasks = json.loads(TASKS_PATH.read_text(encoding="utf-8"))
     if args.task:
-        wanted=set(args.task); tasks=[task for task in tasks if task["id"] in wanted]
+        wanted=set(args.task)
+        unknown=wanted - {task["id"] for task in tasks}
+        if unknown: parser.error(f"unknown task ids: {', '.join(sorted(unknown))}")
+        tasks=[task for task in tasks if task["id"] in wanted]
     if args.limit: tasks=tasks[:args.limit]
     tasks=tasks[args.shard_index::args.shard_count]
     if not tasks: parser.error("no benchmark tasks selected")

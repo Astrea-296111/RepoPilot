@@ -106,17 +106,18 @@ Windows 请把复制路径换成自己的临时文件夹并执行 `git init/add/
 python eval/run_eval.py
 ```
 
-更有意义的评测使用 Mini Benchmark v2：
+更有意义的评测使用 25 任务 Mini Benchmark：
 
 ```bash
-# 无 Key：验证评测器本身，5 个任务都必须通过
+# 无 Key：验证评测器本身，25 个任务都必须通过
 python eval/run_benchmark.py --fake --runs 1 --require-all
+python eval/run_one_shot.py --fake --runs 1 --require-all
 
 # 配置真实 OpenAI-compatible 模型后
 python eval/run_benchmark.py --runs 1
 ```
 
-Mini Benchmark v2 当前包含 5 个彼此独立的 Python Bug 任务，覆盖异常处理、分页边界、配置优先级、路径安全和多文件状态修改。每个任务先确认原始测试失败；Agent 结束后检查其没有修改受保护测试，再注入 Agent 运行时未放入任务工作区的 hidden regression tests 进行独立复测。评测结果记录 steps、tool calls、token usage、duration、changed files 和失败类别。
+当前包含 25 个 Python Bug 任务，涵盖单文件修复和共享 helper、跨模块任务。每个任务先确认原始测试失败；Agent 结束后恢复受保护测试，再注入 Agent 运行时未放入任务工作区的 hidden regression tests 进行独立复测。评测结果记录 steps、tool calls、token usage、duration、changed files 和失败类别。另有同模型 one-shot 对照；这仍是项目自建的小型任务集，不能外推到真实大型仓库。
 
 2026-09-29 的 GitHub Actions Qwen3.8-Max 实测（每任务 1 次）：**5/5 首轮 resolved**；中位数 3 个 Agent steps、4 次工具调用、3554 tokens、27.205 秒。这个数字只描述当前 5 个小型任务，不能外推为通用软件修复成功率，也不是 SWE-bench 成绩。详细方法和结果见 [docs/13-真实模型Benchmark.md](docs/13-真实模型Benchmark.md)。
 
@@ -185,11 +186,11 @@ python eval/run_benchmark.py --fake --runs 1 --require-all
 
 ## GitHub Actions 实测
 
-在仓库 **Settings → Secrets and variables → Actions** 新建 repository secret `DASHSCOPE_API_KEY`。打开 **Actions → Windows evaluation → Run workflow**；先保持 `run_real_model=false` 运行无密钥测试，再选择 `true` 和 Key 所属地域运行 Qwen3.8-Max。真实模型会消耗 API 额度。普通 push 只跑项目测试和脚本化 5 任务 benchmark；手动开启真实模型，或提交信息显式包含 `[qwen-eval]`，才会运行付费 Qwen benchmark。详情见 [`docs/12-GitHub-Actions实测.md`](docs/12-GitHub-Actions实测.md)。
+在仓库 **Settings → Secrets and variables → Actions** 新建 repository secret `DASHSCOPE_API_KEY`。打开 **Actions → Windows evaluation → Run workflow**；先保持 `run_real_model=false` 运行无密钥测试，再选择 `true` 和 Key 所属地域运行 Qwen3.8-Max。`task_ids` 留空运行 25 题，或填写逗号分隔的任务 ID 定向复测。真实模型会消耗 API 额度。普通 push 只跑项目测试和脚本化 25 任务 benchmark；手动开启真实模型，或提交信息显式包含 `[qwen-eval]`，才会运行付费 Qwen benchmark。详情见 [`docs/12-GitHub-Actions实测.md`](docs/12-GitHub-Actions实测.md)。
 
 ## Roadmap
 
-将 Mini Benchmark 从 5 个任务扩展到 20–30 个任务并做每题 3 次重复运行；增加同模型 one-shot baseline 与 ablation；接入少量 SWE-bench Verified smoke tests；BM25/Embedding 混合召回；更好的命令允许列表和审计；增量索引；容器可写区隔离及更严格资源/网络权限；认证和持久化 API 索引。
+在相同模型配置下做每题多次重复运行，并合并 shard 做配对比较与 ablation；接入少量外部任务作为 smoke tests；BM25/Embedding 混合召回；更好的命令允许列表和审计；增量索引；容器可写区隔离及更严格资源/网络权限；认证和持久化 API 索引。
 
 ## 开源参考与 Attribution
 

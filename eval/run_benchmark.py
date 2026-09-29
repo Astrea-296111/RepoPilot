@@ -244,7 +244,10 @@ def main() -> int:
         parser.error("shard index/count are invalid")
     tasks = json.loads(TASKS_PATH.read_text(encoding="utf-8"))
     if args.task:
-        wanted = set(args.task); tasks = [task for task in tasks if task["id"] in wanted]
+        wanted = set(args.task)
+        unknown = wanted - {task["id"] for task in tasks}
+        if unknown: parser.error(f"unknown task ids: {', '.join(sorted(unknown))}")
+        tasks = [task for task in tasks if task["id"] in wanted]
     if args.limit: tasks = tasks[:args.limit]
     tasks = tasks[args.shard_index::args.shard_count]
     if not tasks: parser.error("no benchmark tasks selected")
