@@ -165,3 +165,13 @@ def test_success_requires_git_diff(repo):
     state = RepoPilot(repo, FakeLLM(demo_responses()), Settings(), executor="local", approval="auto").run("fix")
     assert state.status == "failed" and state.error == "git_diff_failed"
     assert state.test_status == "passed"
+
+
+def test_resume_continues_without_replaying_tools(repo):
+    responses = demo_responses()
+    first = RepoPilot(repo, FakeLLM(responses[:2]), Settings(), executor="local", approval="auto").run("fix")
+    assert first.status == "failed" and first.current_step == 1
+    second = RepoPilot(repo, FakeLLM(responses[2:]), Settings(), executor="local", approval="auto").run(first.task, first)
+    assert second.status == "completed" and second.current_step == 6
+    assert [item["tool"] for item in second.tool_history].count("read_file") == 1
+    assert SessionStore(repo).load(first.id).status == "completed"
