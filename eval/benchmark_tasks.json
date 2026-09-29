@@ -1,0 +1,52 @@
+[
+  {
+    "id": "duplicate_email",
+    "repo": "benchmarks/repos/duplicate_email",
+    "task": "修复重复邮箱注册：重复注册必须抛出 DuplicateEmailError，同时保持正常注册行为不变。",
+    "test_command": "python -m pytest -q",
+    "hidden_test": "eval/hidden_tests/duplicate_email.py",
+    "protected_paths": ["tests"],
+    "category": "exception-handling",
+    "difficulty": "easy"
+  },
+  {
+    "id": "pagination_off_by_one",
+    "repo": "benchmarks/repos/pagination_off_by_one",
+    "task": "修复分页逻辑：page 从 1 开始计数，第一页必须返回最前面的 page_size 个元素，并保持参数校验正确。",
+    "test_command": "python -m pytest -q",
+    "hidden_test": "eval/hidden_tests/pagination_off_by_one.py",
+    "protected_paths": ["tests"],
+    "category": "boundary-condition",
+    "difficulty": "easy"
+  },
+  {
+    "id": "config_precedence",
+    "repo": "benchmarks/repos/config_precedence",
+    "task": "修复超时配置优先级：环境变量 APP_TIMEOUT 应覆盖配置文件 timeout，配置文件再覆盖默认值。",
+    "test_command": "python -m pytest -q",
+    "hidden_test": "eval/hidden_tests/config_precedence.py",
+    "protected_paths": ["tests"],
+    "category": "configuration",
+    "difficulty": "easy"
+  },
+  {
+    "id": "safe_path_traversal",
+    "repo": "benchmarks/repos/safe_path_traversal",
+    "task": "修复 safe_join 的路径边界问题：返回路径必须位于 root 内部，拒绝 ../ 穿越和绝对路径逃逸，同时保留合法子路径。",
+    "test_command": "python -m pytest -q",
+    "hidden_test": "eval/hidden_tests/safe_path_traversal.py",
+    "protected_paths": ["tests"],
+    "category": "path-security",
+    "difficulty": "medium"
+  },
+  {
+    "id": "inventory_atomic_reserve",
+    "repo": "benchmarks/repos/inventory_atomic_reserve",
+    "task": "修复库存预留：数量非法或库存不足时不能修改库存；库存足够时才扣减并返回剩余数量。",
+    "test_command": "python -m pytest -q",
+    "hidden_test": "eval/hidden_tests/inventory_atomic_reserve.py",
+    "protected_paths": ["tests"],
+    "category": "state-management",
+    "difficulty": "medium"
+  }
+]

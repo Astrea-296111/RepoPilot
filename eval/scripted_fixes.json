@@ -1,0 +1,27 @@
+{
+  "duplicate_email": {
+    "path": "app/users.py",
+    "old_text": "raise ValueError('UNIQUE constraint failed: users.email')",
+    "new_text": "raise DuplicateEmailError(email)"
+  },
+  "pagination_off_by_one": {
+    "path": "app/pagination.py",
+    "old_text": "start = page * page_size",
+    "new_text": "start = (page - 1) * page_size"
+  },
+  "config_precedence": {
+    "path": "app/config.py",
+    "old_text": "    if env.get(\"APP_TIMEOUT\"):\n        timeout = int(env[\"APP_TIMEOUT\"])\n    if \"timeout\" in config:\n        timeout = int(config[\"timeout\"])",
+    "new_text": "    if \"timeout\" in config:\n        timeout = int(config[\"timeout\"])\n    if env.get(\"APP_TIMEOUT\"):\n        timeout = int(env[\"APP_TIMEOUT\"])"
+  },
+  "safe_path_traversal": {
+    "path": "app/paths.py",
+    "old_text": "    return (root / user_path).resolve()",
+    "new_text": "    candidate = (root / user_path).resolve()\n    if not candidate.is_relative_to(root):\n        raise ValueError(\"path escapes root\")\n    return candidate"
+  },
+  "inventory_atomic_reserve": {
+    "path": "app/service.py",
+    "old_text": "        available = self.inventory.get(sku)\n        self.inventory.decrement(sku, qty)\n        if qty <= 0:\n            raise ValueError(\"qty must be positive\")\n        if available < qty:\n            raise OutOfStockError(sku)\n        return available - qty",
+    "new_text": "        available = self.inventory.get(sku)\n        if qty <= 0:\n            raise ValueError(\"qty must be positive\")\n        if available < qty:\n            raise OutOfStockError(sku)\n        self.inventory.decrement(sku, qty)\n        return available - qty"
+  }
+}
