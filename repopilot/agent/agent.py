@@ -158,6 +158,11 @@ class RepoPilot:
                     if result.ok:
                         diff = self._execute("git_diff", {}, state)
                         state.final_diff = diff.output
+                        if not diff.ok:
+                            state.finish("failed", "无法生成 Git Diff；请先在目标仓库初始化 Git")
+                            state.error = "git_diff_failed"
+                            self.store.save(state)
+                            return state
                         state.finish("completed", action.summary)
                         self.store.save(state)
                         return state

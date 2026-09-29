@@ -158,3 +158,10 @@ def test_final_claim_cannot_override_failing_test(repo):
     state = RepoPilot(repo, FakeLLM([plan, final, final]), Settings(max_steps=2), executor="local", approval="auto").run("fix")
     assert state.status == "failed" and state.test_status == "failed"
     assert len(state.tool_history) == 2 and all(not entry["ok"] for entry in state.tool_history)
+
+
+def test_success_requires_git_diff(repo):
+    shutil.rmtree(repo / ".git")
+    state = RepoPilot(repo, FakeLLM(demo_responses()), Settings(), executor="local", approval="auto").run("fix")
+    assert state.status == "failed" and state.error == "git_diff_failed"
+    assert state.test_status == "passed"
