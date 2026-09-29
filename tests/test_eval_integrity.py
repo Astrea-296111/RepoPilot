@@ -51,6 +51,19 @@ def test_retrieval_measure_is_offline_and_covers_all_tasks(monkeypatch):
     assert report["summary"]["graph"]["hit_all"] >= report["summary"]["retrieved"]["hit_all"]
 
 
+def test_agent_diagnostic_records_shared_helper(monkeypatch):
+    monkeypatch.syspath_prepend(str(ROOT / "eval"))
+    benchmark = importlib.import_module("run_benchmark")
+    from repopilot.config import Settings
+
+    tasks = json.loads((ROOT / "eval" / "benchmark_tasks.json").read_text(encoding="utf-8"))
+    fixes = json.loads((ROOT / "eval" / "scripted_fixes.json").read_text(encoding="utf-8"))
+    task = next(item for item in tasks if item["id"] == "shared_rounding_policy")
+    record = benchmark.run_one(task, 1, fake=True, settings=Settings.load(), fixes=fixes)
+    assert record["resolved"]
+    assert "app/internal/number_ops.py" in record["agent"]["retrieved_files"]
+
+
 def test_merge_rejects_duplicate_and_missing_repeats(monkeypatch, tmp_path):
     monkeypatch.syspath_prepend(str(ROOT / "eval"))
     merge = importlib.import_module("merge_shards").merge

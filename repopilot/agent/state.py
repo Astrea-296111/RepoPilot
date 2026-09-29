@@ -25,6 +25,7 @@ class AgentState(BaseModel):
     messages: list[dict[str, Any]] = Field(default_factory=list)
     tool_history: list[dict[str, Any]] = Field(default_factory=list)
     changed_files: list[str] = Field(default_factory=list)
+    retrieved_files: list[str] = Field(default_factory=list)
     test_status: str = "not_run"
     token_usage: dict[str, int] = Field(default_factory=lambda: {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0})
     status: str = "pending"

@@ -89,6 +89,7 @@ def main() -> int:
         "transport_excluded_pairs": len(keys) - sum(comparable_counts.values()),
         "non_transport_paired_outcomes": comparable_counts,
         "configuration": {"shared": {key: a_config.get(key) for key in shared},
+                          "agent_retrieval_mode": a_config.get("retrieval_mode", "lexical"),
                           "oneshot_context_mode": o_config.get("context_mode")} if a_config else None,
         "agent": {
             "resolved_runs": a_summary["resolved_runs"],
@@ -127,6 +128,7 @@ def main() -> int:
         f"- Paired outcomes: agent-only={counts['agent_only']}, one-shot-only={counts['oneshot_only']}, both={counts['both']}, neither={counts['neither']}",
         f"- Pairs excluded from behavior comparison (transport/runner): {comparison['transport_excluded_pairs']}",
         f"- One-shot context: {o_config.get('context_mode') if o_config else 'unrecorded'}",
+        f"- Agent retrieval: {a_config.get('retrieval_mode', 'lexical') if a_config else 'unrecorded'}",
         f"- Median tokens: Agent={a_summary.get('median_total_tokens')}, One-shot={o_summary.get('median_total_tokens')}",
         f"- Median duration: Agent={a_summary.get('median_duration_seconds')}s, One-shot={o_summary.get('median_duration_seconds')}s",
         "",

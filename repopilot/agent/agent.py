@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError
 from typing import Annotated, Union
 from repopilot.config import Settings
 from repopilot.context.repo_map import build_repo_map, render_repo_map
-from repopilot.context.retrieval import retrieve
+from repopilot.context.retrieval import retrieve_with_imports
 from repopilot.context.manager import ContextManager
 from repopilot.llm.base import LLM, LLMResponse
 from repopilot.session.store import SessionStore
@@ -139,7 +139,8 @@ class RepoPilot:
         try:
             entries = build_repo_map(self.workspace.root)
             mapped = render_repo_map(entries)
-            relevant = retrieve(self.workspace.root, entries, state.task)
+            relevant = retrieve_with_imports(self.workspace.root, entries, state.task)
+            state.retrieved_files = [path for path, _ in relevant]
             if state.plan is None:
                 # Reuse the accounting adapter for the one planning call; planner handles repair.
                 class Metered:

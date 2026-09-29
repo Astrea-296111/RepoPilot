@@ -179,6 +179,7 @@ def run_one(task: dict, run_number: int, *, fake: bool, settings: Settings, fixe
                 "plan": state.plan.model_dump() if state.plan else None,
                 "steps": state.current_step, "test_status": state.test_status,
                 "tool_calls": len(state.tool_history), "changed_files": changed,
+                "retrieved_files": state.retrieved_files,
                 "token_usage": state.token_usage, "duration_seconds": state.duration_seconds,
             }
             record["model_calls"] = model.calls
@@ -278,7 +279,7 @@ def main() -> int:
               "config": {"model": model_name, "base_url": settings.llm_base_url,
                          "reasoning_effort": settings.llm_reasoning_effort or "provider_default",
                          "stream": settings.llm_stream, "timeout_seconds": settings.llm_timeout_seconds,
-                         "runs_per_task": args.runs}}
+                         "runs_per_task": args.runs, "retrieval_mode": "graph"}}
     suffix = "fake" if args.fake else "qwen"
     shard = f"-shard{args.shard_index}" if args.shard_count > 1 else ""
     output = ROOT / "eval" / "results" / f"agent-{suffix}{shard}.json"

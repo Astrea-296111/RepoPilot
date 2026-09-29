@@ -19,7 +19,7 @@
 
 手动运行时可在 `task_ids` 填写英文逗号分隔的 ID，例如 `relative_config_paths,shared_feature_flag_precedence,shared_identifier_normalization,shared_rounding_policy`。有筛选条件时，两组各用一个 job 运行同样的题目，Artifact 仍分别名为 `agent-qwen-shard-0` 和 `oneshot-qwen-shard-0`；留空则各分成 5 个 shard。未知 ID 会直接报错，避免误以为已评测该任务。完整运行与定向运行使用同一套模型参数。
 
-`oneshot_context=retrieved` 保留原 Top-K 上下文；`graph` 将 Top-K 文件的本地 Python 直接依赖补进最多 4 个文件名额，在无词法命中时使用源码导入次数作回退；`full` 将该题工作区内所有公开 Python 文件（包括公开测试）原文放进一次模型调用，超过 30000 字符会明确报错。`run_agent=false` 可以只跑 one-shot 做上下文消融，避免重复支付 Agent 调用。每份 JSON 的 `config` 记录模型、推理力度、流式开关、超时与上下文模式，`context` 记录逐题选中文件及 prompt 字符数。检查 job 的 `retrieval-diagnostics.json` 用已知修复路径测召回，不会将答案加入模型上下文。
+`oneshot_context=retrieved` 保留原 Top-K 上下文；`graph` 将 Top-K 文件的本地 Python 直接依赖补进最多 4 个文件名额，在无词法命中时使用源码导入次数作回退；`full` 将该题工作区内所有公开 Python 文件（包括公开测试）原文放进一次模型调用，超过 30000 字符会明确报错。Agent 也采用导入图补全，并在报告中记录选中文件。`run_agent=false` 可以只跑 one-shot，`run_oneshot=false` 可以只跑 Agent，避免重复付费。每份 JSON 的 `config` 记录模型、推理力度、流式开关、超时与上下文模式，`context` 记录逐题选中文件及 prompt 字符数。检查 job 的 `retrieval-diagnostics.json` 用已知修复路径测召回，不会将答案加入模型上下文。
 
 同一个仓库的 Windows evaluation 工作流按顺序排队，避免两个付费评测重叠。当前真实 Qwen 评测为 Agent 和 one-shot 同时设置 `reasoning_effort=medium`、流式响应及 180 秒的网络读取超时；请求耗时和超时类型保存在诊断 JSON 中。流式响应有利于保持长回答连接，但不能保证不超时。此配置与早期默认模型参数的结果不可直接作为同条件重复实验。
 
@@ -97,7 +97,7 @@ oneshot-qwen-shard-4
 
 ## 下一阶段
 
-四题定向复测已在 [Actions #21](https://github.com/Astrea-296111/RepoPilot/actions/runs/36568828589) 完成：Agent 3/4、Top-K one-shot 0/4，均没有模型超时。随后 [Actions #24](https://github.com/Astrea-296111/RepoPilot/actions/runs/36572978243) 在相同模型参数下给 one-shot 完整公开 Python 上下文，达到 4/4。每题只有一次，不能把差值当作稳定胜率。详细限制见 [`docs/13-真实模型Benchmark.md`](13-真实模型Benchmark.md)。
+四题定向复测已在 [Actions #21](https://github.com/Astrea-296111/RepoPilot/actions/runs/36568828589) 完成：Agent 3/4、Top-K one-shot 0/4，均没有模型超时。随后 [Actions #24](https://github.com/Astrea-296111/RepoPilot/actions/runs/36572978243) 在相同模型参数下给 one-shot 完整公开 Python 上下文，达到 4/4；[Actions #26](https://github.com/Astrea-296111/RepoPilot/actions/runs/36574356369) 用导入图 Top-K 跑五题，达到 5/5。每题只有一次，不能把差值当作稳定胜率。详细限制见 [`docs/13-真实模型Benchmark.md`](13-真实模型Benchmark.md)。
 
 下一步用相同配置对完整 25 任务运行，并视费用与稳定性决定是否使用 `runs=3`。各 shard 的 JSON 需合并并重新计算汇总，之后再用 `eval/compare_results.py` 生成 Agent vs one-shot 的 paired comparison。比较时单独列出 `model_timeout` 和 `patch_failure`，并保留三档 one-shot 上下文对照。
 

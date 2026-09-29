@@ -16,6 +16,11 @@ on:
         type: boolean
         required: true
         default: true
+      run_oneshot:
+        description: "Include one-shot; uncheck for an Agent-only ablation"
+        type: boolean
+        required: true
+        default: true
       oneshot_context:
         description: "One-shot input files: Top-K, import graph, or all public Python files"
         type: choice
@@ -143,7 +148,7 @@ jobs:
 
   qwen-oneshot:
     name: Qwen3.8-Max one-shot shard ${{ matrix.shard }}
-    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_real_model) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[qwen-eval]')) }}
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_real_model && inputs.run_oneshot) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[qwen-eval]')) }}
     runs-on: windows-latest
     timeout-minutes: 60
     strategy:
