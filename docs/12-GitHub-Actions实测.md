@@ -1,20 +1,97 @@
 # 在 GitHub Actions 运行 RepoPilot
 
-工作流：`.github/workflows/windows-eval.yml`。推送 `main` 时只运行无密钥检查；Qwen3.8-Max 必须手动触发。运行环境为 Windows、Python 3.12。不会把模型 Key 写入代码或提交，也不会修改仓库中的原始 Demo。真实模型调用会产生阿里云费用。
+工作流：`.github/workflows/windows-eval.yml`。运行环境为 Windows、Python 3.12。不会把模型 Key 写入代码或提交。真实模型调用会产生阿里云费用。
 
-## 启动
+## 两类 Job
 
-1. 打开仓库 **Settings → Secrets and variables → Actions → New repository secret**，名称填 `DASHSCOPE_API_KEY`，值填阿里云百炼 API Key。Key 所属地域需要与运行时选的地域一致。不要把 Key 发到 Issue、聊天或日志。
-2. 打开 **Actions → Windows evaluation → Run workflow**，选择 `main`。
-3. 初次验证保留 `run_real_model=false`，点击绿色 **Run workflow**。`Tests and scripted evaluation` 会运行项目测试、无密钥 FakeLLM Demo，并上传 `fake-diagnostics` 供你预览诊断格式。
-4. 真正测 Qwen3.8-Max 时改为 `run_real_model=true`，选择 `beijing` 或 `singapore`，再点击 **Run workflow**。两个 job 会并行，真实模型的 job 名为 `Qwen3.8-Max on a temporary Demo copy`。
+### Tests and scripted benchmark
 
-脚本先在系统临时目录复制 `examples/demo_repo` 并初始化 Git，确认原始测试失败，然后让真实模型修复，最后独立复测和检查修改文件。此模式在可信 Demo 副本上使用 `local` 执行器和自动审批；不要把它直接改成针对不受信任的仓库执行。
+每次 push 到 `main` 都会运行：
 
-## 查看结果和排错
+1. `python -m pytest -q`
+2. `python eval/run_benchmark.py --fake --runs 1 --require-all`
+3. 上传 `benchmark-fake` artifact
 
-打开该次 workflow run：每个步骤的日志显示依赖安装、单测、脚本化测试与真实评测是否成功。真实评测结束后，页面底部 **Artifacts** 中下载 `qwen-diagnostics`，内含 `actions-qwen.json`。即使评测失败，上传步骤仍会尝试保存结果。JSON 记录基线/最终测试、计划、模型回复、每次工具的参数和输出、步骤耗时、Token 用量（若 API 返回）、Git 状态及 Diff；API Key 会按原文替换为 `[REDACTED]`，不包含完整原始会话。
+脚本化 benchmark 使用已知 patch，只用于验证 evaluator 的复制仓库、基线失败、Agent 执行、protected tests、hidden tests、汇总统计等基础设施没有坏。
 
-**这是公开仓库：Actions 日志和 Artifact 可被他人看到。** 工作流只运行仓库自带的公开 Demo。不要把私人仓库内容、其他凭据或敏感数据放入任务、Demo 或输出。诊断 Artifact 保留 7 天；需要我帮你排错时，给我 workflow run 的 GitHub 链接，或下载并上传该 JSON。只提供 API Key 不会让我自动看到你本机的运行内容。
+### Qwen3.8-Max five-task benchmark
 
-如果 Key 缺失，真实 job 会失败并在 JSON 写明 `Missing DASHSCOPE_API_KEY`。401/403 请检查地域、额度、模型访问权限和 Key；连接错误请看运行日志。模型不遵循 JSON 工具协议或修复测试未通过时，查看 `model_calls` 与 `agent.tool_history`。该评测只有一个已知 Demo，不代表真实仓库成功率。
+只有两种情况会运行付费模型：
+
+- 手动 **Run workflow** 并设置 `run_real_model=true`
+- push 的 commit message 显式包含 `[qwen-eval]`
+
+命令为：
+
+```powershell
+python eval/run_benchmark.py --runs $env:BENCH_RUNS --limit 5
+```
+
+手动运行时可以选择每题 1 次或 3 次。普通 push 不会调用 Qwen。
+
+## Secret 设置
+
+在 **Settings → Secrets and variables → Actions → New repository secret** 新建：
+
+```text
+DASHSCOPE_API_KEY
+```
+
+根据 Key 地域选择 Beijing 或 Singapore。不要把 Key 放进仓库、Issue、聊天记录或 artifact。
+
+## Mini Benchmark v2 的判定
+
+当前有 5 个任务：
+
+- exception-handling
+- boundary-condition
+- configuration
+- path-security
+- state-management
+
+每次运行都会：
+
+1. 将对应故障仓库复制到系统临时目录；
+2. 初始化独立 Git baseline；
+3. 运行固定测试，要求 baseline 非 0；
+4. 让 RepoPilot 在临时仓库中工作；
+5. 检查 Agent 是否修改了受保护的 `tests/`；
+6. Agent 结束后才注入 `eval/hidden_tests/` 对应的 regression test；
+7. 再运行固定测试；
+8. 保存 resolved、steps、tool calls、token usage、duration、changed files、failure category。
+
+真实模型没有解出某个任务是正常 benchmark 数据，不会因此把 CI 基础设施标成失败。Runner 错误或 baseline 本来就通过会返回非零。FakeLLM sanity check 使用 `--require-all`，任何任务未通过都会让 CI 失败。
+
+## 2026-09-29 已验证结果
+
+GitHub Actions run `36546370324`：
+
+- 项目测试：`21 passed, 1 warning`
+- Scripted 5-task benchmark：5/5
+- Qwen3.8-Max real benchmark：5/5 first-run resolved
+- median steps：3
+- median tool calls：4
+- median total tokens：3554
+- median duration：27.205 s
+- failure categories：无
+
+单任务差异明显：path-security 使用 11103 tokens、约 150.986 s；说明后续不能只看平均成功数，还要分析不同任务类型的成本与轨迹。
+
+这只是 **5 个小型 Python 任务 × 每题 1 次**，不代表通用软件工程成功率，也不是 SWE-bench。
+
+## 查看诊断
+
+真实评测结束后下载 Artifact：
+
+```text
+benchmark-qwen
+  benchmark-qwen.json
+```
+
+JSON 含 summary 和逐任务 records，可看到模型调用、计划、steps、token、duration、changed files、hidden test 输出和 failure category。当前 artifact 保留 14 天。
+
+公开仓库的 Actions 日志和 artifact 也可能公开，因此不要将私人代码、凭据或敏感任务放入这个工作流。
+
+## 下一阶段
+
+把任务集扩到 20–30 个，每题 3 次；再加入相同 Qwen3.8-Max 的 one-shot baseline，比较 Agent Loop 相比一次性 patch 的收益，并对失败做分类。

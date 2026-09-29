@@ -100,13 +100,25 @@ python -m repopilot.cli run /tmp/repopilot-demo "修复重复邮箱注册失败�
 
 Windows 请把复制路径换成自己的临时文件夹并执行 `git init/add/commit`。`--fake-demo` 是专为这一个已知 Bug 编写的固定动作序列，只证明 harness 的工作流；它**没有**证明真实模型能自主找到修复。真实模型去掉 `--fake-demo`，默认保留 `--executor docker --approval ask`。`--approval auto` 和本地执行仅在可信副本上使用。
 
-运行自建评测（每次复制仓库，先确认失败再运行 FakeLLM 并复测）：
+运行旧版单任务 sanity test：
 
 ```bash
 python eval/run_eval.py
 ```
 
-本次实测：1 个脚本化任务成功；基线退出码 1、修复后 0；6 个 Agent 步骤、7 次工具调用。耗时每次随环境变化。真实模型成功率、成本、Token 节省及 SWE-bench 结果均**待测**，不可引用 FakeLLM 数据宣称模型性能。
+更有意义的评测使用 Mini Benchmark v2：
+
+```bash
+# 无 Key：验证评测器本身，5 个任务都必须通过
+python eval/run_benchmark.py --fake --runs 1 --require-all
+
+# 配置真实 OpenAI-compatible 模型后
+python eval/run_benchmark.py --runs 1
+```
+
+Mini Benchmark v2 当前包含 5 个彼此独立的 Python Bug 任务，覆盖异常处理、分页边界、配置优先级、路径安全和多文件状态修改。每个任务先确认原始测试失败；Agent 结束后检查其没有修改受保护测试，再注入 Agent 运行时未放入任务工作区的 hidden regression tests 进行独立复测。评测结果记录 steps、tool calls、token usage、duration、changed files 和失败类别。
+
+2026-09-29 的 GitHub Actions Qwen3.8-Max 实测（每任务 1 次）：**5/5 首轮 resolved**；中位数 3 个 Agent steps、4 次工具调用、3554 tokens、27.205 秒。这个数字只描述当前 5 个小型任务，不能外推为通用软件修复成功率，也不是 SWE-bench 成绩。详细方法和结果见 [docs/13-真实模型Benchmark.md](docs/13-真实模型Benchmark.md)。
 
 ## 目录结构
 
@@ -120,7 +132,7 @@ repopilot/
   session/     store.py
   api/         server.py
   cli.py       config.py
-examples/demo_repo/  tests/  eval/  docs/
+examples/demo_repo/  benchmarks/repos/  tests/  eval/  docs/
 Dockerfile  Dockerfile.sandbox  docker-compose.yml
 ```
 
@@ -164,19 +176,20 @@ curl http://127.0.0.1:8000/api/tasks/TASK_ID
 ## 测试
 
 ```bash
-python -m pytest -q            # RepoPilot 自身测试；不包含故意失败的 Demo
-python eval/run_eval.py         # 复制 Demo、失败基线、脚本化修复、复测
+python -m pytest -q
+python eval/run_eval.py
+python eval/run_benchmark.py --fake --runs 1 --require-all
 ```
 
 `docs/07-项目完整执行流程.md` 有本次真实日志和限制，`BUILD_REPORT.md` 有构建自检。
 
 ## GitHub Actions 实测
 
-在仓库 **Settings → Secrets and variables → Actions** 新建 repository secret `DASHSCOPE_API_KEY`。打开 **Actions → Windows evaluation → Run workflow**；先保持 `run_real_model=false` 运行无密钥测试，再选择 `true` 和 Key 所属地域运行 Qwen3.8-Max。真实模型会消耗 API 额度。推送 `main` 只运行无密钥检查，真实模型仅手动触发；Windows runner 会修改临时复制的 Demo 仓库。详情见 [`docs/12-GitHub-Actions实测.md`](docs/12-GitHub-Actions实测.md)。
+在仓库 **Settings → Secrets and variables → Actions** 新建 repository secret `DASHSCOPE_API_KEY`。打开 **Actions → Windows evaluation → Run workflow**；先保持 `run_real_model=false` 运行无密钥测试，再选择 `true` 和 Key 所属地域运行 Qwen3.8-Max。真实模型会消耗 API 额度。普通 push 只跑项目测试和脚本化 5 任务 benchmark；手动开启真实模型，或提交信息显式包含 `[qwen-eval]`，才会运行付费 Qwen benchmark。详情见 [`docs/12-GitHub-Actions实测.md`](docs/12-GitHub-Actions实测.md)。
 
 ## Roadmap
 
-真实模型多任务基准与失败分析；BM25/Embedding 混合召回；更好的命令允许列表和审计；增量索引；容器可写区隔离及更严格资源/网络权限；认证和持久化 API 索引；SWE-bench 接入。V1 没有这些能力。
+将 Mini Benchmark 从 5 个任务扩展到 20–30 个任务并做每题 3 次重复运行；增加同模型 one-shot baseline 与 ablation；接入少量 SWE-bench Verified smoke tests；BM25/Embedding 混合召回；更好的命令允许列表和审计；增量索引；容器可写区隔离及更严格资源/网络权限；认证和持久化 API 索引。
 
 ## 开源参考与 Attribution
 
