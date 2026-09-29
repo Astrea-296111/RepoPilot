@@ -127,6 +127,7 @@ def test_agent_loop_demo_end_to_end(repo):
     state = agent.run("修复重复邮箱注册失败的问题")
     after = subprocess.run("python -m pytest -q", shell=True, cwd=repo, capture_output=True)
     assert state.status == "completed" and state.test_status == "passed" and after.returncode == 0
+    assert state.duration_seconds is not None and state.duration_seconds > 0
     assert state.changed_files == ["app/users.py"] and "DuplicateEmailError" in state.final_diff
     assert state.tool_history[1]["ok"] is False and state.tool_history[3]["ok"] is True
 
