@@ -168,7 +168,9 @@ GitHub Actions run：`36546370324`
 
 导入关系补全从强词法匹配开始，为其直接依赖预留名额；若完全没有词法匹配，再按仓库内 Python 导入次数选择共享文件。这是针对自建任务集开发的设计内诊断；`scripted_fixes.json` 只代表一种正确修法，也不能外推 25/25 到其他仓库。真实模型对 graph 模式的修复结果要以单独 Actions 运行报告为准。
 
-[Actions #26](https://github.com/Astrea-296111/RepoPilot/actions/runs/36574356369) 对原本漏检参考修复文件的五道共享实现题，以 graph 模式运行真实 Qwen3.8-Max one-shot：**5/5 resolved**，中位 **1096 tokens**、**8.641 秒**、**1 个补丁**；逐题报告的 `context.source_paths` 均包含该题的参考 helper。每题仍只有一次，五题也是定位问题后选择的开发集，不能把这个数字外推为泛化成功率。新版本 Agent 已使用导入图上下文，需另行复测多步轨迹。
+[Actions #26](https://github.com/Astrea-296111/RepoPilot/actions/runs/36574356369) 对原本漏检参考修复文件的五道共享实现题，以 graph 模式运行真实 Qwen3.8-Max one-shot：**5/5 resolved**，中位 **1096 tokens**、**8.641 秒**、**1 个补丁**；逐题报告的 `context.source_paths` 均包含该题的参考 helper。每题仍只有一次，五题也是定位问题后选择的开发集，不能把这个数字外推为泛化成功率。
+
+[Actions #28](https://github.com/Astrea-296111/RepoPilot/actions/runs/36575414927) 在同一五题、同一模型参数下单独复测导入图 Agent：**5/5 resolved**，中位 **6 步、7 次工具调用、12002 tokens、73.558 秒 Agent 总耗时**。此前达到 15 步上限的 `shared_rounding_policy` 此次 9 步通过。不过 Agent 在 `shared_rounding_policy` 与 `shared_identifier_normalization` 中曾修改公开测试；评分前 evaluator 恢复这些文件，最终原测试与隐藏回归测试仍通过。若要求运行期间也不改受保护文件，则仅 **3/5 clean resolved**。one-shot 五题均未改测试，**5/5 clean resolved**。新增 `protected_edit_runs` 和 `resolved_without_protected_edits` 汇总字段，保留这两个不同口径。当前 Agent 总耗时与 one-shot 的单次**模型调用**耗时口径不同，不做延迟倍率比较；两个运行也都只有每题一次，不能声称 graph 让 Agent 的稳定修复率提升。
 
 ## 下一步实验设计
 

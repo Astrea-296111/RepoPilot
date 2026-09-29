@@ -64,6 +64,27 @@ def test_agent_diagnostic_records_shared_helper(monkeypatch):
     assert "app/internal/number_ops.py" in record["agent"]["retrieved_files"]
 
 
+def test_resolved_summary_exposes_protected_test_edits(monkeypatch):
+    monkeypatch.syspath_prepend(str(ROOT / "eval"))
+    agent = importlib.import_module("run_benchmark")
+    one = importlib.import_module("run_one_shot")
+    records = [{"task_id": "a", "run": 1, "category": "test", "difficulty": "hard",
+                "resolved": True, "failure_category": None, "protected_modified": ["tests/test_a.py"],
+                "agent": {"steps": 1, "tool_calls": 1, "duration_seconds": 1,
+                          "token_usage": {"total_tokens": 10}},
+                "model_call": {"total_tokens": 10, "duration_seconds": 1}},
+               {"task_id": "b", "run": 1, "category": "test", "difficulty": "hard",
+                "resolved": True, "failure_category": None, "protected_modified": [],
+                "agent": {"steps": 1, "tool_calls": 1, "duration_seconds": 1,
+                          "token_usage": {"total_tokens": 10}},
+                "model_call": {"total_tokens": 10, "duration_seconds": 1}}]
+    for summarize in (agent.summarize, one.summarize):
+        result = summarize(records, "test")
+        assert result["resolved_runs"] == 2
+        assert result["resolved_without_protected_edits"] == 1
+        assert result["protected_edit_runs"] == 1
+
+
 def test_merge_rejects_duplicate_and_missing_repeats(monkeypatch, tmp_path):
     monkeypatch.syspath_prepend(str(ROOT / "eval"))
     merge = importlib.import_module("merge_shards").merge

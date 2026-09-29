@@ -216,6 +216,8 @@ def summarize(records: list[dict], model_name: str) -> dict:
         "task_count": len({item["task_id"] for item in records}),
         "runs": len(records),
         "resolved_runs": len(resolved),
+        "resolved_without_protected_edits": sum(item["resolved"] and not item.get("protected_modified") for item in records),
+        "protected_edit_runs": sum(bool(item.get("protected_modified")) for item in records),
         "run_resolved_rate": round(len(resolved) / len(records), 4) if records else 0,
         "first_run_resolved": sum(1 for item in first_runs if item["resolved"]),
         "first_run_tasks": len(first_runs),

@@ -99,6 +99,8 @@ oneshot-qwen-shard-4
 
 四题定向复测已在 [Actions #21](https://github.com/Astrea-296111/RepoPilot/actions/runs/36568828589) 完成：Agent 3/4、Top-K one-shot 0/4，均没有模型超时。随后 [Actions #24](https://github.com/Astrea-296111/RepoPilot/actions/runs/36572978243) 在相同模型参数下给 one-shot 完整公开 Python 上下文，达到 4/4；[Actions #26](https://github.com/Astrea-296111/RepoPilot/actions/runs/36574356369) 用导入图 Top-K 跑五题，达到 5/5。每题只有一次，不能把差值当作稳定胜率。详细限制见 [`docs/13-真实模型Benchmark.md`](13-真实模型Benchmark.md)。
 
+[Actions #28](https://github.com/Astrea-296111/RepoPilot/actions/runs/36575414927) 的导入图 Agent 五题为 5/5；两题运行期间曾修改公开测试，虽然评分前恢复并仍通过，严格无测试修改的口径为 3/5。报告同时给出 `protected_edit_runs` 与 `resolved_without_protected_edits`，面试表述需注明这一点。
+
 下一步用相同配置对完整 25 任务运行，并视费用与稳定性决定是否使用 `runs=3`。各 shard 的 JSON 需合并并重新计算汇总，之后再用 `eval/compare_results.py` 生成 Agent vs one-shot 的 paired comparison。比较时单独列出 `model_timeout` 和 `patch_failure`，并保留三档 one-shot 上下文对照。
 
 下载并解压同一次运行的所有 shard 后，分别执行：

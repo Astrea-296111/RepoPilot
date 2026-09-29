@@ -4,7 +4,7 @@
 
 ## 为什么做
 
-只问一次模型「请修 bug」无法验证文件内容、执行测试或根据失败继续修复。本项目把决定与执行分开：模型只返回受 Pydantic 校验的 JSON；Python 负责工具、审批、路径检查和最终测试。核心循环见 [`repopilot/agent/agent.py`](repopilot/agent/agent.py)。它适合学习和小规模实验，不承诺自动修复任意真实仓库。
+单次模型修复也能在补丁后运行测试，但无法根据失败继续查找和修复。本项目把决定与执行分开：模型只返回受 Pydantic 校验的 JSON；Python 负责工具、审批、路径检查和最终测试。核心循环见 [`repopilot/agent/agent.py`](repopilot/agent/agent.py)。它适合学习和小规模实验，不承诺自动修复任意真实仓库。
 
 ## 核心能力
 
@@ -121,7 +121,7 @@ python eval/run_benchmark.py --runs 1
 
 2026-09-29 的首批 5 题 GitHub Actions Qwen3.8-Max 实测（每任务 1 次）：**5/5 首轮 resolved**；中位数 3 个 Agent steps、4 次工具调用、3554 tokens、27.205 秒。这个数字只描述当时 5 个小型任务，不能外推为通用软件修复成功率，也不是 SWE-bench 成绩。详细方法和结果见 [docs/13-真实模型Benchmark.md](docs/13-真实模型Benchmark.md)。
 
-之后扩至 25 任务并加入 one-shot 对照。旧配置的两轮 25 题中，one-shot 各有 4 次模型超时；调整推理力度与流式传输后，[四题定向复测](https://github.com/Astrea-296111/RepoPilot/actions/runs/36568828589) 得到 Agent 3/4、Top-K one-shot 0/4；但[完整公开 Python 上下文复测](https://github.com/Astrea-296111/RepoPilot/actions/runs/36572978243)让 one-shot 达到 4/4，[导入图补全五题](https://github.com/Astrea-296111/RepoPilot/actions/runs/36574356369)得到 5/5。因此原始四题不能证明 Agent Loop 优于单次调用，瓶颈是上下文缺失；详见 [评测方法与限制](docs/13-真实模型Benchmark.md)。
+之后扩至 25 任务并加入 one-shot 对照。旧配置的两轮 25 题中，one-shot 各有 4 次模型超时；调整推理力度与流式传输后，[四题定向复测](https://github.com/Astrea-296111/RepoPilot/actions/runs/36568828589) 得到 Agent 3/4、Top-K one-shot 0/4；但[完整公开 Python 上下文复测](https://github.com/Astrea-296111/RepoPilot/actions/runs/36572978243)让 one-shot 达到 4/4，[导入图补全五题](https://github.com/Astrea-296111/RepoPilot/actions/runs/36574356369)得到 5/5。采用导入图的[Agent 五题复测](https://github.com/Astrea-296111/RepoPilot/actions/runs/36575414927)也是 5/5，但两题曾改公开测试（评分前恢复，严格无测试改动口径为 3/5）。每题只跑一次，原始四题不能证明 Agent Loop 优于单次调用；详见 [评测方法与限制](docs/13-真实模型Benchmark.md)。
 
 ## 目录结构
 
