@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       run_real_model:
-        description: "Run the Qwen3.8-Max mini benchmark (uses paid tokens)"
+        description: "Run Qwen3.8-Max agent + one-shot benchmarks (uses paid tokens)"
         type: boolean
         required: true
         default: false
@@ -33,9 +33,9 @@ permissions:
 
 jobs:
   checks:
-    name: Tests and scripted benchmark
+    name: Tests and scripted 20-task benchmark
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
         with:
@@ -47,22 +47,26 @@ jobs:
         run: python -m pip install -e ".[dev]"
       - name: Project tests
         run: python -m pytest -q
-      - name: Scripted five-task benchmark
+      - name: Scripted Agent benchmark
         run: python eval/run_benchmark.py --fake --runs 1 --require-all
-      - name: Upload scripted benchmark diagnostics
+      - name: Scripted one-shot benchmark
+        run: python eval/run_one_shot.py --fake --runs 1 --require-all
+      - name: Upload scripted diagnostics
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: benchmark-fake
-          path: eval/results/benchmark-fake.json
+          name: benchmark-scripted
+          path: |
+            eval/results/agent-fake.json
+            eval/results/oneshot-fake.json
           if-no-files-found: warn
           retention-days: 7
 
-  qwen:
-    name: Qwen3.8-Max five-task benchmark
+  qwen-agent:
+    name: Qwen3.8-Max Agent 20-task benchmark
     if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_real_model) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[qwen-eval]')) }}
     runs-on: windows-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     env:
       LLM_MODEL: qwen3.8-max
       LLM_BASE_URL: ${{ inputs.region == 'singapore' && 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1' || 'https://dashscope.aliyuncs.com/compatible-mode/v1' }}
@@ -76,15 +80,46 @@ jobs:
           python-version: "3.12"
       - name: Install
         run: python -m pip install -e ".[dev]"
-      - name: Run real-model mini benchmark
+      - name: Run RepoPilot Agent benchmark
         env:
           LLM_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
-        run: python eval/run_benchmark.py --runs $env:BENCH_RUNS --limit 5
-      - name: Upload Qwen benchmark diagnostics
+        run: python eval/run_benchmark.py --runs $env:BENCH_RUNS
+      - name: Upload Agent diagnostics
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: benchmark-qwen
-          path: eval/results/benchmark-qwen.json
+          name: agent-qwen
+          path: eval/results/agent-qwen.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  qwen-oneshot:
+    name: Qwen3.8-Max one-shot 20-task baseline
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_real_model) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[qwen-eval]')) }}
+    runs-on: windows-latest
+    timeout-minutes: 90
+    env:
+      LLM_MODEL: qwen3.8-max
+      LLM_BASE_URL: ${{ inputs.region == 'singapore' && 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1' || 'https://dashscope.aliyuncs.com/compatible-mode/v1' }}
+      BENCH_RUNS: ${{ inputs.runs || '1' }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: python -m pip install -e ".[dev]"
+      - name: Run one-shot baseline
+        env:
+          LLM_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+        run: python eval/run_one_shot.py --runs $env:BENCH_RUNS
+      - name: Upload one-shot diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: oneshot-qwen
+          path: eval/results/oneshot-qwen.json
           if-no-files-found: warn
           retention-days: 14

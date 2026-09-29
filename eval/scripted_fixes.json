@@ -1,27 +1,182 @@
 {
   "duplicate_email": {
-    "path": "app/users.py",
-    "old_text": "raise ValueError('UNIQUE constraint failed: users.email')",
-    "new_text": "raise DuplicateEmailError(email)"
+    "patches": [
+      {
+        "path": "app/users.py",
+        "old_text": "raise ValueError('UNIQUE constraint failed: users.email')",
+        "new_text": "raise DuplicateEmailError(email)"
+      }
+    ]
   },
   "pagination_off_by_one": {
-    "path": "app/pagination.py",
-    "old_text": "start = page * page_size",
-    "new_text": "start = (page - 1) * page_size"
+    "patches": [
+      {
+        "path": "app/pagination.py",
+        "old_text": "start = page * page_size",
+        "new_text": "start = (page - 1) * page_size"
+      }
+    ]
   },
   "config_precedence": {
-    "path": "app/config.py",
-    "old_text": "    if env.get(\"APP_TIMEOUT\"):\n        timeout = int(env[\"APP_TIMEOUT\"])\n    if \"timeout\" in config:\n        timeout = int(config[\"timeout\"])",
-    "new_text": "    if \"timeout\" in config:\n        timeout = int(config[\"timeout\"])\n    if env.get(\"APP_TIMEOUT\"):\n        timeout = int(env[\"APP_TIMEOUT\"])"
+    "patches": [
+      {
+        "path": "app/config.py",
+        "old_text": "    if env.get(\"APP_TIMEOUT\"):\n        timeout = int(env[\"APP_TIMEOUT\"])\n    if \"timeout\" in config:\n        timeout = int(config[\"timeout\"])",
+        "new_text": "    if \"timeout\" in config:\n        timeout = int(config[\"timeout\"])\n    if env.get(\"APP_TIMEOUT\"):\n        timeout = int(env[\"APP_TIMEOUT\"])"
+      }
+    ]
   },
   "safe_path_traversal": {
-    "path": "app/paths.py",
-    "old_text": "    return (root / user_path).resolve()",
-    "new_text": "    candidate = (root / user_path).resolve()\n    if not candidate.is_relative_to(root):\n        raise ValueError(\"path escapes root\")\n    return candidate"
+    "patches": [
+      {
+        "path": "app/paths.py",
+        "old_text": "    return (root / user_path).resolve()",
+        "new_text": "    candidate = (root / user_path).resolve()\n    if not candidate.is_relative_to(root):\n        raise ValueError(\"path escapes root\")\n    return candidate"
+      }
+    ]
   },
   "inventory_atomic_reserve": {
-    "path": "app/service.py",
-    "old_text": "        available = self.inventory.get(sku)\n        self.inventory.decrement(sku, qty)\n        if qty <= 0:\n            raise ValueError(\"qty must be positive\")\n        if available < qty:\n            raise OutOfStockError(sku)\n        return available - qty",
-    "new_text": "        available = self.inventory.get(sku)\n        if qty <= 0:\n            raise ValueError(\"qty must be positive\")\n        if available < qty:\n            raise OutOfStockError(sku)\n        self.inventory.decrement(sku, qty)\n        return available - qty"
+    "patches": [
+      {
+        "path": "app/service.py",
+        "old_text": "        available = self.inventory.get(sku)\n        self.inventory.decrement(sku, qty)\n        if qty <= 0:\n            raise ValueError(\"qty must be positive\")\n        if available < qty:\n            raise OutOfStockError(sku)\n        return available - qty",
+        "new_text": "        available = self.inventory.get(sku)\n        if qty <= 0:\n            raise ValueError(\"qty must be positive\")\n        if available < qty:\n            raise OutOfStockError(sku)\n        self.inventory.decrement(sku, qty)\n        return available - qty"
+      }
+    ]
+  },
+  "normalize_username": {
+    "patches": [
+      {
+        "path": "app/users.py",
+        "old_text": "    normalized = value.lower()",
+        "new_text": "    normalized = value.strip().lower()"
+      }
+    ]
+  },
+  "ttl_expiry_boundary": {
+    "patches": [
+      {
+        "path": "app/cache.py",
+        "old_text": "    return age > ttl_seconds",
+        "new_text": "    return age >= ttl_seconds"
+      }
+    ]
+  },
+  "retry_backoff": {
+    "patches": [
+      {
+        "path": "app/retry.py",
+        "old_text": "    return min(cap, base * (2 ** attempt))",
+        "new_text": "    return min(cap, base * (2 ** (attempt - 1)))"
+      }
+    ]
+  },
+  "slugify_text": {
+    "patches": [
+      {
+        "path": "app/text.py",
+        "old_text": "    cleaned = text.strip().lower().replace(\" \", \"-\")\n    return cleaned",
+        "new_text": "    return re.sub(r\"[^a-z0-9]+\", \"-\", text.lower()).strip(\"-\")"
+      }
+    ]
+  },
+  "authorization_owner": {
+    "patches": [
+      {
+        "path": "app/auth.py",
+        "old_text": "    return role == \"admin\" and user_id == owner_id",
+        "new_text": "    return role == \"admin\" or user_id == owner_id"
+      }
+    ]
+  },
+  "discount_order": {
+    "patches": [
+      {
+        "path": "app/pricing.py",
+        "old_text": "    discounted = (price - coupon) * (1 - percent / 100)\n    return max(0.0, round(discounted, 2))",
+        "new_text": "    discounted = price * (1 - percent / 100) - coupon\n    return max(0.0, round(discounted, 2))"
+      }
+    ]
+  },
+  "csv_header_mapping": {
+    "patches": [
+      {
+        "path": "app/parser.py",
+        "old_text": "    return dict(zip(sorted(headers), values))",
+        "new_text": "    return dict(zip(headers, values))"
+      }
+    ]
+  },
+  "deep_merge_nested": {
+    "patches": [
+      {
+        "path": "app/merge.py",
+        "old_text": "def deep_merge(base: dict, override: dict) -> dict:\n    result = dict(base)\n    result.update(override)\n    return result",
+        "new_text": "def deep_merge(base: dict, override: dict) -> dict:\n    result = dict(base)\n    for key, value in override.items():\n        current = result.get(key)\n        if isinstance(current, dict) and isinstance(value, dict):\n            result[key] = deep_merge(current, value)\n        else:\n            result[key] = value\n    return result"
+      }
+    ]
+  },
+  "inclusive_date_span": {
+    "patches": [
+      {
+        "path": "app/dates.py",
+        "old_text": "    return (end - start).days",
+        "new_text": "    return (end - start).days + 1"
+      }
+    ]
+  },
+  "parse_bool_env": {
+    "patches": [
+      {
+        "path": "app/env.py",
+        "old_text": "def parse_bool(value: str) -> bool:\n    return bool(value)",
+        "new_text": "def parse_bool(value: str) -> bool:\n    normalized = value.strip().lower()\n    if normalized in {\"1\", \"true\", \"yes\", \"on\"}:\n        return True\n    if normalized in {\"0\", \"false\", \"no\", \"off\"}:\n        return False\n    raise ValueError(f\"invalid boolean: {value}\")"
+      }
+    ]
+  },
+  "account_transfer_atomic": {
+    "patches": [
+      {
+        "path": "app/service.py",
+        "old_text": "def transfer(accounts: Accounts, source: str, target: str, amount: int) -> None:\n    accounts.debit(source, amount)\n    if amount <= 0:\n        raise ValueError(\"amount must be positive\")\n    if accounts.get(source) < 0:\n        raise InsufficientFunds(source)\n    accounts.credit(target, amount)",
+        "new_text": "def transfer(accounts: Accounts, source: str, target: str, amount: int) -> None:\n    if amount <= 0:\n        raise ValueError(\"amount must be positive\")\n    if accounts.get(source) < amount:\n        raise InsufficientFunds(source)\n    accounts.debit(source, amount)\n    accounts.credit(target, amount)"
+      }
+    ]
+  },
+  "rate_limit_boundary": {
+    "patches": [
+      {
+        "path": "app/limits.py",
+        "old_text": "    if now - window_start > window_seconds:",
+        "new_text": "    if now - window_start >= window_seconds:"
+      }
+    ]
+  },
+  "extension_filter": {
+    "patches": [
+      {
+        "path": "app/files.py",
+        "old_text": "def filter_files(names: list[str], extension: str) -> list[str]:\n    return [name for name in names if name.endswith(extension)]",
+        "new_text": "def filter_files(names: list[str], extension: str) -> list[str]:\n    normalized = extension.lower()\n    if not normalized.startswith(\".\"):\n        normalized = \".\" + normalized\n    return [name for name in names if name.lower().endswith(normalized)]"
+      }
+    ]
+  },
+  "average_empty": {
+    "patches": [
+      {
+        "path": "app/stats.py",
+        "old_text": "def average(values: list[float]) -> float:\n    return sum(values) / len(values)",
+        "new_text": "def average(values: list[float]) -> float | None:\n    if not values:\n        return None\n    return sum(values) / len(values)"
+      }
+    ]
+  },
+  "dedupe_preserve_order": {
+    "patches": [
+      {
+        "path": "app/collections.py",
+        "old_text": "    return sorted(set(items))",
+        "new_text": "    return list(dict.fromkeys(items))"
+      }
+    ]
   }
 }

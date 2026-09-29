@@ -3,50 +3,240 @@
     "id": "duplicate_email",
     "repo": "benchmarks/repos/duplicate_email",
     "task": "修复重复邮箱注册：重复注册必须抛出 DuplicateEmailError，同时保持正常注册行为不变。",
-    "test_command": "python -m pytest -q",
     "hidden_test": "eval/hidden_tests/duplicate_email.py",
-    "protected_paths": ["tests"],
     "category": "exception-handling",
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
   },
   {
     "id": "pagination_off_by_one",
     "repo": "benchmarks/repos/pagination_off_by_one",
-    "task": "修复分页逻辑：page 从 1 开始计数，第一页必须返回最前面的 page_size 个元素，并保持参数校验正确。",
-    "test_command": "python -m pytest -q",
+    "task": "修复 paginate 分页逻辑：page 从 1 开始计数，第一页必须返回最前面的 page_size 个元素，并保持参数校验正确。",
     "hidden_test": "eval/hidden_tests/pagination_off_by_one.py",
-    "protected_paths": ["tests"],
     "category": "boundary-condition",
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
   },
   {
     "id": "config_precedence",
     "repo": "benchmarks/repos/config_precedence",
-    "task": "修复超时配置优先级：环境变量 APP_TIMEOUT 应覆盖配置文件 timeout，配置文件再覆盖默认值。",
-    "test_command": "python -m pytest -q",
+    "task": "修复 resolve_timeout 配置优先级：环境变量 APP_TIMEOUT 应覆盖配置文件 timeout，配置文件再覆盖默认值。",
     "hidden_test": "eval/hidden_tests/config_precedence.py",
-    "protected_paths": ["tests"],
     "category": "configuration",
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
   },
   {
     "id": "safe_path_traversal",
     "repo": "benchmarks/repos/safe_path_traversal",
     "task": "修复 safe_join 的路径边界问题：返回路径必须位于 root 内部，拒绝 ../ 穿越和绝对路径逃逸，同时保留合法子路径。",
-    "test_command": "python -m pytest -q",
     "hidden_test": "eval/hidden_tests/safe_path_traversal.py",
-    "protected_paths": ["tests"],
     "category": "path-security",
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
   },
   {
     "id": "inventory_atomic_reserve",
     "repo": "benchmarks/repos/inventory_atomic_reserve",
-    "task": "修复库存预留：数量非法或库存不足时不能修改库存；库存足够时才扣减并返回剩余数量。",
-    "test_command": "python -m pytest -q",
+    "task": "修复 InventoryService.reserve 库存预留：数量非法或库存不足时不能修改库存；库存足够时才扣减并返回剩余数量。",
     "hidden_test": "eval/hidden_tests/inventory_atomic_reserve.py",
-    "protected_paths": ["tests"],
     "category": "state-management",
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
+  },
+  {
+    "id": "normalize_username",
+    "repo": "benchmarks/repos/normalize_username",
+    "task": "修复 normalize_username：去掉用户名首尾空白并转为小写；去空白后为空必须抛出 ValueError。",
+    "hidden_test": "eval/hidden_tests/normalize_username.py",
+    "category": "input-normalization",
+    "difficulty": "easy",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
+  },
+  {
+    "id": "ttl_expiry_boundary",
+    "repo": "benchmarks/repos/ttl_expiry_boundary",
+    "task": "修复 is_expired 的 TTL 边界：age 等于 ttl_seconds 时就应视为过期；负 TTL 仍应拒绝。",
+    "hidden_test": "eval/hidden_tests/ttl_expiry_boundary.py",
+    "category": "time-boundary",
+    "difficulty": "easy",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
+  },
+  {
+    "id": "retry_backoff",
+    "repo": "benchmarks/repos/retry_backoff",
+    "task": "修复 backoff_seconds：attempt 从 1 开始，第一次等待 base 秒，之后指数翻倍且不超过 cap。",
+    "hidden_test": "eval/hidden_tests/retry_backoff.py",
+    "category": "retry-logic",
+    "difficulty": "easy",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
+  },
+  {
+    "id": "slugify_text",
+    "repo": "benchmarks/repos/slugify_text",
+    "task": "修复 slugify：转小写，将连续非字母数字字符折叠成单个 '-'，并去掉首尾 '-'。",
+    "hidden_test": "eval/hidden_tests/slugify_text.py",
+    "category": "text-normalization",
+    "difficulty": "medium",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
+  },
+  {
+    "id": "authorization_owner",
+    "repo": "benchmarks/repos/authorization_owner",
+    "task": "修复 can_edit 权限判断：管理员或资源 owner 任一条件满足即可编辑，其他用户不可编辑。",
+    "hidden_test": "eval/hidden_tests/authorization_owner.py",
+    "category": "authorization",
+    "difficulty": "easy",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
+  },
+  {
+    "id": "discount_order",
+    "repo": "benchmarks/repos/discount_order",
+    "task": "修复 final_price：先应用百分比折扣，再减固定 coupon，最终价格不能低于 0。",
+    "hidden_test": "eval/hidden_tests/discount_order.py",
+    "category": "business-rule",
+    "difficulty": "medium",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
+  },
+  {
+    "id": "csv_header_mapping",
+    "repo": "benchmarks/repos/csv_header_mapping",
+    "task": "修复 parse_record：CSV 值必须按 header_line 中声明的原始列顺序映射，不能重排列名。",
+    "hidden_test": "eval/hidden_tests/csv_header_mapping.py",
+    "category": "parsing",
+    "difficulty": "easy",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
+  },
+  {
+    "id": "deep_merge_nested",
+    "repo": "benchmarks/repos/deep_merge_nested",
+    "task": "修复 deep_merge：当 base 和 override 的同名值都是 dict 时递归合并；否则 override 替换 base，且不要修改输入对象。",
+    "hidden_test": "eval/hidden_tests/deep_merge_nested.py",
+    "category": "merge-logic",
+    "difficulty": "hard",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
+  },
+  {
+    "id": "inclusive_date_span",
+    "repo": "benchmarks/repos/inclusive_date_span",
+    "task": "修复 date_span_days：日期范围按首尾都包含计算；end 早于 start 时继续抛出 ValueError。",
+    "hidden_test": "eval/hidden_tests/inclusive_date_span.py",
+    "category": "date-boundary",
+    "difficulty": "easy",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
+  },
+  {
+    "id": "parse_bool_env",
+    "repo": "benchmarks/repos/parse_bool_env",
+    "task": "修复 parse_bool：忽略首尾空白和大小写，1/true/yes/on 为 True，0/false/no/off 为 False，其他值抛出 ValueError。",
+    "hidden_test": "eval/hidden_tests/parse_bool_env.py",
+    "category": "parsing",
+    "difficulty": "medium",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
+  },
+  {
+    "id": "account_transfer_atomic",
+    "repo": "benchmarks/repos/account_transfer_atomic",
+    "task": "修复 transfer：amount 非正或 source 余额不足时不能修改任何账户；余额足够时才原子地扣 source、加 target。",
+    "hidden_test": "eval/hidden_tests/account_transfer_atomic.py",
+    "category": "state-management",
+    "difficulty": "medium",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
+  },
+  {
+    "id": "rate_limit_boundary",
+    "repo": "benchmarks/repos/rate_limit_boundary",
+    "task": "修复 check_limit：当 elapsed 等于 window_seconds 时应开启新窗口并允许请求；窗口内仍按 limit 限制。",
+    "hidden_test": "eval/hidden_tests/rate_limit_boundary.py",
+    "category": "time-boundary",
+    "difficulty": "medium",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
+  },
+  {
+    "id": "extension_filter",
+    "repo": "benchmarks/repos/extension_filter",
+    "task": "修复 filter_files：扩展名匹配应忽略大小写，并同时接受 'py' 与 '.py' 两种 extension 输入。",
+    "hidden_test": "eval/hidden_tests/extension_filter.py",
+    "category": "file-filtering",
+    "difficulty": "easy",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
+  },
+  {
+    "id": "average_empty",
+    "repo": "benchmarks/repos/average_empty",
+    "task": "修复 average：空序列返回 None，非空序列继续返回算术平均值。",
+    "hidden_test": "eval/hidden_tests/average_empty.py",
+    "category": "empty-input",
+    "difficulty": "easy",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
+  },
+  {
+    "id": "dedupe_preserve_order",
+    "repo": "benchmarks/repos/dedupe_preserve_order",
+    "task": "修复 dedupe：去重时保留每个字符串第一次出现的顺序，不能排序重排。",
+    "hidden_test": "eval/hidden_tests/dedupe_preserve_order.py",
+    "category": "collection-order",
+    "difficulty": "easy",
+    "test_command": "python -m pytest -q",
+    "protected_paths": [
+      "tests"
+    ]
   }
 ]
