@@ -247,7 +247,23 @@ def main() -> int:
     if not args.fake and (not settings.llm_api_key or not settings.llm_model):
         raise SystemExit("LLM_API_KEY and LLM_MODEL are required")
     model_name = "scripted FakeLLM" if args.fake else settings.llm_model
-    records = [run_one(task, n, fake=args.fake, settings=settings, fixes=fixes) for task in tasks for n in range(1, args.runs + 1)]
+    records = []
+    total = len(tasks) * args.runs
+    index = 0
+    for task in tasks:
+        for n in range(1, args.runs + 1):
+            index += 1
+            print(f"[agent] {index}/{total} start task={task['id']} run={n}", flush=True)
+            item = run_one(task, n, fake=args.fake, settings=settings, fixes=fixes)
+            records.append(item)
+            details = item.get("agent") or {}
+            tokens = (details.get("token_usage") or {}).get("total_tokens")
+            print(
+                f"[agent] {index}/{total} done task={task['id']} run={n} "
+                f"resolved={item.get('resolved')} failure={item.get('failure_category')} "
+                f"steps={details.get('steps')} tokens={tokens} duration={details.get('duration_seconds')}",
+                flush=True,
+            )
     report = {"summary": summarize(records, model_name), "records": records}
     suffix = "fake" if args.fake else "qwen"
     output = ROOT / "eval" / "results" / f"agent-{suffix}.json"
