@@ -145,6 +145,8 @@ def classify_failure(record: dict) -> str | None:
     if record.get("baseline_test", {}).get("exit_code") == 0: return "invalid_baseline"
     agent = record.get("agent") or {}
     error = (agent.get("error") or "").lower()
+    if "请求超时" in error: return "model_timeout"
+    if "模型服务" in error: return "model_transport_failure"
     if "loop_detection" in error or "max_steps" in error: return "loop_failure"
     if ("无效 json" in error or "json" in error) and agent.get("status") == "failed": return "protocol_failure"
     if agent.get("status") != "completed": return "agent_failure"
@@ -234,12 +236,17 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--task", action="append", default=[])
     parser.add_argument("--require-all", action="store_true")
+    parser.add_argument("--shard-index", type=int, default=0)
+    parser.add_argument("--shard-count", type=int, default=1)
     args = parser.parse_args()
     if not 1 <= args.runs <= 10: parser.error("--runs must be between 1 and 10")
+    if args.shard_count < 1 or not 0 <= args.shard_index < args.shard_count:
+        parser.error("shard index/count are invalid")
     tasks = json.loads(TASKS_PATH.read_text(encoding="utf-8"))
     if args.task:
         wanted = set(args.task); tasks = [task for task in tasks if task["id"] in wanted]
     if args.limit: tasks = tasks[:args.limit]
+    tasks = tasks[args.shard_index::args.shard_count]
     if not tasks: parser.error("no benchmark tasks selected")
 
     fixes = json.loads(FIXES_PATH.read_text(encoding="utf-8"))
@@ -266,7 +273,8 @@ def main() -> int:
             )
     report = {"summary": summarize(records, model_name), "records": records}
     suffix = "fake" if args.fake else "qwen"
-    output = ROOT / "eval" / "results" / f"agent-{suffix}.json"
+    shard = f"-shard{args.shard_index}" if args.shard_count > 1 else ""
+    output = ROOT / "eval" / "results" / f"agent-{suffix}{shard}.json"
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(report["summary"], ensure_ascii=False, indent=2))

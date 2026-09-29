@@ -38,6 +38,8 @@ class OpenAICompatibleLLM:
                 usage.get("prompt_tokens", 0),
                 usage.get("completion_tokens", 0),
             )
+        except httpx.TimeoutException as exc:
+            raise RuntimeError(f"模型服务请求超时（{self.settings.llm_timeout_seconds:g} 秒）") from exc
         except httpx.HTTPStatusError as exc:
             raise RuntimeError(f"模型服务返回 HTTP {exc.response.status_code}；请检查 Base URL、Key 和模型名") from exc
         except (httpx.HTTPError, KeyError, IndexError, ValueError) as exc:

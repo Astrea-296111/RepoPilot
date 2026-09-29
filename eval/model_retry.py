@@ -5,7 +5,7 @@ import time
 
 
 class RetryingLLM:
-    def __init__(self, inner, max_attempts: int = 3):
+    def __init__(self, inner, max_attempts: int = 2):
         self.inner = inner
         self.max_attempts = max_attempts
         self.retries = 0

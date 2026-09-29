@@ -63,14 +63,20 @@ jobs:
           retention-days: 7
 
   qwen-agent:
-    name: Qwen3.8-Max Agent 25-task benchmark
+    name: Qwen3.8-Max Agent shard ${{ matrix.shard }}/5
     if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_real_model) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[qwen-eval]')) }}
     runs-on: windows-latest
-    timeout-minutes: 90
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        shard: [0, 1, 2, 3, 4]
     env:
       LLM_MODEL: qwen3.8-max
       LLM_BASE_URL: ${{ inputs.region == 'singapore' && 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1' || 'https://dashscope.aliyuncs.com/compatible-mode/v1' }}
       BENCH_RUNS: ${{ inputs.runs || '1' }}
+      BENCH_SHARD: ${{ matrix.shard }}
       LLM_TIMEOUT_SECONDS: "180"
     steps:
       - uses: actions/checkout@v6
@@ -81,28 +87,34 @@ jobs:
           python-version: "3.12"
       - name: Install
         run: python -m pip install -e ".[dev]"
-      - name: Run RepoPilot Agent benchmark
+      - name: Run RepoPilot Agent benchmark shard
         env:
           LLM_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
-        run: python eval/run_benchmark.py --runs $env:BENCH_RUNS
+        run: python eval/run_benchmark.py --runs $env:BENCH_RUNS --shard-index $env:BENCH_SHARD --shard-count 5
       - name: Upload Agent diagnostics
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: agent-qwen
-          path: eval/results/agent-qwen.json
+          name: agent-qwen-shard-${{ matrix.shard }}
+          path: eval/results/agent-qwen-shard${{ matrix.shard }}.json
           if-no-files-found: warn
           retention-days: 14
 
   qwen-oneshot:
-    name: Qwen3.8-Max one-shot 25-task baseline
+    name: Qwen3.8-Max one-shot shard ${{ matrix.shard }}/5
     if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_real_model) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[qwen-eval]')) }}
     runs-on: windows-latest
-    timeout-minutes: 90
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        shard: [0, 1, 2, 3, 4]
     env:
       LLM_MODEL: qwen3.8-max
       LLM_BASE_URL: ${{ inputs.region == 'singapore' && 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1' || 'https://dashscope.aliyuncs.com/compatible-mode/v1' }}
       BENCH_RUNS: ${{ inputs.runs || '1' }}
+      BENCH_SHARD: ${{ matrix.shard }}
       LLM_TIMEOUT_SECONDS: "180"
     steps:
       - uses: actions/checkout@v6
@@ -113,15 +125,15 @@ jobs:
           python-version: "3.12"
       - name: Install
         run: python -m pip install -e ".[dev]"
-      - name: Run one-shot baseline
+      - name: Run one-shot baseline shard
         env:
           LLM_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
-        run: python eval/run_one_shot.py --runs $env:BENCH_RUNS
+        run: python eval/run_one_shot.py --runs $env:BENCH_RUNS --shard-index $env:BENCH_SHARD --shard-count 5
       - name: Upload one-shot diagnostics
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: oneshot-qwen
-          path: eval/results/oneshot-qwen.json
+          name: oneshot-qwen-shard-${{ matrix.shard }}
+          path: eval/results/oneshot-qwen-shard${{ matrix.shard }}.json
           if-no-files-found: warn
           retention-days: 14
