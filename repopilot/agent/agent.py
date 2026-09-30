@@ -70,16 +70,23 @@ def demo_responses() -> list[str]:
 class RepoPilot:
     def __init__(self, repo: Path, llm: LLM, settings: Settings, *, executor: str = "docker",
                  approval: str = "ask", approve: Callable[[str, dict], bool] | None = None,
-                 protected_paths: tuple[str, ...] = ()):
+                 protected_paths: tuple[str, ...] = (), runtime: str = "custom"):
         self.workspace = Workspace(repo, protected_paths)
         if executor not in {"docker", "local"} or approval not in {"ask", "auto", "never"}:
             raise ValueError("executor 或 approval 参数无效")
         self.executor_name, self.approval, self.approve = executor, approval, approve
         self.settings, self.llm = settings, llm
+        if runtime not in {"custom", "langgraph"}:
+            raise ValueError("runtime must be custom or langgraph")
+        self.runtime = runtime
         shell = DockerExecutor(self.workspace.root, settings.docker_image, protected_paths) if executor == "docker" else LocalExecutor(self.workspace.root)
         self.tools = {tool.name: tool for tool in [ReadFile(self.workspace), SearchCode(self.workspace),
             ApplyPatch(self.workspace), WriteFile(self.workspace), RunCommand(self.workspace, shell), GitDiff(self.workspace)]}
         self.store = SessionStore(self.workspace.root)
+        self.graph_runtime = None
+        if runtime == "langgraph":
+            from repopilot.runtime.langgraph import LangGraphRuntime
+            self.graph_runtime = LangGraphRuntime(self)
 
     def _model(self, system: str, user: str, state: AgentState) -> LLMResponse:
         started = time.monotonic()
@@ -129,64 +136,102 @@ class RepoPilot:
         state.messages.append({"role": "tool", "content": f"{tool}: {result.output}"})
         return result
 
+    def _prepare_context(self, state: AgentState) -> tuple[str, list[tuple[str, int]]]:
+        entries = build_repo_map(self.workspace.root)
+        mapped = render_repo_map(entries)
+        relevant = retrieve_with_imports(self.workspace.root, entries, state.task)
+        state.retrieved_files = [path for path, _ in relevant]
+        return mapped, relevant
+
+    def _plan(self, state: AgentState, mapped: str, relevant: list[tuple[str, int]]) -> None:
+        if state.plan is None:
+            class Metered:
+                def chat(inner, system, user):
+                    return self._model(system, user, state)
+            state.plan, _ = plan_task(Metered(), state.task, mapped, relevant)
+            self.store.save(state)
+
+    def _decide(self, state: AgentState, mapped: str, relevant: list[tuple[str, int]]) -> ToolAction | FinalAction | None:
+        if state.current_step >= self.settings.max_steps:
+            state.finish("failed", "达到 max_steps，任务未完成")
+            state.error = "max_steps"
+            return None
+        prompt = ContextManager(self.settings.max_context_chars).build(state, mapped, relevant)
+        action = self._action(prompt, state)
+        state.current_step += 1
+        return action
+
+    def _tool_step(self, state: AgentState, action: ToolAction) -> tuple[str, ToolAction | FinalAction]:
+        fingerprint = json.dumps([action.tool, action.arguments], sort_keys=True, ensure_ascii=False)
+        recent = [item.get("fingerprint") for item in state.tool_history[-2:]]
+        if recent == [fingerprint, fingerprint]:
+            state.finish("failed", "检测到连续 3 次相同工具调用，已停止")
+            state.error = "loop_detection"
+            return "finalize", action
+        self._execute(action.tool, action.arguments, state)
+        state.tool_history[-1]["fingerprint"] = fingerprint
+        if recent and recent[-1] == fingerprint:
+            state.messages.append({"role": "system", "content": "连续重复同一工具调用；请改变方法或完成任务。"})
+        return "agent_decide", action
+
+    def _verify(self, state: AgentState) -> bool:
+        # Always independently execute the planned suite, even if an earlier test passed.
+        result = self._execute("run_command", {"command": state.plan.test_command, "timeout": 60}, state)
+        state.tool_history[-1]["phase"] = "verification"
+        if not result.ok:
+            state.messages.append({"role": "system", "content": "Final verification failed. Fix the observed error before final."})
+        return result.ok
+
+    def _finalize(self, state: AgentState, action: ToolAction | FinalAction | None) -> None:
+        if state.status == "failed":
+            return
+        diff = self._execute("git_diff", {}, state)
+        state.final_diff = diff.output
+        if not diff.ok:
+            state.finish("failed", "无法生成 Git Diff；请先在目标仓库初始化 Git")
+            state.error = "git_diff_failed"
+        else:
+            state.finish("completed", action.summary)
+
+    @staticmethod
+    def _fail(state: AgentState, exc: Exception) -> None:
+        state.finish("failed", "执行中断")
+        state.error = str(exc)
+        log.exception("task=%s error=%s", state.id, exc)
+
+    def _run_custom(self, state: AgentState) -> AgentState:
+        mapped, relevant = self._prepare_context(state)
+        self._plan(state, mapped, relevant)
+        while state.status == "running":
+            action = self._decide(state, mapped, relevant)
+            if action is None:
+                break
+            route = "verify"
+            if isinstance(action, ToolAction):
+                route, action = self._tool_step(state, action)
+            if route == "verify" and self._verify(state):
+                self._finalize(state, action)
+            self.store.save(state)
+        return state
+
     def run(self, task: str, state: AgentState | None = None) -> AgentState:
+        """Run custom orchestration by default or the real optional LangGraph adapter."""
         state = state or AgentState(task=task, repo_path=str(self.workspace.root),
-                                   executor=self.executor_name, approval=self.approval)
-        if Path(state.repo_path).resolve() != self.workspace.root or state.executor != self.executor_name or state.approval != self.approval:
+                                   executor=self.executor_name, approval=self.approval, runtime=self.runtime)
+        if (Path(state.repo_path).resolve() != self.workspace.root or state.executor != self.executor_name
+                or state.approval != self.approval or state.runtime != self.runtime or state.task != task):
             raise ValueError("恢复会话的仓库或运行选项与原会话不一致")
-        if state.status == "completed": raise ValueError("已完成的会话无需恢复")
-        state.status = "running"
+        if state.status == "completed":
+            raise ValueError("已完成的会话无需恢复")
+        state.status, state.error = "running", ""
+        state.finished_at = state.duration_seconds = None
         self.store.save(state)
         try:
-            entries = build_repo_map(self.workspace.root)
-            mapped = render_repo_map(entries)
-            relevant = retrieve_with_imports(self.workspace.root, entries, state.task)
-            state.retrieved_files = [path for path, _ in relevant]
-            if state.plan is None:
-                # Reuse the accounting adapter for the one planning call; planner handles repair.
-                class Metered:
-                    def __init__(inner, owner): inner.owner = owner
-                    def chat(inner, system, user): return inner.owner._model(system, user, state)
-                state.plan, _ = plan_task(Metered(self), state.task, mapped, relevant)
-                self.store.save(state)
-            while state.current_step < self.settings.max_steps:
-                prompt = ContextManager(self.settings.max_context_chars).build(state, mapped, relevant)
-                action = self._action(prompt, state)
-                state.current_step += 1
-                if isinstance(action, FinalAction):
-                    # Do not trust a model's tests field: run the planned test now.
-                    command = state.plan.test_command
-                    result = self._execute("run_command", {"command": command, "timeout": 60}, state)
-                    if result.ok:
-                        diff = self._execute("git_diff", {}, state)
-                        state.final_diff = diff.output
-                        if not diff.ok:
-                            state.finish("failed", "无法生成 Git Diff；请先在目标仓库初始化 Git")
-                            state.error = "git_diff_failed"
-                            self.store.save(state)
-                            return state
-                        state.finish("completed", action.summary)
-                        self.store.save(state)
-                        return state
-                    state.messages.append({"role": "system", "content": "Final verification failed. Fix the observed error before final."})
-                else:
-                    fingerprint = json.dumps([action.tool, action.arguments], sort_keys=True, ensure_ascii=False)
-                    recent = [item.get("fingerprint") for item in state.tool_history[-2:]]
-                    if recent == [fingerprint, fingerprint]:
-                        state.finish("failed", "检测到连续 3 次相同工具调用，已停止")
-                        state.error = "loop_detection"
-                        break
-                    result = self._execute(action.tool, action.arguments, state)
-                    state.tool_history[-1]["fingerprint"] = fingerprint
-                    if recent and recent[-1] == fingerprint:
-                        state.messages.append({"role": "system", "content": "连续重复同一工具调用；请改变方法或完成任务。"})
-                self.store.save(state)
+            if self.graph_runtime is None:
+                self._run_custom(state)
             else:
-                state.finish("failed", "达到 max_steps，任务未完成")
-                state.error = "max_steps"
+                self.graph_runtime.run(state)
         except Exception as exc:
-            state.finish("failed", "执行中断")
-            state.error = str(exc)
-            log.exception("task=%s error=%s", state.id, exc)
+            self._fail(state, exc)
         self.store.save(state)
         return state

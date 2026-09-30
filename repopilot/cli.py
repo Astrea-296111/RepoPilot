@@ -25,6 +25,7 @@ def _approve(tool: str, args: dict) -> bool:
 @app.command()
 def run(repo: Path, task: str, executor: str = typer.Option("docker", help="docker / local"),
         approval: str = typer.Option("ask", help="ask / auto / never"),
+        runtime: str = typer.Option("custom", help="custom / langgraph"),
         fake_demo: bool = typer.Option(False, help="Key-free scripted run for examples/demo_repo only")):
     """Plan and execute one coding task; Docker and interactive approval are defaults."""
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
@@ -32,7 +33,8 @@ def run(repo: Path, task: str, executor: str = typer.Option("docker", help="dock
         raise typer.BadParameter("--fake-demo 仅适用于提供的 demo_repo")
     settings = Settings.load()
     try:
-        agent = RepoPilot(repo, _llm(settings, fake_demo), settings, executor=executor, approval=approval, approve=_approve)
+        agent = RepoPilot(repo, _llm(settings, fake_demo), settings, executor=executor,
+                          approval=approval, approve=_approve, runtime=runtime)
     except (ValueError, OSError) as exc:
         typer.echo(f"配置错误: {exc}", err=True)
         raise typer.Exit(2) from exc
@@ -58,11 +60,12 @@ def show(session_id: str, repo: Path = typer.Option(Path("."))):
 
 @app.command()
 def resume(session_id: str, repo: Path = typer.Option(Path(".")),
-           executor: str = typer.Option("docker"), approval: str = typer.Option("ask")):
+           executor: str = typer.Option("docker"), approval: str = typer.Option("ask"),
+           runtime: str | None = typer.Option(None, help="Default: the saved session runtime")):
     """Continue a paused/failed session without replaying previous tools."""
     state = SessionStore(repo).load(session_id)
     agent = RepoPilot(repo, OpenAICompatibleLLM(Settings.load()), Settings.load(),
-                      executor=executor, approval=approval, approve=_approve)
+                      executor=executor, approval=approval, approve=_approve, runtime=runtime or state.runtime)
     result = agent.run(state.task, state)
     typer.echo(f"{result.id}: {result.status}; {result.summary or result.error}")
     if result.status != "completed": raise typer.Exit(1)
@@ -76,4 +79,3 @@ def serve(host: str = "127.0.0.1", port: int = 8000):
 
 
 if __name__ == "__main__": app()
-

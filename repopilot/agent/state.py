@@ -20,6 +20,7 @@ class AgentState(BaseModel):
     repo_path: str
     executor: str = "docker"
     approval: str = "ask"
+    runtime: str = "custom"
     plan: Plan | None = None
     current_step: int = 0
     messages: list[dict[str, Any]] = Field(default_factory=list)

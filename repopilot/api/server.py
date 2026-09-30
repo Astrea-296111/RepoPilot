@@ -2,6 +2,7 @@
 from __future__ import annotations
 import os
 from pathlib import Path
+from typing import Literal
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from repopilot.agent.agent import RepoPilot
@@ -19,6 +20,7 @@ class TaskRequest(BaseModel):
     task: str = Field(min_length=1, max_length=4000)
     executor: str = "docker"
     approval: str = "never"  # non-interactive API cannot ask a human
+    runtime: Literal["custom", "langgraph"] = "custom"
 
 
 @app.get("/health")
@@ -28,7 +30,7 @@ def health(): return {"status": "ok"}
 def _run(request: TaskRequest, state: AgentState, repo: Path):
     try:
         agent = RepoPilot(repo, OpenAICompatibleLLM(Settings.load()), Settings.load(),
-                          executor=request.executor, approval=request.approval)
+                          executor=request.executor, approval=request.approval, runtime=request.runtime)
         agent.run(state.task, state)
     except Exception as exc:
         state.error = str(exc)
@@ -46,9 +48,15 @@ def start(request: TaskRequest, background_tasks: BackgroundTasks):
         raise HTTPException(400, "Invalid executor or approval; API does not support interactive ask")
     if request.executor == "local" and os.getenv("REPOPILOT_API_ALLOW_LOCAL") != "1":
         raise HTTPException(400, "Local API execution disabled; set REPOPILOT_API_ALLOW_LOCAL=1 for trusted repos")
+    if request.runtime == "langgraph":
+        try:
+            from repopilot.runtime.langgraph import LangGraphRuntime  # noqa: F401
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
     try: OpenAICompatibleLLM(Settings.load())
     except ValueError as exc: raise HTTPException(400, str(exc)) from exc
-    state = AgentState(task=request.task, repo_path=str(repo), executor=request.executor, approval=request.approval)
+    state = AgentState(task=request.task, repo_path=str(repo), executor=request.executor,
+                       approval=request.approval, runtime=request.runtime)
     SessionStore(repo).save(state)
     TASKS[state.id] = repo
     background_tasks.add_task(_run, request, state, repo)
@@ -60,4 +68,3 @@ def get_task(task_id: str):
     repo = TASKS.get(task_id)
     if repo is None: raise HTTPException(404, "Unknown task ID on this API process")
     return SessionStore(repo).load(task_id)
-
