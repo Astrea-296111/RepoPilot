@@ -37,6 +37,12 @@ def execute(repo, command, settings, local=False):
     return {'exit_code':result.exit_code,'output':result.output}
 
 
+def repair_changed_files(repo):
+    # SessionStore is evaluator-owned state, never a model source modification.
+    return [p for p in git_changed_files(repo)
+            if Path(p).parts[0] not in {'.repopilot', '.git'}]
+
+
 def suite_hash():
     digest=hashlib.sha256()
     for p in sorted((ROOT/'eval/external').rglob('*')):
@@ -98,7 +104,7 @@ def trial(task, run, mode, settings):
                 record['patches']=len(answer.patches)
             record['repair_seconds']=round(time.monotonic()-model_started,3)
             record['llm_transport_retries']=llm.retries
-            changed=git_changed_files(repo)
+            changed=repair_changed_files(repo)
             record['changed_files']=changed
             allowed=task['allowed_source_dir']+'/'
             invalid=[p for p in changed if not p.startswith(allowed) or not p.endswith('.py')]

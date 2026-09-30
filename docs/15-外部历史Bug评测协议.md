@@ -47,3 +47,7 @@ docker build -t repopilot-external:fixed -f eval/Dockerfile.external .
 export REPOPILOT_DOCKER_IMAGE=repopilot-external:fixed
 python eval/run_external.py --mode agent --runs 3 --shard 0 --shards 5
 ```
+
+## 评分器运行记录
+
+首轮 36677252700 在评测代码审查时发现会把自动生成的 `.repopilot` 会话目录算为越界改动，因此整体作废并取消。修正仅排除评分器拥有且 Agent 文件工具和容器均不可写的内部目录；未改任务、测试或模型策略。正式结果来自修正后的完整新轮次，不能挑选首轮成功样本。

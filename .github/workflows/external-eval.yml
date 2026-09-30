@@ -7,7 +7,7 @@ permissions:
   contents: read
 concurrency:
   group: repopilot-external-eval
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   reference:
     if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[external-eval]') }}

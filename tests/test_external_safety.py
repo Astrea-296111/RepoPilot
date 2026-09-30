@@ -20,3 +20,18 @@ def test_excerpts_find_named_symbol_beyond_prefix():
     excerpt=source_excerpt(source,'Fix target',500)
     assert 'return 17' in excerpt
     assert 'return 23' not in excerpt
+
+
+def test_evaluator_session_is_not_source_change(tmp_path):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'eval'))
+    from run_external import prepare_repo, repair_changed_files
+    from repopilot.session.store import SessionStore
+    task={'repo':'eval/external/repos/boltons_split'}
+    repo=prepare_repo(task,str(tmp_path))
+    SessionStore(repo)
+    (repo/'.repopilot/sessions/internal.json').write_text('{}')
+    assert repair_changed_files(repo)==[]
+    (repo/'boltons/iterutils.py').write_text('changed')
+    assert repair_changed_files(repo)==['boltons/iterutils.py']
