@@ -15,6 +15,9 @@ class Settings(BaseModel):
     docker_image: str = "repopilot-sandbox:dev"
     max_steps: int = Field(default=15, ge=1, le=100)
     max_context_chars: int = Field(default=30000, ge=2000)
+    otel_enabled: bool = False
+    otel_exporter: str = "console"
+    otel_endpoint: str = ""
 
     @classmethod
     def load(cls, env_file: Path | None = None) -> "Settings":
@@ -29,4 +32,7 @@ class Settings(BaseModel):
             docker_image=os.getenv("REPOPILOT_DOCKER_IMAGE", "repopilot-sandbox:dev"),
             max_steps=int(os.getenv("REPOPILOT_MAX_STEPS", "15")),
             max_context_chars=int(os.getenv("REPOPILOT_MAX_CONTEXT_CHARS", "30000")),
+            otel_enabled=os.getenv("REPOPILOT_OTEL_ENABLED", "0").lower() in {"1", "true", "yes"},
+            otel_exporter=os.getenv("REPOPILOT_OTEL_EXPORTER", "console"),
+            otel_endpoint=os.getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "")),
         )

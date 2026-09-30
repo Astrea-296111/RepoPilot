@@ -12,6 +12,7 @@ from repopilot.context.repo_map import build_repo_map, render_repo_map
 from repopilot.context.retrieval import retrieve_with_imports
 from repopilot.context.manager import ContextManager
 from repopilot.llm.base import LLM, LLMResponse
+from repopilot.observability import Tracing
 from repopilot.session.store import SessionStore
 from repopilot.tools.base import ToolResult, Workspace
 from repopilot.tools.filesystem import ReadFile, ApplyPatch, WriteFile
@@ -70,12 +71,13 @@ def demo_responses() -> list[str]:
 class RepoPilot:
     def __init__(self, repo: Path, llm: LLM, settings: Settings, *, executor: str = "docker",
                  approval: str = "ask", approve: Callable[[str, dict], bool] | None = None,
-                 protected_paths: tuple[str, ...] = (), runtime: str = "custom"):
+                 protected_paths: tuple[str, ...] = (), runtime: str = "custom", tracing: Tracing | None = None):
         self.workspace = Workspace(repo, protected_paths)
         if executor not in {"docker", "local"} or approval not in {"ask", "auto", "never"}:
             raise ValueError("executor 或 approval 参数无效")
         self.executor_name, self.approval, self.approve = executor, approval, approve
         self.settings, self.llm = settings, llm
+        self.tracing = tracing if tracing is not None else Tracing.from_settings(settings)
         if runtime not in {"custom", "langgraph"}:
             raise ValueError("runtime must be custom or langgraph")
         self.runtime = runtime
@@ -89,13 +91,17 @@ class RepoPilot:
             self.graph_runtime = LangGraphRuntime(self)
 
     def _model(self, system: str, user: str, state: AgentState) -> LLMResponse:
-        started = time.monotonic()
-        response = self.llm.chat(system, user)
-        state.token_usage["prompt_tokens"] += response.prompt_tokens
-        state.token_usage["completion_tokens"] += response.completion_tokens
-        state.token_usage["total_tokens"] += response.prompt_tokens + response.completion_tokens
-        log.info("task=%s llm_latency=%.3fs", state.id, time.monotonic() - started)
-        return response
+        with self.tracing.span("llm.call", {"repopilot.step": state.current_step}) as span:
+            started = time.monotonic()
+            response = self.llm.chat(system, user)
+            state.token_usage["prompt_tokens"] += response.prompt_tokens
+            state.token_usage["completion_tokens"] += response.completion_tokens
+            state.token_usage["total_tokens"] += response.prompt_tokens + response.completion_tokens
+            span.set({"gen_ai.usage.input_tokens": response.prompt_tokens,
+                      "gen_ai.usage.output_tokens": response.completion_tokens,
+                      "gen_ai.usage.total_tokens": response.prompt_tokens + response.completion_tokens})
+            log.info("task=%s llm_latency=%.3fs", state.id, time.monotonic() - started)
+            return response
 
     def _action(self, prompt: str, state: AgentState) -> ToolAction | FinalAction:
         for attempt in range(2):
@@ -118,48 +124,58 @@ class RepoPilot:
         return bool(self.approve and self.approve(tool, args))
 
     def _execute(self, tool: str, args: dict, state: AgentState) -> ToolResult:
-        started = time.monotonic()
-        try:
-            result = self.tools[tool].execute(args) if self._permitted(tool, args) else ToolResult(False, "Approval denied for " + tool)
-        except (ValueError, KeyError, TypeError, OSError) as exc:
-            result = ToolResult(False, f"{type(exc).__name__}: {exc}")
-        result.output = bounded_output(result.output)
-        log.info("task=%s step=%s tool=%s latency=%.3fs ok=%s", state.id, state.current_step,
-                 tool, time.monotonic() - started, result.ok)
-        if result.changed_file and result.changed_file not in state.changed_files:
-            state.changed_files.append(result.changed_file)
-        if tool == "run_command" and state.plan and args.get("command") == state.plan.test_command:
-            state.test_status = "passed" if result.ok else "failed"
-        state.tool_history.append({"step": state.current_step, "tool": tool, "arguments": args,
-                                   "ok": result.ok, "exit_code": result.exit_code, "output": result.output,
-                                   "latency_seconds": round(time.monotonic() - started, 3)})
-        state.messages.append({"role": "tool", "content": f"{tool}: {result.output}"})
-        return result
+        with self.tracing.span("tool." + tool, {"repopilot.tool.name": tool,
+                                                 "repopilot.step": state.current_step}) as span:
+            started = time.monotonic()
+            try:
+                result = self.tools[tool].execute(args) if self._permitted(tool, args) else ToolResult(False, "Approval denied for " + tool)
+            except (ValueError, KeyError, TypeError, OSError) as exc:
+                result = ToolResult(False, f"{type(exc).__name__}: {exc}")
+            result.output = bounded_output(result.output)
+            log.info("task=%s step=%s tool=%s latency=%.3fs ok=%s", state.id, state.current_step,
+                     tool, time.monotonic() - started, result.ok)
+            if result.changed_file and result.changed_file not in state.changed_files:
+                state.changed_files.append(result.changed_file)
+            if tool == "run_command" and state.plan and args.get("command") == state.plan.test_command:
+                state.test_status = "passed" if result.ok else "failed"
+            state.tool_history.append({"step": state.current_step, "tool": tool, "arguments": args,
+                                       "ok": result.ok, "exit_code": result.exit_code, "output": result.output,
+                                       "latency_seconds": round(time.monotonic() - started, 3)})
+            state.messages.append({"role": "tool", "content": f"{tool}: {result.output}"})
+            span.set({"repopilot.ok": result.ok})
+            if not result.ok:
+                category = "timeout" if result.exit_code == 124 else ("approval_denied" if result.output.startswith("Approval denied") else "tool_error")
+                span.fail(category)
+            return result
 
     def _prepare_context(self, state: AgentState) -> tuple[str, list[tuple[str, int]]]:
-        entries = build_repo_map(self.workspace.root)
-        mapped = render_repo_map(entries)
-        relevant = retrieve_with_imports(self.workspace.root, entries, state.task)
-        state.retrieved_files = [path for path, _ in relevant]
-        return mapped, relevant
+        with self.tracing.span("retrieval") as span:
+            entries = build_repo_map(self.workspace.root)
+            mapped = render_repo_map(entries)
+            relevant = retrieve_with_imports(self.workspace.root, entries, state.task)
+            state.retrieved_files = [path for path, _ in relevant]
+            span.set({"repopilot.retrieved_file_count": len(state.retrieved_files)})
+            return mapped, relevant
 
     def _plan(self, state: AgentState, mapped: str, relevant: list[tuple[str, int]]) -> None:
         if state.plan is None:
-            class Metered:
-                def chat(inner, system, user):
-                    return self._model(system, user, state)
-            state.plan, _ = plan_task(Metered(), state.task, mapped, relevant)
-            self.store.save(state)
+            with self.tracing.span("planning"):
+                class Metered:
+                    def chat(inner, system, user):
+                        return self._model(system, user, state)
+                state.plan, _ = plan_task(Metered(), state.task, mapped, relevant)
+                self.store.save(state)
 
     def _decide(self, state: AgentState, mapped: str, relevant: list[tuple[str, int]]) -> ToolAction | FinalAction | None:
         if state.current_step >= self.settings.max_steps:
             state.finish("failed", "达到 max_steps，任务未完成")
             state.error = "max_steps"
             return None
-        prompt = ContextManager(self.settings.max_context_chars).build(state, mapped, relevant)
-        action = self._action(prompt, state)
-        state.current_step += 1
-        return action
+        with self.tracing.span("agent.turn", {"repopilot.step": state.current_step + 1}):
+            prompt = ContextManager(self.settings.max_context_chars).build(state, mapped, relevant)
+            action = self._action(prompt, state)
+            state.current_step += 1
+            return action
 
     def _tool_step(self, state: AgentState, action: ToolAction) -> tuple[str, ToolAction | FinalAction]:
         fingerprint = json.dumps([action.tool, action.arguments], sort_keys=True, ensure_ascii=False)
@@ -175,12 +191,16 @@ class RepoPilot:
         return "agent_decide", action
 
     def _verify(self, state: AgentState) -> bool:
-        # Always independently execute the planned suite, even if an earlier test passed.
-        result = self._execute("run_command", {"command": state.plan.test_command, "timeout": 60}, state)
-        state.tool_history[-1]["phase"] = "verification"
-        if not result.ok:
-            state.messages.append({"role": "system", "content": "Final verification failed. Fix the observed error before final."})
-        return result.ok
+        with self.tracing.span("verification", {"repopilot.step": state.current_step}) as span:
+            # Always independently execute the planned suite, even if an earlier test passed.
+            result = self._execute("run_command", {"command": state.plan.test_command, "timeout": 60}, state)
+            state.tool_history[-1]["phase"] = "verification"
+            if not result.ok:
+                state.messages.append({"role": "system", "content": "Final verification failed. Fix the observed error before final."})
+            span.set({"repopilot.test.status": state.test_status})
+            if not result.ok:
+                span.fail("test_failed")
+            return result.ok
 
     def _finalize(self, state: AgentState, action: ToolAction | FinalAction | None) -> None:
         if state.status == "failed":
@@ -226,12 +246,20 @@ class RepoPilot:
         state.status, state.error = "running", ""
         state.finished_at = state.duration_seconds = None
         self.store.save(state)
-        try:
-            if self.graph_runtime is None:
-                self._run_custom(state)
-            else:
-                self.graph_runtime.run(state)
-        except Exception as exc:
-            self._fail(state, exc)
+        with self.tracing.span("repopilot.task", {"repopilot.session.id": state.id,
+                                                   "repopilot.runtime": self.runtime}) as span:
+            try:
+                if self.graph_runtime is None:
+                    self._run_custom(state)
+                else:
+                    self.graph_runtime.run(state)
+            except Exception as exc:
+                self._fail(state, exc)
+            span.set({"repopilot.ok": state.status == "completed", "repopilot.test.status": state.test_status,
+                      "repopilot.changed_file_count": len(state.changed_files)})
+            if state.status != "completed":
+                category = state.error if state.error in {"max_steps", "loop_detection", "git_diff_failed"} else "execution_error"
+                span.fail(category)
+        self.tracing.flush()
         self.store.save(state)
         return state

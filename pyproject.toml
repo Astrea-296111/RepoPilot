@@ -14,6 +14,8 @@ dependencies = ["fastapi>=0.110,<1", "pydantic>=2,<3", "typer>=0.12,<1", "httpx>
 dev = ["pytest>=8,<10"]
 langgraph = ["langgraph>=1.2.12,<1.3"]
 mcp = ["mcp>=2.2,<3"]
+observability = ["opentelemetry-sdk>=1.45,<2", "opentelemetry-exporter-otlp-proto-http>=1.45,<2"]
+full = ["repopilot-agent[langgraph,mcp,observability]"]
 
 [project.scripts]
 repopilot = "repopilot.cli:app"

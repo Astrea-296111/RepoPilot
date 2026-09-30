@@ -1,0 +1,288 @@
+{
+  "command": "REPOPILOT_OTEL_ENABLED=1 OTEL_TRACES_SAMPLER=always_on repopilot run REPO TASK --runtime langgraph --fake-demo --executor local --approval auto",
+  "result": "completed; planned and independent final tests passed",
+  "span_count": 24,
+  "spans": [
+    {
+      "name": "retrieval",
+      "attributes": {
+        "repopilot.retrieved_file_count": 2,
+        "repopilot.duration_seconds": 0.004765740000038932
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "llm.call",
+      "attributes": {
+        "repopilot.step": 0,
+        "gen_ai.usage.input_tokens": 0,
+        "gen_ai.usage.output_tokens": 0,
+        "gen_ai.usage.total_tokens": 0,
+        "repopilot.duration_seconds": 0.0001978979998966679
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "planning",
+      "attributes": {
+        "repopilot.duration_seconds": 0.0014608030005547334
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "llm.call",
+      "attributes": {
+        "repopilot.step": 0,
+        "gen_ai.usage.input_tokens": 0,
+        "gen_ai.usage.output_tokens": 0,
+        "gen_ai.usage.total_tokens": 0,
+        "repopilot.duration_seconds": 0.000208808999559551
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "agent.turn",
+      "attributes": {
+        "repopilot.step": 1,
+        "repopilot.duration_seconds": 0.0009493529996689176
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "tool.read_file",
+      "attributes": {
+        "repopilot.tool.name": "read_file",
+        "repopilot.step": 1,
+        "repopilot.ok": true,
+        "repopilot.duration_seconds": 0.0007257400002345094
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "llm.call",
+      "attributes": {
+        "repopilot.step": 1,
+        "gen_ai.usage.input_tokens": 0,
+        "gen_ai.usage.output_tokens": 0,
+        "gen_ai.usage.total_tokens": 0,
+        "repopilot.duration_seconds": 0.00010758999997051433
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "agent.turn",
+      "attributes": {
+        "repopilot.step": 2,
+        "repopilot.duration_seconds": 0.0006173289993967046
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "tool.run_command",
+      "attributes": {
+        "repopilot.tool.name": "run_command",
+        "repopilot.step": 2,
+        "repopilot.ok": false,
+        "repopilot.failure.category": "tool_error",
+        "repopilot.duration_seconds": 0.8885174910001297
+      },
+      "status": {
+        "status_code": "ERROR",
+        "description": "tool_error"
+      }
+    },
+    {
+      "name": "llm.call",
+      "attributes": {
+        "repopilot.step": 2,
+        "gen_ai.usage.input_tokens": 0,
+        "gen_ai.usage.output_tokens": 0,
+        "gen_ai.usage.total_tokens": 0,
+        "repopilot.duration_seconds": 0.0001273460002266802
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "agent.turn",
+      "attributes": {
+        "repopilot.step": 3,
+        "repopilot.duration_seconds": 0.0010119270000359393
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "tool.apply_patch",
+      "attributes": {
+        "repopilot.tool.name": "apply_patch",
+        "repopilot.step": 3,
+        "repopilot.ok": true,
+        "repopilot.duration_seconds": 0.0014822389994151308
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "llm.call",
+      "attributes": {
+        "repopilot.step": 3,
+        "gen_ai.usage.input_tokens": 0,
+        "gen_ai.usage.output_tokens": 0,
+        "gen_ai.usage.total_tokens": 0,
+        "repopilot.duration_seconds": 0.00010379600007581757
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "agent.turn",
+      "attributes": {
+        "repopilot.step": 4,
+        "repopilot.duration_seconds": 0.0006383660002029501
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "tool.run_command",
+      "attributes": {
+        "repopilot.tool.name": "run_command",
+        "repopilot.step": 4,
+        "repopilot.ok": true,
+        "repopilot.duration_seconds": 1.1322740970008454
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "llm.call",
+      "attributes": {
+        "repopilot.step": 4,
+        "gen_ai.usage.input_tokens": 0,
+        "gen_ai.usage.output_tokens": 0,
+        "gen_ai.usage.total_tokens": 0,
+        "repopilot.duration_seconds": 0.00014760700014448958
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "agent.turn",
+      "attributes": {
+        "repopilot.step": 5,
+        "repopilot.duration_seconds": 0.0012721450002572965
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "tool.git_diff",
+      "attributes": {
+        "repopilot.tool.name": "git_diff",
+        "repopilot.step": 5,
+        "repopilot.ok": true,
+        "repopilot.duration_seconds": 0.011456653999630362
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "llm.call",
+      "attributes": {
+        "repopilot.step": 5,
+        "gen_ai.usage.input_tokens": 0,
+        "gen_ai.usage.output_tokens": 0,
+        "gen_ai.usage.total_tokens": 0,
+        "repopilot.duration_seconds": 0.00013005799974052934
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "agent.turn",
+      "attributes": {
+        "repopilot.step": 6,
+        "repopilot.duration_seconds": 0.0011222189996260568
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "tool.run_command",
+      "attributes": {
+        "repopilot.tool.name": "run_command",
+        "repopilot.step": 6,
+        "repopilot.ok": true,
+        "repopilot.duration_seconds": 0.9176079460003166
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "verification",
+      "attributes": {
+        "repopilot.step": 6,
+        "repopilot.test.status": "passed",
+        "repopilot.duration_seconds": 0.917968237000423
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "tool.git_diff",
+      "attributes": {
+        "repopilot.tool.name": "git_diff",
+        "repopilot.step": 6,
+        "repopilot.ok": true,
+        "repopilot.duration_seconds": 0.011380887000086659
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    },
+    {
+      "name": "repopilot.task",
+      "attributes": {
+        "repopilot.session.id": "21ce1dae4903402a9b98c6856f849f14",
+        "repopilot.runtime": "langgraph",
+        "repopilot.ok": true,
+        "repopilot.test.status": "passed",
+        "repopilot.changed_file_count": 1,
+        "repopilot.duration_seconds": 3.017773985999156
+      },
+      "status": {
+        "status_code": "UNSET"
+      }
+    }
+  ]
+}
