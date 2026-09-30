@@ -1,0 +1,251 @@
+{
+  "scope": {
+    "independent_tasks": 4,
+    "repeats_per_task_per_method": 3,
+    "trials": 24
+  },
+  "config": {
+    "suite_sha256": "fc0eb01fc240b1147a93e465b9c96a0a1f96916b932c1c8ceedd4f0b30eb8987",
+    "model": "qwen3.8-max",
+    "reasoning_effort": "medium",
+    "stream": true,
+    "max_steps": 15,
+    "max_context_chars": 30000,
+    "runs": 3,
+    "shards": 4,
+    "timing_scope": "Preparation + baseline Docker test + model/repair + fresh Docker grading",
+    "runtime": "custom"
+  },
+  "methods": {
+    "agent": {
+      "trials": 12,
+      "resolved": 12,
+      "completed_and_resolved": 12,
+      "loop_detection": 0,
+      "max_steps": 0,
+      "protocol_failures": 0,
+      "terminal_errors": {},
+      "median_steps": 7.5,
+      "median_tool_records": 8.5,
+      "median_executed_tool_calls": 8.0,
+      "median_tokens": 50297.5,
+      "token_record_count": 12,
+      "total_tokens": 913866,
+      "median_end_to_end_seconds": 154.86950000000002
+    },
+    "oneshot": {
+      "trials": 12,
+      "resolved": 7,
+      "completed_and_resolved": 7,
+      "loop_detection": 0,
+      "max_steps": 0,
+      "protocol_failures": 0,
+      "terminal_errors": {
+        "ValueError: old_text 必须在目标文件中恰好出现一次": 3
+      },
+      "median_steps": null,
+      "median_tool_records": null,
+      "median_executed_tool_calls": null,
+      "median_tokens": 6128.5,
+      "token_record_count": 12,
+      "total_tokens": 75224,
+      "median_end_to_end_seconds": 53.09
+    }
+  },
+  "by_task": [
+    {
+      "task_id": "boltons_research",
+      "agent": {
+        "trials": 3,
+        "resolved": 3,
+        "completed_and_resolved": 3,
+        "loop_detection": 0,
+        "max_steps": 0,
+        "protocol_failures": 0,
+        "terminal_errors": {},
+        "median_steps": 13,
+        "median_tool_records": 14,
+        "median_executed_tool_calls": 12,
+        "median_tokens": 159374,
+        "token_record_count": 3,
+        "total_tokens": 481839,
+        "median_end_to_end_seconds": 996.47
+      },
+      "oneshot": {
+        "trials": 3,
+        "resolved": 1,
+        "completed_and_resolved": 1,
+        "loop_detection": 0,
+        "max_steps": 0,
+        "protocol_failures": 0,
+        "terminal_errors": {},
+        "median_steps": null,
+        "median_tool_records": null,
+        "median_executed_tool_calls": null,
+        "median_tokens": 6736,
+        "token_record_count": 3,
+        "total_tokens": 21581,
+        "median_end_to_end_seconds": 63.033
+      }
+    },
+    {
+      "task_id": "more_predicate_sentinel",
+      "agent": {
+        "trials": 3,
+        "resolved": 3,
+        "completed_and_resolved": 3,
+        "loop_detection": 0,
+        "max_steps": 0,
+        "protocol_failures": 0,
+        "terminal_errors": {},
+        "median_steps": 8,
+        "median_tool_records": 9,
+        "median_executed_tool_calls": 9,
+        "median_tokens": 70110,
+        "token_record_count": 3,
+        "total_tokens": 197091,
+        "median_end_to_end_seconds": 216.345
+      },
+      "oneshot": {
+        "trials": 3,
+        "resolved": 3,
+        "completed_and_resolved": 3,
+        "loop_detection": 0,
+        "max_steps": 0,
+        "protocol_failures": 0,
+        "terminal_errors": {},
+        "median_steps": null,
+        "median_tool_records": null,
+        "median_executed_tool_calls": null,
+        "median_tokens": 6124,
+        "token_record_count": 3,
+        "total_tokens": 19009,
+        "median_end_to_end_seconds": 44.817
+      }
+    },
+    {
+      "task_id": "slugify_hex",
+      "agent": {
+        "trials": 3,
+        "resolved": 3,
+        "completed_and_resolved": 3,
+        "loop_detection": 0,
+        "max_steps": 0,
+        "protocol_failures": 0,
+        "terminal_errors": {},
+        "median_steps": 7,
+        "median_tool_records": 8,
+        "median_executed_tool_calls": 8,
+        "median_tokens": 44755,
+        "token_record_count": 3,
+        "total_tokens": 122370,
+        "median_end_to_end_seconds": 113.268
+      },
+      "oneshot": {
+        "trials": 3,
+        "resolved": 1,
+        "completed_and_resolved": 1,
+        "loop_detection": 0,
+        "max_steps": 0,
+        "protocol_failures": 0,
+        "terminal_errors": {
+          "ValueError: old_text 必须在目标文件中恰好出现一次": 2
+        },
+        "median_steps": null,
+        "median_tool_records": null,
+        "median_executed_tool_calls": null,
+        "median_tokens": 5219,
+        "token_record_count": 3,
+        "total_tokens": 15441,
+        "median_end_to_end_seconds": 36.245
+      }
+    },
+    {
+      "task_id": "slugify_truncation",
+      "agent": {
+        "trials": 3,
+        "resolved": 3,
+        "completed_and_resolved": 3,
+        "loop_detection": 0,
+        "max_steps": 0,
+        "protocol_failures": 0,
+        "terminal_errors": {},
+        "median_steps": 6,
+        "median_tool_records": 7,
+        "median_executed_tool_calls": 7,
+        "median_tokens": 35649,
+        "token_record_count": 3,
+        "total_tokens": 112566,
+        "median_end_to_end_seconds": 134.024
+      },
+      "oneshot": {
+        "trials": 3,
+        "resolved": 2,
+        "completed_and_resolved": 2,
+        "loop_detection": 0,
+        "max_steps": 0,
+        "protocol_failures": 0,
+        "terminal_errors": {
+          "ValueError: old_text 必须在目标文件中恰好出现一次": 1
+        },
+        "median_steps": null,
+        "median_tool_records": null,
+        "median_executed_tool_calls": null,
+        "median_tokens": 6133,
+        "token_record_count": 3,
+        "total_tokens": 19193,
+        "median_end_to_end_seconds": 66.789
+      }
+    }
+  ],
+  "historical_same_scope": {
+    "commit": "ff9d52b6164b58c17d33a8dd3a17802765487965",
+    "run_url": "https://github.com/Astrea-296111/RepoPilot/actions/runs/36677551664",
+    "methods": {
+      "agent": {
+        "trials": 12,
+        "resolved": 7,
+        "completed_and_resolved": 5,
+        "loop_detection": 5,
+        "max_steps": 0,
+        "protocol_failures": 0,
+        "terminal_errors": {
+          "loop_detection": 5
+        },
+        "median_steps": 7.0,
+        "median_tool_records": 6.0,
+        "median_executed_tool_calls": 6.0,
+        "median_tokens": 50781.0,
+        "token_record_count": 12,
+        "total_tokens": 691309,
+        "median_end_to_end_seconds": 187.4615
+      },
+      "oneshot": {
+        "trials": 12,
+        "resolved": 10,
+        "completed_and_resolved": 10,
+        "loop_detection": 0,
+        "max_steps": 0,
+        "protocol_failures": 0,
+        "terminal_errors": {
+          "ValueError: old_text 必须在目标文件中恰好出现一次": 2
+        },
+        "median_steps": null,
+        "median_tool_records": null,
+        "median_executed_tool_calls": null,
+        "median_tokens": 6010.0,
+        "token_record_count": 12,
+        "total_tokens": 78105,
+        "median_end_to_end_seconds": 56.966499999999996
+      }
+    }
+  },
+  "limitations": [
+    "Risk tasks selected from historical failures; this is not a representative full-suite success rate.",
+    "Original 10-task full benchmark has not been rerun by this targeted execution.",
+    "Runtime feedback and repeat/termination policies intentionally changed; task prompts, source files and scoring are frozen.",
+    "Historical/current model aliases are mutable and runs are not contemporaneous; descriptive before/after only.",
+    "Repeated trials share four tasks; do not treat 12 method trials as 12 independent bugs.",
+    "tool_records includes reused/withheld observations; executed_tool_calls counts actual dispatches including verification, excluding denials/cache."
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "suite_sha256": "fc0eb01fc240b1147a93e465b9c96a0a1f96916b932c1c8ceedd4f0b30eb8987",
+  "model": "qwen3.8-max",
+  "reasoning_effort": "medium",
+  "stream": true,
+  "max_steps": 15,
+  "max_context_chars": 30000,
+  "mode": "oneshot",
+  "runs": 3,
+  "shard": 3,
+  "shards": 4,
+  "runtime": "oneshot",
+  "runtime_policy_revision": "repeat-recovery-v1",
+  "task_ids": [
+    "boltons_research",
+    "more_predicate_sentinel",
+    "slugify_hex",
+    "slugify_truncation"
+  ],
+  "timing_scope": "Preparation + baseline Docker test + model/repair + fresh Docker grading",
+  "records": [
+    {
+      "task_id": "slugify_truncation",
+      "upstream": "un33k/python-slugify",
+      "run": 1,
+      "mode": "oneshot",
+      "resolved": false,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________________________ test_fits ___________________________________\n\n    def test_fits():\n>       assert slugify('x',algorithm='modern',allow_unicode=True,replacements=[('x','one--two')],replacement_stage='post',word_boundary=True,max_length=20) == 'one--two'\nE       AssertionError: assert 'one-two' == 'one--two'\nE         \nE         - one--two\nE         ?     -\nE         + one-two\n\ntests/test_public.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_fits - AssertionError: assert 'one-two' == ...\n1 failed in 0.03s\n"
+      },
+      "retrieved_files": [
+        "slugify/slugify.py",
+        "slugify/__main__.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"slugify/slugify.py\",\"old_text\":\"    \\\"\\\"\\\"Budget internal dash-separated tokens before mapping output delimiters.\\\"\\\"\\\"\\n    if not max_length:\\n        return text.replace(DEFAULT_SEPARATOR, separator) if separator != DEFAULT_SEPARATOR else text\",\"new_text\":\"    \\\"\\\"\\\"Budget internal dash-separated tokens before mapping output delimiters.\\\"\\\"\\\"\\n    mapped = text.replace(DEFAULT_SEPARATOR, separator) if separator != DEFAULT_SEPARATOR else text\\n    if not max_length or len(mapped) <= max_length:\\n        return mapped\"}],\"summary\":\"In _modern_truncate, return the text immediately (preserving intentional repeated/leading/trailing dashes from post-stage replacements) when the separator-mapped output already fits within max_length, instead of falling through to token-split logic that collapses consecutive separators.\"}",
+      "token_usage": {
+        "prompt_tokens": 3600,
+        "completion_tokens": 2533,
+        "total_tokens": 6133
+      },
+      "error": "ValueError: old_text 必须在目标文件中恰好出现一次",
+      "failure_category": "runner_or_protocol_failure",
+      "end_to_end_seconds": 66.789
+    },
+    {
+      "task_id": "slugify_truncation",
+      "upstream": "un33k/python-slugify",
+      "run": 2,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________________________ test_fits ___________________________________\n\n    def test_fits():\n>       assert slugify('x',algorithm='modern',allow_unicode=True,replacements=[('x','one--two')],replacement_stage='post',word_boundary=True,max_length=20) == 'one--two'\nE       AssertionError: assert 'one-two' == 'one--two'\nE         \nE         - one--two\nE         ?     -\nE         + one-two\n\ntests/test_public.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_fits - AssertionError: assert 'one-two' == ...\n1 failed in 0.03s\n"
+      },
+      "retrieved_files": [
+        "slugify/slugify.py",
+        "slugify/__main__.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"slugify/slugify.py\",\"old_text\":\"    if algorithm == 'modern':\\n        return _modern_truncate(text, max_length, word_boundary, separator, save_order)\",\"new_text\":\"    if algorithm == 'modern':\\n        if max_length == 0 or len(text) <= max_length:\\n            return text.replace(DEFAULT_SEPARATOR, separator) if separator != DEFAULT_SEPARATOR else text\\n        return _modern_truncate(text, max_length, word_boundary, separator, save_order)\"}],\"summary\":\"When modern-algorithm output already fits within max_length, return it directly (preserving intentional repeated/leading/trailing dashes from post-stage replacements) instead of passing through _modern_truncate which collapses consecutive separators during token budgeting.\"}",
+      "token_usage": {
+        "prompt_tokens": 3600,
+        "completion_tokens": 3541,
+        "total_tokens": 7141
+      },
+      "patches": 1,
+      "repair_seconds": 68.613,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "slugify/slugify.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/slugify/slugify.py b/slugify/slugify.py\nindex b31280d..2150d67 100644\n--- a/slugify/slugify.py\n+++ b/slugify/slugify.py\n@@ -238,6 +238,8 @@ def slugify(\n             text = text.replace(old, new)\n \n     if algorithm == 'modern':\n+        if max_length == 0 or len(text) <= max_length:\n+            return text.replace(DEFAULT_SEPARATOR, separator) if separator != DEFAULT_SEPARATOR else text\n         return _modern_truncate(text, max_length, word_boundary, separator, save_order)\n     if max_length > 0:\n         text = smart_truncate(text, max_length, word_boundary, DEFAULT_SEPARATOR, save_order)\n",
+      "grader": {
+        "exit_code": 0,
+        "output": "......................................                                   [100%]\n38 passed in 0.05s\n"
+      },
+      "end_to_end_seconds": 69.528
+    },
+    {
+      "task_id": "slugify_truncation",
+      "upstream": "un33k/python-slugify",
+      "run": 3,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________________________ test_fits ___________________________________\n\n    def test_fits():\n>       assert slugify('x',algorithm='modern',allow_unicode=True,replacements=[('x','one--two')],replacement_stage='post',word_boundary=True,max_length=20) == 'one--two'\nE       AssertionError: assert 'one-two' == 'one--two'\nE         \nE         - one--two\nE         ?     -\nE         + one-two\n\ntests/test_public.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_fits - AssertionError: assert 'one-two' == ...\n1 failed in 0.03s\n"
+      },
+      "retrieved_files": [
+        "slugify/slugify.py",
+        "slugify/__main__.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"slugify/slugify.py\",\"old_text\":\"    if algorithm == 'modern':\\n        return _modern_truncate(text, max_length, word_boundary, separator, save_order)\",\"new_text\":\"    if algorithm == 'modern':\\n        if max_length == 0 or len(text) <= max_length:\\n            return text.replace(DEFAULT_SEPARATOR, separator) if separator != DEFAULT_SEPARATOR else text\\n        return _modern_truncate(text, max_length, word_boundary, separator, save_order)\"}],\"summary\":\"When modern-algorithm output already fits max_length, return it directly (with separator mapping) instead of passing through _modern_truncate which splits on dashes and collapses intentional repeated separators from post-stage replacements.\"}",
+      "token_usage": {
+        "prompt_tokens": 3600,
+        "completion_tokens": 2319,
+        "total_tokens": 5919
+      },
+      "patches": 1,
+      "repair_seconds": 46.227,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "slugify/slugify.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/slugify/slugify.py b/slugify/slugify.py\nindex b31280d..2150d67 100644\n--- a/slugify/slugify.py\n+++ b/slugify/slugify.py\n@@ -238,6 +238,8 @@ def slugify(\n             text = text.replace(old, new)\n \n     if algorithm == 'modern':\n+        if max_length == 0 or len(text) <= max_length:\n+            return text.replace(DEFAULT_SEPARATOR, separator) if separator != DEFAULT_SEPARATOR else text\n         return _modern_truncate(text, max_length, word_boundary, separator, save_order)\n     if max_length > 0:\n         text = smart_truncate(text, max_length, word_boundary, DEFAULT_SEPARATOR, save_order)\n",
+      "grader": {
+        "exit_code": 0,
+        "output": "......................................                                   [100%]\n38 passed in 0.05s\n"
+      },
+      "end_to_end_seconds": 47.136
+    }
+  ],
+  "summary": {
+    "trials": 3,
+    "resolved": 2,
+    "task_successes": {
+      "slugify_truncation": 2
+    },
+    "median_end_to_end_seconds": 66.789,
+    "median_tokens": 6133,
+    "total_tokens": 19193,
+    "failure_categories": {
+      "runner_or_protocol_failure": 1
+    }
+  }
+}

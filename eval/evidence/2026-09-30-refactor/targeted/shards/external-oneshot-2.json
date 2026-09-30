@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "suite_sha256": "fc0eb01fc240b1147a93e465b9c96a0a1f96916b932c1c8ceedd4f0b30eb8987",
+  "model": "qwen3.8-max",
+  "reasoning_effort": "medium",
+  "stream": true,
+  "max_steps": 15,
+  "max_context_chars": 30000,
+  "mode": "oneshot",
+  "runs": 3,
+  "shard": 2,
+  "shards": 4,
+  "runtime": "oneshot",
+  "runtime_policy_revision": "repeat-recovery-v1",
+  "task_ids": [
+    "boltons_research",
+    "more_predicate_sentinel",
+    "slugify_hex",
+    "slugify_truncation"
+  ],
+  "timing_scope": "Preparation + baseline Docker test + model/repair + fresh Docker grading",
+  "records": [
+    {
+      "task_id": "slugify_hex",
+      "upstream": "un33k/python-slugify",
+      "run": 1,
+      "mode": "oneshot",
+      "resolved": false,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n________________________________ test_uppercase ________________________________\n\n    def test_uppercase():\n>       assert slugify('&#X41;',algorithm='modern') == 'a'\nE       AssertionError: assert 'x41' == 'a'\nE         \nE         - a\nE         + x41\n\ntests/test_public.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_uppercase - AssertionError: assert 'x41' ==...\n1 failed in 0.03s\n"
+      },
+      "retrieved_files": [
+        "slugify/slugify.py",
+        "slugify/__main__.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"slugify/slugify.py\",\"old_text\":\"HEX_PATTERN = re.compile(r'&#x([0-9a-fA-F]+);')\",\"new_text\":\"HEX_PATTERN = re.compile(r'&#x([0-9a-fA-F]+);')\\nHEX_PATTERN_CI = re.compile(r'&#[xX]([0-9a-fA-F]+);')\"},{\"path\":\"slugify/slugify.py\",\"old_text\":\"            text = HEX_PATTERN.sub(lambda m: _numeric_reference(m, 16), text)\",\"new_text\":\"            text = HEX_PATTERN_CI.sub(lambda m: _numeric_reference(m, 16), text)\"}],\"summary\":\"Add a case-insensitive hex entity pattern (matching both &#x and &#X) used only in the modern algorithm path, leaving legacy behaviour unchanged.\"}",
+      "token_usage": {
+        "prompt_tokens": 3525,
+        "completion_tokens": 2492,
+        "total_tokens": 6017
+      },
+      "error": "ValueError: old_text 必须在目标文件中恰好出现一次",
+      "failure_category": "runner_or_protocol_failure",
+      "end_to_end_seconds": 56.105
+    },
+    {
+      "task_id": "slugify_hex",
+      "upstream": "un33k/python-slugify",
+      "run": 2,
+      "mode": "oneshot",
+      "resolved": false,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n________________________________ test_uppercase ________________________________\n\n    def test_uppercase():\n>       assert slugify('&#X41;',algorithm='modern') == 'a'\nE       AssertionError: assert 'x41' == 'a'\nE         \nE         - a\nE         + x41\n\ntests/test_public.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_uppercase - AssertionError: assert 'x41' ==...\n1 failed in 0.03s\n"
+      },
+      "retrieved_files": [
+        "slugify/slugify.py",
+        "slugify/__main__.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"slugify/slugify.py\",\"old_text\":\"HEX_PATTERN = re.compile(r'&#x([0-9a-fA-F]+);')\",\"new_text\":\"HEX_PATTERN = re.compile(r'&#[xX]([0-9a-fA-F]+);')\"}],\"summary\":\"Update HEX_PATTERN to match both lowercase &#x and uppercase &#X hexadecimal HTML entity references.\"}",
+      "token_usage": {
+        "prompt_tokens": 3525,
+        "completion_tokens": 680,
+        "total_tokens": 4205
+      },
+      "error": "ValueError: old_text 必须在目标文件中恰好出现一次",
+      "failure_category": "runner_or_protocol_failure",
+      "end_to_end_seconds": 16.91
+    },
+    {
+      "task_id": "slugify_hex",
+      "upstream": "un33k/python-slugify",
+      "run": 3,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n________________________________ test_uppercase ________________________________\n\n    def test_uppercase():\n>       assert slugify('&#X41;',algorithm='modern') == 'a'\nE       AssertionError: assert 'x41' == 'a'\nE         \nE         - a\nE         + x41\n\ntests/test_public.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_uppercase - AssertionError: assert 'x41' ==...\n1 failed in 0.03s\n"
+      },
+      "retrieved_files": [
+        "slugify/slugify.py",
+        "slugify/__main__.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"slugify/slugify.py\",\"old_text\":\"            text = HEX_PATTERN.sub(lambda m: _numeric_reference(m, 16), text)\",\"new_text\":\"            text = re.sub(r'&#[xX]([0-9a-fA-F]+);', lambda m: _numeric_reference(m, 16), text)\"}],\"summary\":\"Use a case-insensitive hex prefix pattern ([xX]) in the modern algorithm branch so &#X41; is decoded alongside &#x41;, while legacy continues to use the original HEX_PATTERN unchanged.\"}",
+      "token_usage": {
+        "prompt_tokens": 3525,
+        "completion_tokens": 1694,
+        "total_tokens": 5219
+      },
+      "patches": 1,
+      "repair_seconds": 35.336,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "slugify/slugify.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/slugify/slugify.py b/slugify/slugify.py\nindex abfc099..932e3ab 100644\n--- a/slugify/slugify.py\n+++ b/slugify/slugify.py\n@@ -50,7 +50,7 @@ def _decode_entities(text: str, entities: bool, decimal: bool, hexadecimal: bool\n                 pass\n     if hexadecimal:\n         if algorithm == 'modern':\n-            text = HEX_PATTERN.sub(lambda m: _numeric_reference(m, 16), text)\n+            text = re.sub(r'&#[xX]([0-9a-fA-F]+);', lambda m: _numeric_reference(m, 16), text)\n         else:\n             try:\n                 text = HEX_PATTERN.sub(lambda m: chr(int(m.group(1), 16)), text)\n",
+      "grader": {
+        "exit_code": 0,
+        "output": "......                                                                   [100%]\n6 passed in 0.03s\n"
+      },
+      "end_to_end_seconds": 36.245
+    }
+  ],
+  "summary": {
+    "trials": 3,
+    "resolved": 1,
+    "task_successes": {
+      "slugify_hex": 1
+    },
+    "median_end_to_end_seconds": 36.245,
+    "median_tokens": 5219,
+    "total_tokens": 15441,
+    "failure_categories": {
+      "runner_or_protocol_failure": 2
+    }
+  }
+}

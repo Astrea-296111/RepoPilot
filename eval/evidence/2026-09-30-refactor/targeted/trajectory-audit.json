@@ -1,0 +1,14 @@
+{
+  "agent_trial_count": 12,
+  "independent_verification_count": 12,
+  "test_repeat_termination_redirect_count": 8,
+  "cached_read_observations": 5,
+  "actual_dispatches": 102,
+  "tool_observation_records": 107,
+  "max_end_to_end_seconds": 1595.108,
+  "notes": [
+    "These are observed mechanisms, not a causal effect estimate.",
+    "All 24 records retained; one-shot misses include exact-patch and hidden-regression failures.",
+    "No shared-symbol algorithm was introduced or proven by this scope."
+  ]
+}

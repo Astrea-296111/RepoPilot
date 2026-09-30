@@ -425,5 +425,384 @@
     "windows_base": "57 passed, 14 extras-only skipped, 1 warning in 23.44s",
     "linux_base": "success; Python 3.11 base extras",
     "docker": "5 passed in 14.68s; sandbox build and all 10 frozen external baselines/reference fixes validated"
+  },
+  "final_local_pytest": {
+    "command": "python -m pytest -q",
+    "result": "86 passed, 5 Docker-only skipped in 98.90s",
+    "source_commit": "a121b18e23d628e7d8ab57eb7498d86a62e95c69"
+  },
+  "final_standalone_integrations": {
+    "mcp": "4 passed in 6.50s",
+    "observability": "9 passed in 12.71s",
+    "recovery": "13 passed in 14.16s"
+  },
+  "demo_ci_url": "https://github.com/Astrea-296111/RepoPilot/actions/runs/36722341988",
+  "individual_extra_installations": "dev, langgraph, mcp and observability each installed successfully; pip check passed",
+  "final_fake_benchmarks": {
+    "agent-fake": {
+      "suite": "RepoPilot Mini Benchmark v3",
+      "runner": "agent",
+      "model": "scripted FakeLLM",
+      "task_count": 25,
+      "runs": 25,
+      "resolved_runs": 25,
+      "resolved_without_protected_edits": 25,
+      "protected_edit_runs": 0,
+      "run_resolved_rate": 1.0,
+      "first_run_resolved": 25,
+      "first_run_tasks": 25,
+      "first_run_resolved_rate": 1.0,
+      "median_steps": 2.0,
+      "median_tool_calls": 3.0,
+      "median_total_tokens": 0.0,
+      "median_duration_seconds": 1.097,
+      "failure_categories": {},
+      "categories": {
+        "authorization": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "boundary-condition": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "business-rule": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "collection-order": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "configuration": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "cross-module-paths": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "date-boundary": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "empty-input": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "exception-handling": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "file-filtering": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "input-normalization": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "merge-logic": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "parsing": {
+          "runs": 2,
+          "resolved": 2
+        },
+        "path-security": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "retry-logic": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "shared-configuration": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "shared-normalization": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "shared-policy": {
+          "runs": 2,
+          "resolved": 2
+        },
+        "state-management": {
+          "runs": 2,
+          "resolved": 2
+        },
+        "text-normalization": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "time-boundary": {
+          "runs": 2,
+          "resolved": 2
+        }
+      },
+      "difficulties": {
+        "easy": {
+          "runs": 12,
+          "resolved": 12
+        },
+        "hard": {
+          "runs": 6,
+          "resolved": 6
+        },
+        "medium": {
+          "runs": 7,
+          "resolved": 7
+        }
+      }
+    },
+    "agent-langgraph-fake": {
+      "suite": "RepoPilot Mini Benchmark v3",
+      "runner": "agent",
+      "model": "scripted FakeLLM",
+      "task_count": 25,
+      "runs": 25,
+      "resolved_runs": 25,
+      "resolved_without_protected_edits": 25,
+      "protected_edit_runs": 0,
+      "run_resolved_rate": 1.0,
+      "first_run_resolved": 25,
+      "first_run_tasks": 25,
+      "first_run_resolved_rate": 1.0,
+      "median_steps": 2.0,
+      "median_tool_calls": 3.0,
+      "median_total_tokens": 0.0,
+      "median_duration_seconds": 1.176,
+      "failure_categories": {},
+      "categories": {
+        "authorization": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "boundary-condition": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "business-rule": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "collection-order": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "configuration": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "cross-module-paths": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "date-boundary": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "empty-input": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "exception-handling": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "file-filtering": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "input-normalization": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "merge-logic": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "parsing": {
+          "runs": 2,
+          "resolved": 2
+        },
+        "path-security": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "retry-logic": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "shared-configuration": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "shared-normalization": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "shared-policy": {
+          "runs": 2,
+          "resolved": 2
+        },
+        "state-management": {
+          "runs": 2,
+          "resolved": 2
+        },
+        "text-normalization": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "time-boundary": {
+          "runs": 2,
+          "resolved": 2
+        }
+      },
+      "difficulties": {
+        "easy": {
+          "runs": 12,
+          "resolved": 12
+        },
+        "hard": {
+          "runs": 6,
+          "resolved": 6
+        },
+        "medium": {
+          "runs": 7,
+          "resolved": 7
+        }
+      }
+    },
+    "oneshot-fake": {
+      "suite": "RepoPilot Mini Benchmark v3",
+      "runner": "one-shot",
+      "model": "scripted FakeLLM",
+      "task_count": 25,
+      "runs": 25,
+      "resolved_runs": 25,
+      "resolved_without_protected_edits": 25,
+      "protected_edit_runs": 0,
+      "run_resolved_rate": 1.0,
+      "first_run_resolved": 25,
+      "first_run_tasks": 25,
+      "first_run_resolved_rate": 1.0,
+      "median_total_tokens": 0.0,
+      "median_duration_seconds": 0.0,
+      "median_all_call_duration_seconds": 0.0,
+      "median_patch_count": 1.0,
+      "failure_categories": {},
+      "categories": {
+        "authorization": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "boundary-condition": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "business-rule": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "collection-order": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "configuration": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "cross-module-paths": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "date-boundary": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "empty-input": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "exception-handling": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "file-filtering": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "input-normalization": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "merge-logic": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "parsing": {
+          "runs": 2,
+          "resolved": 2
+        },
+        "path-security": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "retry-logic": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "shared-configuration": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "shared-normalization": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "shared-policy": {
+          "runs": 2,
+          "resolved": 2
+        },
+        "state-management": {
+          "runs": 2,
+          "resolved": 2
+        },
+        "text-normalization": {
+          "runs": 1,
+          "resolved": 1
+        },
+        "time-boundary": {
+          "runs": 2,
+          "resolved": 2
+        }
+      },
+      "difficulties": {
+        "easy": {
+          "runs": 12,
+          "resolved": 12
+        },
+        "hard": {
+          "runs": 6,
+          "resolved": 6
+        },
+        "medium": {
+          "runs": 7,
+          "resolved": 7
+        }
+      }
+    }
+  },
+  "final_packaging": {
+    "wheel_command": "python -m pip wheel --no-deps . --wheel-dir /tmp/repopilot-final-wheel",
+    "result": "success; pip check and repopilot --help passed"
+  },
+  "live_api_smoke": {
+    "command": "repopilot serve --host 127.0.0.1 --port 8765",
+    "result": "live HTTP health returned status ok; graceful shutdown; no model call"
   }
 }

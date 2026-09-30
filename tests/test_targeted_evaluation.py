@@ -2,10 +2,31 @@
 import importlib
 import json
 from pathlib import Path
+import runpy
+import subprocess
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+@pytest.mark.parametrize("scope,shards,timeout", [("targeted", "4", 3900), ("full", "5", 5400)])
+def test_actual_supervisor_preserves_three_repeats_and_fixed_scope(monkeypatch, capsys, scope, shards, timeout):
+    """Exercise the real entry point without spending tokens or launching Docker."""
+    for key, value in {"EVAL_SCOPE": scope, "EVAL_MODE": "agent", "EVAL_SHARD": "0",
+                       "EVAL_RUNTIME": "custom", "LLM_API_KEY": "MUST_NOT_APPEAR_IN_ARGV"}.items():
+        monkeypatch.setenv(key, value)
+    calls = []
+    monkeypatch.setattr(subprocess, "run", lambda command, **kwargs: calls.append((command, kwargs)))
+    runpy.run_path(str(ROOT / "eval/run_external_actions.py"), run_name="__main__")
+    assert len(calls) == 1
+    command, options = calls[0]
+    assert Path(command[1]) == ROOT / "eval/run_external.py"
+    assert command[command.index("--runs") + 1] == "3"
+    assert command[command.index("--shards") + 1] == shards
+    assert ("--task" in command) == (scope == "targeted")
+    assert options == {"check": True, "timeout": timeout}
+    assert "MUST_NOT_APPEAR_IN_ARGV" not in " ".join(command) + capsys.readouterr().out
 
 
 @pytest.fixture

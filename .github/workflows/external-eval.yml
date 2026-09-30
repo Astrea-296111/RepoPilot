@@ -58,7 +58,8 @@ jobs:
   trials:
     needs: reference
     runs-on: ubuntu-latest
-    timeout-minutes: 70
+    # This is a batch supervisor allowance, not a per-model/per-test deadline.
+    timeout-minutes: ${{ (inputs.scope == 'full' || contains(github.event.head_commit.message, '[external-eval]')) && 100 || 70 }}
     strategy:
       fail-fast: false
       max-parallel: 4

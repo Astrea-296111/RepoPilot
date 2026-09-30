@@ -1,0 +1,124 @@
+{
+  "evaluated_commit": "68a4c49a72d9f61fe0ee7daabcf55c43147b999e",
+  "run_id": 36720727948,
+  "run_url": "https://github.com/Astrea-296111/RepoPilot/actions/runs/36720727948",
+  "run_started_utc": "2026-09-30T13:18:48Z",
+  "run_completed_utc": "2026-09-30T14:20:37Z",
+  "scope": {
+    "independent_tasks": 4,
+    "repeats_per_task_per_method": 3,
+    "trials": 24
+  },
+  "configuration": {
+    "suite_sha256": "fc0eb01fc240b1147a93e465b9c96a0a1f96916b932c1c8ceedd4f0b30eb8987",
+    "model": "qwen3.8-max",
+    "reasoning_effort": "medium",
+    "stream": true,
+    "max_steps": 15,
+    "max_context_chars": 30000,
+    "runs": 3,
+    "shards": 4,
+    "timing_scope": "Preparation + baseline Docker test + model/repair + fresh Docker grading",
+    "runtime": "custom"
+  },
+  "additional_configuration": {
+    "temperature": 0,
+    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "llm_read_timeout_seconds": 180,
+    "transport_retry_limit": 1,
+    "docker_command_timeout_seconds": 60,
+    "batch_supervisor_seconds": 3900,
+    "workflow_job_minutes": 70
+  },
+  "artifact_ids": {
+    "external-agent-0": 11104037535,
+    "external-agent-1": 11102295223,
+    "external-agent-2": 11100795861,
+    "external-agent-3": 11100775863,
+    "external-oneshot-0": 11101595341,
+    "external-oneshot-1": 11101485330,
+    "external-oneshot-2": 11102290605,
+    "external-oneshot-3": 11102160786,
+    "external-reference": 11099265961,
+    "external-comparison": 11102594206
+  },
+  "audit_notes": [
+    "Original shards/reference/comparison copied byte-for-byte from completed Actions artifacts.",
+    "Recomputed strict comparison equals original JSON; all expected 24 keys present.",
+    "Risk scope selected before run; no seeds, repetitions, task definitions or graders retuned.",
+    "All failed one-shot records are retained.",
+    "Cannot infer a representative full-suite rate or sole causal attribution to runtime changes."
+  ],
+  "files": [
+    {
+      "path": "external-comparison.json",
+      "bytes": 7680,
+      "sha256": "641ab5cdf0c59c7c2261dc056b3fe52a28061e3a285f662a658e4ee644b7d0af"
+    },
+    {
+      "path": "external-comparison.md",
+      "bytes": 1528,
+      "sha256": "845b6aa07cee1411cd65e84a2548316bd8af07aead29a55d1b319159357f4243"
+    },
+    {
+      "path": "external-reference.json",
+      "bytes": 16035,
+      "sha256": "dde7045e71744b89757f491f2639e9b38c85836043aa89902754da958024e4b2"
+    },
+    {
+      "path": "original-external-comparison.json",
+      "bytes": 7680,
+      "sha256": "641ab5cdf0c59c7c2261dc056b3fe52a28061e3a285f662a658e4ee644b7d0af"
+    },
+    {
+      "path": "original-external-comparison.md",
+      "bytes": 1528,
+      "sha256": "845b6aa07cee1411cd65e84a2548316bd8af07aead29a55d1b319159357f4243"
+    },
+    {
+      "path": "shards/external-agent-0.json",
+      "bytes": 198512,
+      "sha256": "1725fb80d6d59e330476f5928b984f787d8ac71d0c41d63d3ca4743c9d7d0393"
+    },
+    {
+      "path": "shards/external-agent-1.json",
+      "bytes": 93248,
+      "sha256": "f7dce93af277cf7e8de77786209e6c830e967f5a9ba0d6428d37f50bcd5ccd25"
+    },
+    {
+      "path": "shards/external-agent-2.json",
+      "bytes": 95370,
+      "sha256": "ca0eab4ccffd5620c58746e378a3d696b8776705ee0aa0642b00370725741498"
+    },
+    {
+      "path": "shards/external-agent-3.json",
+      "bytes": 79518,
+      "sha256": "7f2f771eaef681921d7b81e0e3b76d2be4e27661e6272b1ceac0e7158a3d6345"
+    },
+    {
+      "path": "shards/external-oneshot-0.json",
+      "bytes": 15292,
+      "sha256": "b538aa5684c2fd79dfb8282e6ce65791f34f92d3f23e4c4459648893f61f62b8"
+    },
+    {
+      "path": "shards/external-oneshot-1.json",
+      "bytes": 12184,
+      "sha256": "f4bed199b7520e1ad523368b46839f96353afa1f7d6d84369f6589c892eea393"
+    },
+    {
+      "path": "shards/external-oneshot-2.json",
+      "bytes": 7113,
+      "sha256": "e4a9176686872611fd67a8ebe3163a76786c7b8e8cfc30d59419e5b03de2c5dd"
+    },
+    {
+      "path": "shards/external-oneshot-3.json",
+      "bytes": 9493,
+      "sha256": "ef899b1c51783c8af2c1e203e53e2867d45be042e813966df8f4e6106bf2a4e0"
+    },
+    {
+      "path": "trajectory-audit.json",
+      "bytes": 510,
+      "sha256": "e01231e513c4fb84498eaff6b4f02946ff6058ac6361dce7dc452e98f50eea03"
+    }
+  ]
+}

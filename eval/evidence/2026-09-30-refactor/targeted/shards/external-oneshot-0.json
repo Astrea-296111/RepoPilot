@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "suite_sha256": "fc0eb01fc240b1147a93e465b9c96a0a1f96916b932c1c8ceedd4f0b30eb8987",
+  "model": "qwen3.8-max",
+  "reasoning_effort": "medium",
+  "stream": true,
+  "max_steps": 15,
+  "max_context_chars": 30000,
+  "mode": "oneshot",
+  "runs": 3,
+  "shard": 0,
+  "shards": 4,
+  "runtime": "oneshot",
+  "runtime_policy_revision": "repeat-recovery-v1",
+  "task_ids": [
+    "boltons_research",
+    "more_predicate_sentinel",
+    "slugify_hex",
+    "slugify_truncation"
+  ],
+  "timing_scope": "Preparation + baseline Docker test + model/repair + fresh Docker grading",
+  "records": [
+    {
+      "task_id": "boltons_research",
+      "upstream": "mahmoud/boltons",
+      "run": 1,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_________________________________ test_shared __________________________________\n\n    def test_shared():\n        item=('hello',)\n        tree={'a':item,'b':item}\n        paths=[p for p,v in research(tree) if v=='hello']\n>       assert paths == [('a',0),('b',0)]\nE       AssertionError: assert [('a', 0)] == [('a', 0), ('b', 0)]\nE         \nE         Right contains one more item: ('b', 0)\nE         Use -v to get more diff\n\ntests/test_public.py:7: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_shared - AssertionError: assert [('a', 0)] ...\n1 failed in 0.03s\n"
+      },
+      "retrieved_files": [
+        "boltons/iterutils.py",
+        "boltons/typeutils.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"boltons/iterutils.py\",\"old_text\":\"    reraise_visit = kwargs.pop('reraise_visit', True)\\n    trace = kwargs.pop('trace', ())\",\"new_text\":\"    reraise_visit = kwargs.pop('reraise_visit', True)\\n    _no_cache = kwargs.pop('_no_cache', False)\\n    trace = kwargs.pop('trace', ())\"},{\"path\":\"boltons/iterutils.py\",\"old_text\":\"        elif id_value in registry:\\n            value = registry[id_value]\",\"new_text\":\"        elif id_value in registry and not _no_cache:\\n            value = registry[id_value]\"},{\"path\":\"boltons/iterutils.py\",\"old_text\":\"    remap(root, enter=_enter)\\n    return ret\",\"new_text\":\"    remap(root, enter=_enter, _no_cache=True)\\n    return ret\"}],\"summary\":\"Add _no_cache flag to remap so research traverses every branch of acyclic shared containers instead of short-circuiting on identity-cached objects.\"}",
+      "token_usage": {
+        "prompt_tokens": 3980,
+        "completion_tokens": 2279,
+        "total_tokens": 6259
+      },
+      "patches": 3,
+      "repair_seconds": 49.135,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "boltons/iterutils.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/boltons/iterutils.py b/boltons/iterutils.py\nindex e0a5b90..925f42c 100644\n--- a/boltons/iterutils.py\n+++ b/boltons/iterutils.py\n@@ -1165,6 +1165,7 @@ def remap(root, visit=default_visit, enter=default_enter, exit=default_exit,\n     if not callable(exit):\n         raise TypeError('exit expected callable, not: %r' % exit)\n     reraise_visit = kwargs.pop('reraise_visit', True)\n+    _no_cache = kwargs.pop('_no_cache', False)\n     trace = kwargs.pop('trace', ())\n     if trace is True:\n         trace = ('visit', 'enter', 'exit')\n@@ -1195,7 +1196,7 @@ def remap(root, visit=default_visit, enter=default_enter, exit=default_exit,\n             registry[id_value] = value\n             if not new_items_stack:\n                 continue\n-        elif id_value in registry:\n+        elif id_value in registry and not _no_cache:\n             value = registry[id_value]\n         else:\n             if trace_enter:\n@@ -1388,7 +1389,7 @@ def research(root, query=lambda p, k, v: True, reraise=False, enter=default_ente\n                 raise\n         return enter(path, key, value)\n \n-    remap(root, enter=_enter)\n+    remap(root, enter=_enter, _no_cache=True)\n     return ret\n \n \n",
+      "grader": {
+        "exit_code": 0,
+        "output": "....                                                                     [100%]\n4 passed in 0.02s\n"
+      },
+      "end_to_end_seconds": 50.075
+    },
+    {
+      "task_id": "boltons_research",
+      "upstream": "mahmoud/boltons",
+      "run": 2,
+      "mode": "oneshot",
+      "resolved": false,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_________________________________ test_shared __________________________________\n\n    def test_shared():\n        item=('hello',)\n        tree={'a':item,'b':item}\n        paths=[p for p,v in research(tree) if v=='hello']\n>       assert paths == [('a',0),('b',0)]\nE       AssertionError: assert [('a', 0)] == [('a', 0), ('b', 0)]\nE         \nE         Right contains one more item: ('b', 0)\nE         Use -v to get more diff\n\ntests/test_public.py:7: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_shared - AssertionError: assert [('a', 0)] ...\n1 failed in 0.03s\n"
+      },
+      "retrieved_files": [
+        "boltons/iterutils.py",
+        "boltons/typeutils.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"boltons/iterutils.py\",\"old_text\":\"    path, registry, stack = (), {}, [(None, root)]\\n    new_items_stack = []\",\"new_text\":\"    path, registry, stack = (), {}, [(None, root)]\\n    new_items_stack = []\\n    _active_ids = set()\"},{\"path\":\"boltons/iterutils.py\",\"old_text\":\"        if key is _REMAP_EXIT:\\n            key, new_parent, old_parent = value\\n            id_value = id(old_parent)\\n            path, new_items = new_items_stack.pop()\",\"new_text\":\"        if key is _REMAP_EXIT:\\n            key, new_parent, old_parent = value\\n            id_value = id(old_parent)\\n            _active_ids.discard(id_value)\\n            path, new_items = new_items_stack.pop()\"},{\"path\":\"boltons/iterutils.py\",\"old_text\":\"        elif id_value in registry:\\n            value = registry[id_value]\",\"new_text\":\"        elif id_value in _active_ids:\\n            value = registry[id_value]\"},{\"path\":\"boltons/iterutils.py\",\"old_text\":\"                registry[id_value] = new_parent\",\"new_text\":\"                registry[id_value] = new_parent\\n                _active_ids.add(id_value)\"}],\"summary\":\"Replace identity-based registry skip with active-cycle detection: track ids currently on the traversal stack in _active_ids so that shared acyclic containers are re-traversed from every branch, while true cycles are still short-circuited.\"}",
+      "token_usage": {
+        "prompt_tokens": 3980,
+        "completion_tokens": 2756,
+        "total_tokens": 6736
+      },
+      "patches": 4,
+      "repair_seconds": 62.11,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "boltons/iterutils.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/boltons/iterutils.py b/boltons/iterutils.py\nindex e0a5b90..22e4062 100644\n--- a/boltons/iterutils.py\n+++ b/boltons/iterutils.py\n@@ -1179,12 +1179,14 @@ def remap(root, visit=default_visit, enter=default_enter, exit=default_exit,\n \n     path, registry, stack = (), {}, [(None, root)]\n     new_items_stack = []\n+    _active_ids = set()\n     while stack:\n         key, value = stack.pop()\n         id_value = id(value)\n         if key is _REMAP_EXIT:\n             key, new_parent, old_parent = value\n             id_value = id(old_parent)\n+            _active_ids.discard(id_value)\n             path, new_items = new_items_stack.pop()\n             if trace_exit:\n                 print(' .. remap exit:', path, '-', key, '-',\n@@ -1195,7 +1197,7 @@ def remap(root, visit=default_visit, enter=default_enter, exit=default_exit,\n             registry[id_value] = value\n             if not new_items_stack:\n                 continue\n-        elif id_value in registry:\n+        elif id_value in _active_ids:\n             value = registry[id_value]\n         else:\n             if trace_enter:\n@@ -1212,6 +1214,7 @@ def remap(root, visit=default_visit, enter=default_enter, exit=default_exit,\n             if new_items is not False:\n                 # traverse unless False is explicitly passed\n                 registry[id_value] = new_parent\n+                _active_ids.add(id_value)\n                 new_items_stack.append((path, []))\n                 if value is not root:\n                     path += (key,)\n",
+      "grader": {
+        "exit_code": 1,
+        "output": ".F..                                                                     [100%]\n=================================== FAILURES ===================================\n__________________________ test_remap_keeps_identity ___________________________\n\n    def test_remap_keeps_identity():\n        shared=[1,2]\n        mapped=remap({'a':shared,'b':shared})\n>       assert mapped['a'] is mapped['b']\nE       assert [1, 2] is [1, 2]\n\ntests/test_hidden.py:11: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_hidden.py::test_remap_keeps_identity - assert [1, 2] is [1, 2]\n1 failed, 3 passed in 0.04s\n"
+      },
+      "failure_category": "behavior_failure",
+      "end_to_end_seconds": 63.033
+    },
+    {
+      "task_id": "boltons_research",
+      "upstream": "mahmoud/boltons",
+      "run": 3,
+      "mode": "oneshot",
+      "resolved": false,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_________________________________ test_shared __________________________________\n\n    def test_shared():\n        item=('hello',)\n        tree={'a':item,'b':item}\n        paths=[p for p,v in research(tree) if v=='hello']\n>       assert paths == [('a',0),('b',0)]\nE       AssertionError: assert [('a', 0)] == [('a', 0), ('b', 0)]\nE         \nE         Right contains one more item: ('b', 0)\nE         Use -v to get more diff\n\ntests/test_public.py:7: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_shared - AssertionError: assert [('a', 0)] ...\n1 failed in 0.03s\n"
+      },
+      "retrieved_files": [
+        "boltons/iterutils.py",
+        "boltons/typeutils.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"boltons/iterutils.py\",\"old_text\":\"    path, registry, stack = (), {}, [(None, root)]\\n    new_items_stack = []\",\"new_text\":\"    path, registry, stack = (), {}, [(None, root)]\\n    new_items_stack = []\\n    active = set()\"},{\"path\":\"boltons/iterutils.py\",\"old_text\":\"            id_value = id(old_parent)\\n            path, new_items = new_items_stack.pop()\",\"new_text\":\"            id_value = id(old_parent)\\n            active.discard(id_value)\\n            path, new_items = new_items_stack.pop()\"},{\"path\":\"boltons/iterutils.py\",\"old_text\":\"        elif id_value in registry:\\n            value = registry[id_value]\",\"new_text\":\"        elif id_value in registry and id_value in active:\\n            value = registry[id_value]\"},{\"path\":\"boltons/iterutils.py\",\"old_text\":\"                registry[id_value] = new_parent\\n                new_items_stack.append((path, []))\",\"new_text\":\"                registry[id_value] = new_parent\\n                active.add(id_value)\\n                new_items_stack.append((path, []))\"}],\"summary\":\"Track in-progress (active) container ids in remap so the identity cache is only used for true cycles; acyclic shared references are re-traversed, letting research visit every branch.\"}",
+      "token_usage": {
+        "prompt_tokens": 3980,
+        "completion_tokens": 4606,
+        "total_tokens": 8586
+      },
+      "patches": 4,
+      "repair_seconds": 95.113,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "boltons/iterutils.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/boltons/iterutils.py b/boltons/iterutils.py\nindex e0a5b90..5fe81ac 100644\n--- a/boltons/iterutils.py\n+++ b/boltons/iterutils.py\n@@ -1179,12 +1179,14 @@ def remap(root, visit=default_visit, enter=default_enter, exit=default_exit,\n \n     path, registry, stack = (), {}, [(None, root)]\n     new_items_stack = []\n+    active = set()\n     while stack:\n         key, value = stack.pop()\n         id_value = id(value)\n         if key is _REMAP_EXIT:\n             key, new_parent, old_parent = value\n             id_value = id(old_parent)\n+            active.discard(id_value)\n             path, new_items = new_items_stack.pop()\n             if trace_exit:\n                 print(' .. remap exit:', path, '-', key, '-',\n@@ -1195,7 +1197,7 @@ def remap(root, visit=default_visit, enter=default_enter, exit=default_exit,\n             registry[id_value] = value\n             if not new_items_stack:\n                 continue\n-        elif id_value in registry:\n+        elif id_value in registry and id_value in active:\n             value = registry[id_value]\n         else:\n             if trace_enter:\n@@ -1212,6 +1214,7 @@ def remap(root, visit=default_visit, enter=default_enter, exit=default_exit,\n             if new_items is not False:\n                 # traverse unless False is explicitly passed\n                 registry[id_value] = new_parent\n+                active.add(id_value)\n                 new_items_stack.append((path, []))\n                 if value is not root:\n                     path += (key,)\n",
+      "grader": {
+        "exit_code": 1,
+        "output": ".F..                                                                     [100%]\n=================================== FAILURES ===================================\n__________________________ test_remap_keeps_identity ___________________________\n\n    def test_remap_keeps_identity():\n        shared=[1,2]\n        mapped=remap({'a':shared,'b':shared})\n>       assert mapped['a'] is mapped['b']\nE       assert [1, 2] is [1, 2]\n\ntests/test_hidden.py:11: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_hidden.py::test_remap_keeps_identity - assert [1, 2] is [1, 2]\n1 failed, 3 passed in 0.04s\n"
+      },
+      "failure_category": "behavior_failure",
+      "end_to_end_seconds": 96.022
+    }
+  ],
+  "summary": {
+    "trials": 3,
+    "resolved": 1,
+    "task_successes": {
+      "boltons_research": 1
+    },
+    "median_end_to_end_seconds": 63.033,
+    "median_tokens": 6736,
+    "total_tokens": 21581,
+    "failure_categories": {
+      "behavior_failure": 2
+    }
+  }
+}

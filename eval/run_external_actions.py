@@ -7,6 +7,17 @@ import sys
 TARGETED_TASK_IDS = ("boltons_research", "more_predicate_sentinel", "slugify_hex", "slugify_truncation")
 
 
+def supervisor_timeout(scope: str) -> int:
+    """Bound the batch supervisor, without changing model/tool/trial definitions.
+
+    Full shards contain two tasks (six trials); targeted shards contain one.
+    The measured targeted research shard took nearly an hour on its own.
+    """
+    if scope not in {"targeted", "full"}:
+        raise ValueError("Invalid evaluation scope")
+    return 5400 if scope == "full" else 3900
+
+
 def arguments(environment: dict) -> list[str]:
     """Build validated fixed-budget arguments without reading model credentials."""
     scope = environment.get("EVAL_SCOPE", "targeted")
@@ -29,4 +40,4 @@ if __name__ == "__main__":
     args = arguments(os.environ)
     print("Fixed evaluation arguments:", " ".join(args), flush=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("run_external.py")), *args],
-                   check=True, timeout=3900)
+                   check=True, timeout=supervisor_timeout(os.environ.get("EVAL_SCOPE", "targeted")))

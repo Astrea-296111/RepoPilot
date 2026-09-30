@@ -1,0 +1,115 @@
+{
+  "suite_sha256": "fc0eb01fc240b1147a93e465b9c96a0a1f96916b932c1c8ceedd4f0b30eb8987",
+  "tasks": [
+    {
+      "task_id": "boltons_xfrange",
+      "baseline": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_______________________________ test_descending ________________________________\n\n    def test_descending():\n>       assert list(xfrange(5, 0, step=-1.25)) == frange(5, 0, step=-1.25)\nE       assert [] == [5.0, 3.75, 2.5, 1.25]\nE         \nE         Right contains 4 more items, first extra item: 5.0\nE         Use -v to get more diff\n\ntests/test_public.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_descending - assert [] == [5.0, 3.75, 2.5, ...\n1 failed in 0.03s\n"
+      },
+      "reference": {
+        "exit_code": 0,
+        "output": "..........                                                               [100%]\n10 passed in 0.03s\n"
+      }
+    },
+    {
+      "task_id": "boltons_backoff",
+      "baseline": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________________________ test_equal __________________________________\n\n    def test_equal():\n>       assert backoff(5,5,factor=1.0) == [5.0]\n               ^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_public.py:4: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nboltons/iterutils.py:579: in backoff\n    return list(backoff_iter(start, stop, count=count,\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nstart = 5.0, stop = 5.0, count = None, factor = 1.0, jitter = False\n\n    def backoff_iter(start, stop, count=None, factor=2.0, jitter=False):\n        \"\"\"Generates a sequence of geometrically-increasing floats, suitable\n        for usage with `exponential backoff`_. Starts with *start*,\n        increasing by *factor* until *stop* is reached, optionally\n        stopping iteration once *count* numbers are yielded. *factor*\n        defaults to 2. In general retrying with properly-configured\n        backoff creates a better-behaved component for a larger service\n        ecosystem.\n    \n        .. _exponential backoff: https://en.wikipedia.org/wiki/Exponential_backoff\n    \n        >>> list(backoff_iter(1.0, 10.0, count=5))\n        [1.0, 2.0, 4.0, 8.0, 10.0]\n        >>> list(backoff_iter(1.0, 10.0, count=8))\n        [1.0, 2.0, 4.0, 8.0, 10.0, 10.0, 10.0, 10.0]\n        >>> list(backoff_iter(0.25, 100.0, factor=10))\n        [0.25, 2.5, 25.0, 100.0]\n    \n        A simplified usage example:\n    \n        .. code-block:: python\n    \n          for timeout in backoff_iter(0.25, 5.0):\n              try:\n                  res = network_call()\n                  break\n              except Exception as e:\n                  log(e)\n                  time.sleep(timeout)\n    \n        An enhancement for large-scale systems would be to add variation,\n        or *jitter*, to timeout values. This is done to avoid a thundering\n        herd on the receiving end of the network call.\n    \n        Finally, for *count*, the special value ``'repeat'`` can be passed to\n        continue yielding indefinitely.\n    \n        Args:\n    \n            start (float): Positive number for baseline.\n            stop (float): Positive number for maximum.\n            count (int): Number of steps before stopping\n                iteration. Defaults to the number of steps between *start* and\n                *stop*. Pass the string, `'repeat'`, to continue iteration\n                indefinitely.\n            factor (float): Rate of exponential increase. Defaults to `2.0`,\n                e.g., `[1, 2, 4, 8, 16]`.\n            jitter (float): A factor between `-1.0` and `1.0`, used to\n                uniformly randomize and thus spread out timeouts in a distributed\n                system, avoiding rhythm effects. Positive values use the base\n                backoff curve as a maximum, negative values use the curve as a\n                minimum. Set to 1.0 or `True` for a jitter approximating\n                Ethernet's time-tested backoff solution. Defaults to `False`.\n    \n        \"\"\"\n        start = float(start)\n        stop = float(stop)\n        factor = float(factor)\n        if start < 0.0:\n            raise ValueError('expected start >= 0, not %r' % start)\n        if factor < 1.0:\n            raise ValueError('expected factor >= 1.0, not %r' % factor)\n        if stop == 0.0:\n            raise ValueError('expected stop >= 0')\n        if stop < start:\n            raise ValueError('expected stop >= start, not %r' % stop)\n        if count is None:\n            denom = start if start else 1\n>           count = 1 + math.ceil(math.log(stop/denom, factor))\n                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE           ZeroDivisionError: float division by zero\n\nboltons/iterutils.py:651: ZeroDivisionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_equal - ZeroDivisionError: float division b...\n1 failed in 0.05s\n"
+      },
+      "reference": {
+        "exit_code": 0,
+        "output": "...........                                                              [100%]\n11 passed in 0.03s\n"
+      }
+    },
+    {
+      "task_id": "boltons_split",
+      "baseline": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________________________ test_zero ___________________________________\n\n    def test_zero():\n>       assert split([1,None,2],maxsplit=0) == [[1,None,2]]\nE       assert [[[1, None, 2]]] == [[1, None, 2]]\nE         \nE         At index 0 diff: [[1, None, 2]] != [1, None, 2]\nE         Use -v to get more diff\n\ntests/test_public.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_zero - assert [[[1, None, 2]]] == [[1, None...\n1 failed in 0.03s\n"
+      },
+      "reference": {
+        "exit_code": 0,
+        "output": ".......                                                                  [100%]\n7 passed in 0.02s\n"
+      }
+    },
+    {
+      "task_id": "boltons_research",
+      "baseline": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_________________________________ test_shared __________________________________\n\n    def test_shared():\n        item=('hello',)\n        tree={'a':item,'b':item}\n        paths=[p for p,v in research(tree) if v=='hello']\n>       assert paths == [('a',0),('b',0)]\nE       AssertionError: assert [('a', 0)] == [('a', 0), ('b', 0)]\nE         \nE         Right contains one more item: ('b', 0)\nE         Use -v to get more diff\n\ntests/test_public.py:7: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_shared - AssertionError: assert [('a', 0)] ...\n1 failed in 0.03s\n"
+      },
+      "reference": {
+        "exit_code": 0,
+        "output": "....                                                                     [100%]\n4 passed in 0.02s\n"
+      }
+    },
+    {
+      "task_id": "more_numeric_slice",
+      "baseline": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n______________________________ test_reverse_slice ______________________________\n\n    def test_reverse_slice():\n>       assert list(numeric_range(0,10,2)[::-1]) == [8,6,4,2,0]\nE       assert [] == [8, 6, 4, 2, 0]\nE         \nE         Right contains 5 more items, first extra item: 8\nE         Use -v to get more diff\n\ntests/test_public.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_reverse_slice - assert [] == [8, 6, 4, 2, 0]\n1 failed in 0.05s\n"
+      },
+      "reference": {
+        "exit_code": 0,
+        "output": "...............................                                          [100%]\n31 passed in 0.06s\n"
+      }
+    },
+    {
+      "task_id": "more_predicate_sentinel",
+      "baseline": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_______________________________ test_no_sentinel _______________________________\n\n    def test_no_sentinel():\n>       assert list(locate([1,2],lambda *xs:sum(xs)>0,window_size=3)) == [0]\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_public.py:4: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nxs = (1, 2, <object object at 0x7fa7d2465770>)\n\n>   assert list(locate([1,2],lambda *xs:sum(xs)>0,window_size=3)) == [0]\n                                        ^^^^^^^\nE   TypeError: unsupported operand type(s) for +: 'int' and 'object'\n\ntests/test_public.py:4: TypeError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_no_sentinel - TypeError: unsupported operan...\n1 failed in 0.05s\n"
+      },
+      "reference": {
+        "exit_code": 0,
+        "output": "......                                                                   [100%]\n6 passed in 0.04s\n"
+      }
+    },
+    {
+      "task_id": "more_nth_combination",
+      "baseline": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_________________________________ test_long_r __________________________________\n\n    def test_long_r():\n>       assert nth('ab',3,0) == ('a','a','a')\n               ^^^^^^^^^^^^^\n\ntests/test_public.py:4: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\niterable = 'ab', r = 3, index = 0\n\n    def nth_combination_with_replacement(iterable, r, index):\n        \"\"\"Equivalent to\n        ``list(combinations_with_replacement(iterable, r))[index]``.\n    \n    \n        The subsequences with repetition of *iterable* that are of length *r* can\n        be ordered lexicographically. :func:`nth_combination_with_replacement`\n        computes the subsequence at sort position *index* directly, without\n        computing the previous subsequences with replacement.\n    \n            >>> nth_combination_with_replacement(range(5), 3, 5)\n            (0, 1, 1)\n    \n        ``ValueError`` will be raised If *r* is negative or greater than the length\n        of *iterable*.\n        ``IndexError`` will be raised if the given *index* is invalid.\n        \"\"\"\n        pool = tuple(iterable)\n        n = len(pool)\n        if (r < 0) or (r > n):\n>           raise ValueError\nE           ValueError\n\nmore_itertools/more.py:4277: ValueError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_long_r - ValueError\n1 failed in 0.08s\n"
+      },
+      "reference": {
+        "exit_code": 0,
+        "output": "........                                                                 [100%]\n8 passed in 0.04s\n"
+      }
+    },
+    {
+      "task_id": "more_nth_permutation",
+      "baseline": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________________ test_empty_permutation_set __________________________\n\n    def test_empty_permutation_set():\n>       with pytest.raises(IndexError): nth_permutation('abc',5,0)\n                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_public.py:5: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\niterable = 'abc', r = 5, index = 0\n\n    def nth_permutation(iterable, r, index):\n        \"\"\"Equivalent to ``list(permutations(iterable, r))[index]```\n    \n        The subsequences of *iterable* that are of length *r* where order is\n        important can be ordered lexicographically. :func:`nth_permutation`\n        computes the subsequence at sort position *index* directly, without\n        computing the previous subsequences.\n    \n            >>> nth_permutation('ghijk', 2, 5)\n            ('h', 'i')\n    \n        ``ValueError`` will be raised If *r* is negative or greater than the length\n        of *iterable*.\n        ``IndexError`` will be raised if the given *index* is invalid.\n        \"\"\"\n        pool = list(iterable)\n        n = len(pool)\n    \n        if r is None or r == n:\n            r, c = n, factorial(n)\n        elif not 0 <= r < n:\n>           raise ValueError\nE           ValueError\n\nmore_itertools/more.py:4241: ValueError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_empty_permutation_set - ValueError\n1 failed in 0.08s\n"
+      },
+      "reference": {
+        "exit_code": 0,
+        "output": "........                                                                 [100%]\n8 passed in 0.04s\n"
+      }
+    },
+    {
+      "task_id": "slugify_hex",
+      "baseline": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n________________________________ test_uppercase ________________________________\n\n    def test_uppercase():\n>       assert slugify('&#X41;',algorithm='modern') == 'a'\nE       AssertionError: assert 'x41' == 'a'\nE         \nE         - a\nE         + x41\n\ntests/test_public.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_uppercase - AssertionError: assert 'x41' ==...\n1 failed in 0.03s\n"
+      },
+      "reference": {
+        "exit_code": 0,
+        "output": "......                                                                   [100%]\n6 passed in 0.03s\n"
+      }
+    },
+    {
+      "task_id": "slugify_truncation",
+      "baseline": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________________________ test_fits ___________________________________\n\n    def test_fits():\n>       assert slugify('x',algorithm='modern',allow_unicode=True,replacements=[('x','one--two')],replacement_stage='post',word_boundary=True,max_length=20) == 'one--two'\nE       AssertionError: assert 'one-two' == 'one--two'\nE         \nE         - one--two\nE         ?     -\nE         + one-two\n\ntests/test_public.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_fits - AssertionError: assert 'one-two' == ...\n1 failed in 0.03s\n"
+      },
+      "reference": {
+        "exit_code": 0,
+        "output": "......................................                                   [100%]\n38 passed in 0.05s\n"
+      }
+    }
+  ]
+}
