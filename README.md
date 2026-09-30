@@ -201,3 +201,5 @@ python eval/run_benchmark.py --fake --runs 1 --require-all
 ## 开源参考与 Attribution
 
 借鉴 `rasbt/mini-coding-agent` 的最小循环、`SWE-agent/mini-swe-agent` 的 issue→环境观察→重试思路、`Aider` 的 repository map 思路。项目核心代码独立编写，未复制它们的实现；详见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。可学习的顺序从 [`docs/00-项目总览.md`](docs/00-项目总览.md) 开始。
+
+- [外部历史 Bug 评测：10 个真实 Bug / 3 个项目 / 3 次重复](docs/15-外部历史Bug评测协议.md)

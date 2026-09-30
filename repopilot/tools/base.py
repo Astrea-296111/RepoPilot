@@ -21,8 +21,9 @@ class Tool(Protocol):
 
 
 class Workspace:
-    def __init__(self, root: Path):
+    def __init__(self, root: Path, protected_paths: tuple[str, ...] = ()):
         self.root = root.resolve(strict=True)
+        self.protected_paths = tuple((self.root / p).resolve() for p in protected_paths)
         if not self.root.is_dir():
             raise ValueError("仓库路径必须是目录")
 
@@ -39,3 +40,7 @@ class Workspace:
         if exists and not path.exists():
             raise ValueError("目标路径不存在")
         return path
+
+    def writable(self, path: Path) -> None:
+        if any(path == p or path.is_relative_to(p) for p in self.protected_paths):
+            raise ValueError("拒绝修改受保护的评分文件")

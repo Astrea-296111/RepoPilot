@@ -32,6 +32,7 @@ class ApplyPatch:
 
     def execute(self, args: dict) -> ToolResult:
         path = self.workspace.resolve(args["path"])
+        self.workspace.writable(path)
         if not path.is_file() or path.stat().st_size > 512_000:
             raise ValueError("只能修改不超过 512 KB 的已有文件")
         old, new = args["old_text"], args["new_text"]
@@ -61,6 +62,7 @@ class WriteFile:
 
     def execute(self, args: dict) -> ToolResult:
         path = self.workspace.resolve(args["path"], exists=False)
+        self.workspace.writable(path)
         content = args["content"]
         if path.exists() or not path.parent.is_dir() or not isinstance(content, str) or len(content) > 128_000:
             raise ValueError("只能在已有目录创建不超过 128 KB 的新文件")

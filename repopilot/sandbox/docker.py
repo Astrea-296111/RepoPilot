@@ -10,9 +10,10 @@ from repopilot.tools.shell import bounded_output
 
 
 class DockerExecutor:
-    def __init__(self, root: Path, image: str = "repopilot-sandbox:dev"):
+    def __init__(self, root: Path, image: str = "repopilot-sandbox:dev", protected_paths: tuple[str, ...] = ()):
         self.root = root.resolve()
         self.image = image
+        self.protected_paths = protected_paths
 
     def run(self, command: str, timeout: int) -> ToolResult:
         if not shutil.which("docker"):
@@ -25,7 +26,14 @@ class DockerExecutor:
                     "--security-opt", "no-new-privileges", "--pids-limit", "128",
                     "--memory", "512m", "--cpus", "1", "--user", f"{getattr(os, 'getuid', lambda: 10001)()}:{getattr(os, 'getgid', lambda: 10001)()}",
                     "-e", "HOME=/tmp", "--mount", f"type=bind,source={self.root},target=/workspace",
-                    "--workdir", "/workspace", self.image, "sh", "-lc", command]
+                    "--workdir", "/workspace"]
+            for relative in self.protected_paths:
+                path = (self.root / relative).resolve()
+                if not path.is_relative_to(self.root):
+                    raise ValueError("Protected mount escapes workspace")
+                if path.exists():
+                    args += ["--mount", f"type=bind,source={path},target=/workspace/{relative},readonly"]
+            args += [self.image, "sh", "-lc", command]
             try:
                 proc = subprocess.run(args, capture_output=True, text=True, timeout=timeout + 10)
                 output = bounded_output(proc.stdout + ("\nstderr:\n" + proc.stderr if proc.stderr else ""))

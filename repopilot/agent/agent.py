@@ -69,13 +69,14 @@ def demo_responses() -> list[str]:
 
 class RepoPilot:
     def __init__(self, repo: Path, llm: LLM, settings: Settings, *, executor: str = "docker",
-                 approval: str = "ask", approve: Callable[[str, dict], bool] | None = None):
-        self.workspace = Workspace(repo)
+                 approval: str = "ask", approve: Callable[[str, dict], bool] | None = None,
+                 protected_paths: tuple[str, ...] = ()):
+        self.workspace = Workspace(repo, protected_paths)
         if executor not in {"docker", "local"} or approval not in {"ask", "auto", "never"}:
             raise ValueError("executor 或 approval 参数无效")
         self.executor_name, self.approval, self.approve = executor, approval, approve
         self.settings, self.llm = settings, llm
-        shell = DockerExecutor(self.workspace.root, settings.docker_image) if executor == "docker" else LocalExecutor(self.workspace.root)
+        shell = DockerExecutor(self.workspace.root, settings.docker_image, protected_paths) if executor == "docker" else LocalExecutor(self.workspace.root)
         self.tools = {tool.name: tool for tool in [ReadFile(self.workspace), SearchCode(self.workspace),
             ApplyPatch(self.workspace), WriteFile(self.workspace), RunCommand(self.workspace, shell), GitDiff(self.workspace)]}
         self.store = SessionStore(self.workspace.root)

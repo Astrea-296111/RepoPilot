@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from repopilot.agent.state import AgentState
 from repopilot.tools.shell import bounded_output
+from .excerpts import source_excerpt
 
 
 class ContextManager:
@@ -21,7 +22,9 @@ class ContextManager:
         for relative, _score in relevant[:3]:
             path = (root / relative).resolve()
             if path.is_relative_to(root.resolve()) and path.is_file():
-                relevant_code.append(f"{relative}:\n{path.read_text(encoding='utf-8', errors='replace')[:1400]}")
+                source = path.read_text(encoding='utf-8', errors='replace')
+                excerpt = source_excerpt(source, state.task) if len(source) > 7000 else source[:1400]
+                relevant_code.append(f"{relative}:\n{excerpt}")
         # Priority: required > newest observations > memory > relevant code > repo map.
         sections = [("\nRecent observations:\n", recent), ("\nEarlier memory:\n", memory),
                     ("\nRelevant code:\n", "\n".join(relevant_code)), ("\nRepo map:\n", repo_map)]

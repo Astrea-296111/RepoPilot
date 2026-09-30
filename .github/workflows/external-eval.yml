@@ -1,0 +1,98 @@
+name: External historical bug evaluation
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: repopilot-external-eval
+  cancel-in-progress: false
+jobs:
+  reference:
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[external-eval]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e '.[dev]' pytest==8.4.2
+      - run: python -m pytest -q
+      - run: docker build -t repopilot-external:fixed -f eval/Dockerfile.external .
+      - name: Validate broken baselines and upstream fixes in Docker
+        env:
+          REPOPILOT_DOCKER_IMAGE: repopilot-external:fixed
+        run: python eval/run_external.py --mode reference --output eval/results/external-reference.json
+      - uses: actions/upload-artifact@v6
+        with:
+          name: external-reference
+          path: eval/results/external-reference.json
+          retention-days: 30
+  trials:
+    needs: reference
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        mode: [agent, oneshot]
+        shard: [0, 1, 2, 3, 4]
+    env:
+      LLM_MODEL: qwen3.8-max
+      LLM_BASE_URL: https://dashscope.aliyuncs.com/compatible-mode/v1
+      LLM_REASONING_EFFORT: medium
+      LLM_STREAM: 'true'
+      LLM_TIMEOUT_SECONDS: '180'
+      REPOPILOT_DOCKER_IMAGE: repopilot-external:fixed
+      REPOPILOT_MAX_STEPS: '15'
+      REPOPILOT_MAX_CONTEXT_CHARS: '30000'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e '.[dev]' pytest==8.4.2
+      - run: docker build -t repopilot-external:fixed -f eval/Dockerfile.external .
+      - name: Run fixed paired trials
+        env:
+          LLM_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+        run: python eval/run_external.py --mode ${{ matrix.mode }} --runs 3 --shard ${{ matrix.shard }} --shards 5
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: external-${{ matrix.mode }}-${{ matrix.shard }}
+          path: eval/results/external-${{ matrix.mode }}-${{ matrix.shard }}.json
+          if-no-files-found: error
+          retention-days: 30
+  comparison:
+    needs: trials
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e '.[dev]'
+      - uses: actions/download-artifact@v6
+        with:
+          pattern: external-*
+          path: eval/results/external-shards
+      - run: python eval/summarize_external.py eval/results/external-shards
+      - name: Show comparison
+        run: cat eval/results/external-comparison.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: external-comparison
+          path: |
+            eval/results/external-comparison.json
+            eval/results/external-comparison.md
+          retention-days: 30
