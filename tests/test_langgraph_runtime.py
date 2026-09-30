@@ -100,7 +100,7 @@ def test_graph_cli_smoke(runtime_repo):
     result = subprocess.run([sys.executable, "-m", "repopilot.cli", "run", str(runtime_repo),
                              "fix duplicate email", "--runtime", "langgraph", "--fake-demo",
                              "--executor", "local", "--approval", "auto"],
-                            capture_output=True, text=True, timeout=45)
+                            capture_output=True, text=True, encoding="utf-8", timeout=45)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "Status: completed" in result.stdout and "Tests: passed" in result.stdout
 

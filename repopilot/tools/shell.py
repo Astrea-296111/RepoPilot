@@ -34,6 +34,7 @@ class LocalExecutor:
             "PATH", "HOME", "TMPDIR", "TEMP", "TMP", "LANG", "LC_ALL", "VIRTUAL_ENV",
             "PYTHONPATH", "SYSTEMROOT", "COMSPEC", "PATHEXT"}}
         process = subprocess.Popen(command, shell=True, cwd=self.root, text=True,
+                                   encoding="utf-8", errors="replace",
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                    start_new_session=True, env={**allowed_env, "PYTHONUNBUFFERED": "1"})
         try:

@@ -45,7 +45,7 @@ def repair_changed_files(repo):
 
 def suite_hash():
     digest=hashlib.sha256()
-    for p in sorted((ROOT/'eval/external').rglob('*')):
+    for p in sorted((ROOT/'eval/external').rglob('*'), key=lambda item: item.relative_to(ROOT).as_posix()):
         if p.is_file() and '__pycache__' not in p.parts:
             digest.update(p.relative_to(ROOT).as_posix().encode())
             digest.update(p.read_bytes())
@@ -92,7 +92,7 @@ def trial(task, run, mode, settings, runtime='custom'):
             else:
                 entries=build_repo_map(repo)
                 paths=retrieve_with_imports(repo,entries,public_task)[:3]
-                code='\n\n'.join('FILE '+p+'\n'+source_excerpt((repo/p).read_text(),public_task) for p,_ in paths)
+                code='\n\n'.join('FILE '+p+'\n'+source_excerpt((repo/p).read_text(encoding="utf-8"),public_task) for p,_ in paths)
                 context=public_task+'\nRepo map:\n'+render_repo_map(entries)+'\nSelected public source:\n'+code
                 record['retrieved_files']=[p for p,_ in paths]
                 response=llm.chat(SYSTEM,context)
@@ -162,7 +162,7 @@ def main():
     if args.local_reference and args.mode!='reference': parser.error('Local execution is only allowed for trusted reference validation')
     if not 0<=args.shard<args.shards or args.runs<1: parser.error('Invalid shard or runs')
     settings=Settings.load()
-    tasks=json.loads(TASKS.read_text())
+    tasks=json.loads(TASKS.read_text(encoding="utf-8"))
     if args.task:
         unknown=set(args.task)-{t['id'] for t in tasks}
         if unknown: parser.error('Unknown task IDs: '+', '.join(sorted(unknown)))

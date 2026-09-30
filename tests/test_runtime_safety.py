@@ -27,7 +27,7 @@ def test_interactive_approval_is_applied_to_mutation(runtime_repo):
     patch = json.loads(demo_responses()[3])["arguments"]
     assert not pilot._execute("apply_patch", patch, state).ok
     assert requested == ["apply_patch"]
-    assert "raise ValueError" in (runtime_repo / "app/users.py").read_text()
+    assert "raise ValueError" in (runtime_repo / "app/users.py").read_text(encoding="utf-8")
 
 
 def test_valid_json_after_one_repair(runtime_repo):
@@ -64,7 +64,7 @@ def test_external_hidden_suite_is_injected_only_into_grader(monkeypatch):
     root = Path(__file__).resolve().parents[1]
     monkeypatch.syspath_prepend(str(root / "eval"))
     runner = importlib.import_module("run_external")
-    task = json.loads((root / "eval/external/tasks.json").read_text())[0]
+    task = json.loads((root / "eval/external/tasks.json").read_text(encoding="utf-8"))[0]
     observed = []
 
     def execute(repo, command, settings, local=False):
@@ -75,7 +75,7 @@ def test_external_hidden_suite_is_injected_only_into_grader(monkeypatch):
     monkeypatch.setattr(runner, "execute", execute)
     source = next(p for p in (root / task["repo"] / task["allowed_source_dir"]).glob("*.py")
                   if p.stat().st_size)
-    original = source.read_text()
+    original = source.read_text(encoding="utf-8")
     response = {"summary": "isolation test", "patches": [{
         "path": source.relative_to(root / task["repo"]).as_posix(),
         "old_text": original, "new_text": original + "\n# isolation probe\n"}]}

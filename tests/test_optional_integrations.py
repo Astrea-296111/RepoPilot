@@ -1,5 +1,6 @@
 """Base installation remains usable without optional SDKs or external services."""
 import builtins
+import os
 import subprocess
 import sys
 
@@ -10,8 +11,9 @@ from repopilot.llm.base import FakeLLM
 
 def test_base_cli_custom_runtime_smoke(runtime_repo):
     result = subprocess.run([sys.executable, "-m", "repopilot.cli", "run", str(runtime_repo),
-                             "fix duplicate email", "--fake-demo", "--executor", "local", "--approval", "auto"],
-                            capture_output=True, text=True, timeout=45)
+                            "fix duplicate email", "--fake-demo", "--executor", "local", "--approval", "auto"],
+                            capture_output=True, text=True, encoding="utf-8", timeout=45,
+                            env={**os.environ, "PYTHONIOENCODING": "ascii"})
     assert result.returncode == 0, result.stdout + result.stderr
     assert "Status: completed" in result.stdout
 
@@ -59,5 +61,5 @@ for extra, operation in [
 print("All optional integrations report actionable installation errors")
 '''
     result = subprocess.run([sys.executable, "-c", script, str(runtime_repo)],
-                            capture_output=True, text=True, timeout=15)
+                            capture_output=True, text=True, encoding="utf-8", timeout=15)
     assert result.returncode == 0, result.stdout + result.stderr

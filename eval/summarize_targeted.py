@@ -35,7 +35,7 @@ def describe(records, mode):
 
 
 def summarize(inputs):
-    docs = [json.loads(p.read_text()) for p in inputs]
+    docs = [json.loads(p.read_text(encoding="utf-8")) for p in inputs]
     docs = [d for d in docs if "records" in d]
     if len(docs) != 8:
         raise ValueError("Need exactly four shards per method for the targeted scope")
@@ -66,12 +66,12 @@ def summarize(inputs):
     config["runtime"] = runtimes.pop()
     methods = {mode: describe([r for (t, n, m), r in seen.items() if m == mode], mode) for mode in ("agent", "oneshot")}
     historical_path = ROOT / "eval/evidence/2026-09-30"
-    manifest = json.loads((historical_path / "manifest.json").read_text())
+    manifest = json.loads((historical_path / "manifest.json").read_text(encoding="utf-8"))
     if manifest["configuration"]["suite_sha256"] != config["suite_sha256"]:
         raise ValueError("Frozen suite differs from the historical baseline")
     old = []
     for path in sorted((historical_path / "shards").glob("external-*.json")):
-        old.extend(r for r in json.loads(path.read_text()).get("records", []) if r["task_id"] in TARGETED_TASK_IDS)
+        old.extend(r for r in json.loads(path.read_text(encoding="utf-8")).get("records", []) if r["task_id"] in TARGETED_TASK_IDS)
     if {(r["task_id"], r["run"], r["mode"]) for r in old} != expected or len(old) != len(expected):
         raise ValueError("Historical targeted slice is incomplete or duplicated")
     by_task = [{"task_id": task, **{

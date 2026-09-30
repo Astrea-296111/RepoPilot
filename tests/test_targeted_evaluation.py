@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def targeted(monkeypatch, tmp_path):
     monkeypatch.syspath_prepend(str(ROOT / "eval"))
     report = importlib.import_module("summarize_targeted")
-    old = [json.loads(p.read_text()) for p in (ROOT / "eval/evidence/2026-09-30/shards").glob("external-*.json")]
+    old = [json.loads(p.read_text(encoding="utf-8")) for p in (ROOT / "eval/evidence/2026-09-30/shards").glob("external-*.json")]
     docs = [d for d in old if "records" in d]
     config = {f: docs[0][f] for f in report.FIELDS}
     config["shards"] = 4
@@ -46,7 +46,7 @@ def test_targeted_reporting_rejects_incomplete_or_mixed_data(targeted, corruptio
     elif corruption == "duplicate":
         inputs = [inputs[0], inputs[0], *inputs[2:]]
     else:
-        data = json.loads(inputs[0].read_text())
+        data = json.loads(inputs[0].read_text(encoding="utf-8"))
         if corruption == "config":
             data["max_context_chars"] += 1
         else:

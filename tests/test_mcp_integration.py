@@ -70,7 +70,7 @@ def test_invalid_mcp_repository_exits_with_clear_error(tmp_path):
     with pytest.raises(FileNotFoundError):
         create_server(tmp_path / "missing")
     result = subprocess.run([sys.executable, "-m", "repopilot.cli", "mcp", str(tmp_path / "missing")],
-                            capture_output=True, text=True, timeout=15)
+                            capture_output=True, text=True, encoding="utf-8", timeout=15)
     assert result.returncode == 2 and "MCP" in result.stderr
 
 

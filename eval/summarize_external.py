@@ -9,7 +9,7 @@ from run_external import aggregate
 
 
 def summarize(inputs):
-    documents=[json.loads(p.read_text()) for p in inputs]
+    documents=[json.loads(p.read_text(encoding="utf-8")) for p in inputs]
     docs=[d for d in documents if 'records' in d]
     if len(docs)!=10: raise ValueError('Need exactly 5 shards for each of 2 methods')
     fields=('suite_sha256','model','reasoning_effort','stream','max_steps','max_context_chars','runs','shards','timing_scope')

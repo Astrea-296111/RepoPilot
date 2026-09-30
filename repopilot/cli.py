@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
+import sys
 import typer
 from repopilot.agent.agent import RepoPilot, demo_responses
 from repopilot.config import Settings
@@ -11,6 +12,14 @@ from repopilot.llm.openai_compatible import OpenAICompatibleLLM
 from repopilot.session.store import SessionStore
 
 app = typer.Typer(help="RepoPilot: inspect, edit and test a repository with an explicit agent loop")
+
+
+@app.callback()
+def configure_text_streams():
+    """Keep Unicode summaries and stdio JSON usable when Windows stdout is redirected."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
 
 
 def _llm(settings: Settings, fake_demo: bool):

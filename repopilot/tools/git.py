@@ -23,12 +23,12 @@ class GitDiff:
                       ":(exclude)**/.repopilot/**"]
         for prefix in (["diff", "--no-ext-diff", "--no-textconv", "--", rel, *exclusions],
                        ["diff", "--cached", "--no-ext-diff", "--no-textconv", "--", rel, *exclusions]):
-            proc = subprocess.run([*base, *prefix], capture_output=True, text=True, timeout=10)
+            proc = subprocess.run([*base, *prefix], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10)
             if proc.returncode:
                 return ToolResult(False, bounded_output(proc.stderr or "git diff failed: initialize a Git repository"), proc.returncode)
             chunks.append(proc.stdout)
         # Git ignores untracked files in diff; report them explicitly so they aren't invisible.
-        untracked = subprocess.run([*base, "ls-files", "--others", "--exclude-standard", "--", rel, *exclusions], capture_output=True, text=True, timeout=10)
+        untracked = subprocess.run([*base, "ls-files", "--others", "--exclude-standard", "--", rel, *exclusions], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10)
         if untracked.returncode:
             return ToolResult(False, bounded_output(untracked.stderr), untracked.returncode)
         if untracked.stdout:
