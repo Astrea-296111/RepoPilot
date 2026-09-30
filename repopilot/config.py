@@ -34,5 +34,5 @@ class Settings(BaseModel):
             max_context_chars=int(os.getenv("REPOPILOT_MAX_CONTEXT_CHARS", "30000")),
             otel_enabled=os.getenv("REPOPILOT_OTEL_ENABLED", "0").lower() in {"1", "true", "yes"},
             otel_exporter=os.getenv("REPOPILOT_OTEL_EXPORTER", "console"),
-            otel_endpoint=os.getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "")),
+            otel_endpoint=os.getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT") or os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", ""),
         )

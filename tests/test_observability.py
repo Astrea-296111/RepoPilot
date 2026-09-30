@@ -109,7 +109,7 @@ def test_metadata_allowlist_rejects_source_bodies():
     provider.shutdown()
 
 
-def test_otlp_http_export_to_local_collector(monkeypatch):
+def test_otlp_http_export_to_local_collector(monkeypatch, tmp_path):
     from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
     from threading import Thread
     from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import ExportTraceServiceRequest
@@ -127,8 +127,15 @@ def test_otlp_http_export_to_local_collector(monkeypatch):
     server = ThreadingHTTPServer(("127.0.0.1", 0), Collector)
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
-    tracing = Tracing.from_settings(Settings(otel_enabled=True, otel_exporter="otlp",
-        otel_endpoint=f"http://127.0.0.1:{server.server_port}/v1/traces"))
+    # Exercise documented env loading, including a blank traces endpoint from
+    # .env.example and the generic endpoint fallback, through the real exporter.
+    monkeypatch.setenv("REPOPILOT_OTEL_ENABLED", "1")
+    monkeypatch.setenv("REPOPILOT_OTEL_EXPORTER", "otlp")
+    monkeypatch.setenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "")
+    monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", f"http://127.0.0.1:{server.server_port}/v1/traces")
+    env_file = tmp_path / "empty.env"
+    env_file.write_text("")
+    tracing = Tracing.from_settings(Settings.load(env_file))
     try:
         with tracing.span("repopilot.task", {"repopilot.runtime": "custom"}):
             pass

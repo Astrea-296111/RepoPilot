@@ -92,3 +92,31 @@ def test_mcp_git_diff_excludes_private_files_and_never_runs_external_diff(runtim
             assert "public change" in text(result) and "PRIVATE_DIFF_SENTINEL" not in text(result)
 
     asyncio.run(asyncio.wait_for(exercise(), timeout=20))
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows forbids ':' in filenames")
+def test_mcp_git_diff_keeps_magic_looking_filenames_inside_nested_workspace(tmp_path):
+    root = tmp_path / "parent-repository"
+    workspace = root / "workspace"
+    workspace.mkdir(parents=True)
+    private = root / "private.txt"
+    private.write_text("parent baseline")
+    target = workspace / ":(top)"
+    target.write_text("public baseline")
+    for command in (["git", "init", "-q"], ["git", "add", "."],
+                    ["git", "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                     "commit", "-qm", "baseline"]):
+        subprocess.run(command, cwd=root, check=True, timeout=10)
+    private.write_text("PRIVATE_PARENT_SENTINEL")
+    (root / "PRIVATE_PARENT_UNTRACKED.txt").write_text("parent untracked data")
+    target.write_text("public change")
+
+    async def exercise():
+        async with Client(create_server(workspace), read_timeout_seconds=5) as client:
+            for path in (".", ":(top)"):
+                result = await client.call_tool("git_diff", {"path": path})
+                assert not result.is_error and "public change" in text(result)
+                assert "PRIVATE_PARENT_SENTINEL" not in text(result)
+                assert "PRIVATE_PARENT_UNTRACKED.txt" not in text(result)
+
+    asyncio.run(asyncio.wait_for(exercise(), timeout=20))

@@ -1,0 +1,19 @@
+{
+  "issue": "Git magic-looking actual filenames could select paths outside a nested workspace",
+  "before": {
+    "trusted_fixture_marker": "PRIVATE_PARENT_SENTINEL",
+    "outside_root_marker_leaked": true
+  },
+  "fix": "Prefix positive user pathspec with :(literal), keeping only explicit private-path exclusions as magic",
+  "verification_commands": [
+    "python -m pytest tests/test_mcp_integration.py tests/test_core.py tests/test_langgraph_runtime.py -q",
+    "python -m pytest tests/test_mcp_integration.py -q"
+  ],
+  "verified_behaviors": [
+    "Official MCP client accepts literal colon filename and returns its public change",
+    "Parent tracked content and untracked names excluded for both default and explicit path",
+    "Default standalone Git diff, custom/LangGraph real demos, private .env exclusion and external helper blocking still pass"
+  ],
+  "result": "36 relevant tests passed before final untracked-name assertion; all five final MCP tests passed",
+  "benchmark_note": "Paid full run remains on 192627da77a2520df07d5e5b9c87e03e9424bfaf. This independent safety fix does not modify model/recovery/task/scoring/budgets; frozen task files have no Git magic-looking names."
+}

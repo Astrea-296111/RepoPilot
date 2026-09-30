@@ -14,8 +14,9 @@ class GitDiff:
     def execute(self, args: dict) -> ToolResult:
         path = args.get("path", ".")
         target = self.workspace.resolve(path)
-        rel = target.relative_to(self.workspace.root).as_posix()
-        # -C root keeps the checkout's subdirectory scope even when root is nested.
+        # A real filename such as ':(top)' must not become Git pathspec magic
+        # and escape a nested workspace. Keep only our exclusion patterns magic.
+        rel = ":(literal)" + target.relative_to(self.workspace.root).as_posix()
         chunks = []
         # Read-only callers must not execute repository-configured diff/textconv/fsmonitor helpers.
         base = ["git", "--no-pager", "-c", "core.fsmonitor=false", "-C", str(self.workspace.root)]
