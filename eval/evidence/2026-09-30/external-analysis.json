@@ -1,0 +1,160 @@
+{
+  "config": {
+    "suite_sha256": "fc0eb01fc240b1147a93e465b9c96a0a1f96916b932c1c8ceedd4f0b30eb8987",
+    "model": "qwen3.8-max",
+    "reasoning_effort": "medium",
+    "stream": true,
+    "max_steps": 15,
+    "max_context_chars": 30000,
+    "runs": 3,
+    "shards": 5,
+    "timing_scope": "Preparation + baseline Docker test + model/repair + fresh Docker grading"
+  },
+  "methods": {
+    "agent": {
+      "trials": 30,
+      "resolved": 25,
+      "task_successes": {
+        "boltons_backoff": 3,
+        "boltons_research": 0,
+        "boltons_split": 3,
+        "boltons_xfrange": 3,
+        "more_nth_combination": 3,
+        "more_nth_permutation": 3,
+        "more_numeric_slice": 3,
+        "more_predicate_sentinel": 3,
+        "slugify_hex": 2,
+        "slugify_truncation": 2
+      },
+      "median_end_to_end_seconds": 123.90350000000001,
+      "median_tokens": 34337.5,
+      "total_tokens": 1296515,
+      "failure_categories": {
+        "agent_loop_detection": 3,
+        "behavior_failure": 2
+      },
+      "completed_and_resolved": 23,
+      "terminal_errors": {
+        "loop_detection": 5
+      },
+      "max_end_to_end_seconds": 952.422
+    },
+    "oneshot": {
+      "trials": 30,
+      "resolved": 28,
+      "task_successes": {
+        "boltons_backoff": 3,
+        "boltons_research": 3,
+        "boltons_split": 3,
+        "boltons_xfrange": 3,
+        "more_nth_combination": 3,
+        "more_nth_permutation": 3,
+        "more_numeric_slice": 3,
+        "more_predicate_sentinel": 3,
+        "slugify_hex": 3,
+        "slugify_truncation": 1
+      },
+      "median_end_to_end_seconds": 36.492000000000004,
+      "median_tokens": 5003.0,
+      "total_tokens": 164566,
+      "failure_categories": {
+        "runner_or_protocol_failure": 2
+      },
+      "completed_and_resolved": 28,
+      "terminal_errors": {
+        "ValueError: old_text 必须在目标文件中恰好出现一次": 2
+      },
+      "max_end_to_end_seconds": 171.681
+    }
+  },
+  "by_task": [
+    {
+      "task_id": "boltons_backoff",
+      "upstream": "mahmoud/boltons",
+      "agent_successes": 3,
+      "oneshot_successes": 3,
+      "agent_completed_and_resolved": 3
+    },
+    {
+      "task_id": "boltons_research",
+      "upstream": "mahmoud/boltons",
+      "agent_successes": 0,
+      "oneshot_successes": 3,
+      "agent_completed_and_resolved": 0
+    },
+    {
+      "task_id": "boltons_split",
+      "upstream": "mahmoud/boltons",
+      "agent_successes": 3,
+      "oneshot_successes": 3,
+      "agent_completed_and_resolved": 3
+    },
+    {
+      "task_id": "boltons_xfrange",
+      "upstream": "mahmoud/boltons",
+      "agent_successes": 3,
+      "oneshot_successes": 3,
+      "agent_completed_and_resolved": 3
+    },
+    {
+      "task_id": "more_nth_combination",
+      "upstream": "more-itertools/more-itertools",
+      "agent_successes": 3,
+      "oneshot_successes": 3,
+      "agent_completed_and_resolved": 3
+    },
+    {
+      "task_id": "more_nth_permutation",
+      "upstream": "more-itertools/more-itertools",
+      "agent_successes": 3,
+      "oneshot_successes": 3,
+      "agent_completed_and_resolved": 3
+    },
+    {
+      "task_id": "more_numeric_slice",
+      "upstream": "more-itertools/more-itertools",
+      "agent_successes": 3,
+      "oneshot_successes": 3,
+      "agent_completed_and_resolved": 3
+    },
+    {
+      "task_id": "more_predicate_sentinel",
+      "upstream": "more-itertools/more-itertools",
+      "agent_successes": 3,
+      "oneshot_successes": 3,
+      "agent_completed_and_resolved": 1
+    },
+    {
+      "task_id": "slugify_hex",
+      "upstream": "un33k/python-slugify",
+      "agent_successes": 2,
+      "oneshot_successes": 3,
+      "agent_completed_and_resolved": 2
+    },
+    {
+      "task_id": "slugify_truncation",
+      "upstream": "un33k/python-slugify",
+      "agent_successes": 2,
+      "oneshot_successes": 1,
+      "agent_completed_and_resolved": 2
+    }
+  ],
+  "paired_outcomes": {
+    "both": 24,
+    "agent_only": 1,
+    "oneshot_only": 4,
+    "neither": 1
+  },
+  "success_gap_percentage_points": -10.0,
+  "task_cluster_bootstrap_95_percent_gap": [
+    -33.33333333333333,
+    6.666666666666667
+  ],
+  "notes": [
+    "10 historical module-scoped bugs in 3 upstream projects, each repeated 3 times; not SWE-bench.",
+    "Repeated trials on one task are correlated; bootstrap resamples tasks, only 10 clusters.",
+    "Additional completed_and_resolved metric audits saved Agent terminal status; patch grading remains the preregistered resolved outcome.",
+    "Public historical fixes may have been in model training data; no guarantee of contamination-free holdout.",
+    "No harness/prompt tuning based on these real-model outcomes. Public reproducers + custom frozen hidden edge cases; not the entire upstream test suite."
+  ]
+}

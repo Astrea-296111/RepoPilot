@@ -1,0 +1,115 @@
+{
+  "evaluated_commit": "ff9d52b6164b58c17d33a8dd3a17802765487965",
+  "run_url": "https://github.com/Astrea-296111/RepoPilot/actions/runs/36677551664",
+  "run_id": 36677551664,
+  "run_started_utc": "2026-09-30T06:18:24Z",
+  "run_completed_utc": "2026-09-30T06:59:02Z",
+  "scope": {
+    "upstream_projects": 3,
+    "independent_historical_bugs": 10,
+    "repeats_per_task_per_method": 3,
+    "real_model_trials": 60,
+    "public_reproducer_tests": 10,
+    "hidden_parameterized_tests": 119
+  },
+  "configuration": {
+    "suite_sha256": "fc0eb01fc240b1147a93e465b9c96a0a1f96916b932c1c8ceedd4f0b30eb8987",
+    "model": "qwen3.8-max",
+    "reasoning_effort": "medium",
+    "stream": true,
+    "max_steps": 15,
+    "max_context_chars": 30000,
+    "runs": 3,
+    "shards": 5,
+    "timing_scope": "Preparation + baseline Docker test + model/repair + fresh Docker grading"
+  },
+  "additional_configuration": {
+    "temperature": 0,
+    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "llm_read_timeout_seconds": 180,
+    "transport_retry_limit": 1
+  },
+  "audit_notes": [
+    "Shards and original comparison are copied verbatim from this completed run.",
+    "external-analysis adds saved terminal-status and maximum elapsed-time audits after the run; original resolved and token/timing scores are unchanged.",
+    "Cancelled run 36677252700 is excluded entirely due to evaluator session-directory accounting bug, corrected before this formal run.",
+    "Recorded token totals only cover this completed formal run, excluding earlier cancelled API usage."
+  ],
+  "files": [
+    {
+      "path": "external-analysis.json",
+      "bytes": 4788,
+      "sha256": "3edb40f2dedf697350a4c8508598dd90d886e7508371463b395e8aec25f3ab43"
+    },
+    {
+      "path": "external-analysis.md",
+      "bytes": 1056,
+      "sha256": "0728ebc8e9450a0eaf00bae6003842da2e9cae237aa712df3a083a2af3e0c27b"
+    },
+    {
+      "path": "original-external-comparison.json",
+      "bytes": 3905,
+      "sha256": "4bf7c05467e8f05eec1ed79ac0bacd477ae8cea0b833d548ca6f036cc2b63539"
+    },
+    {
+      "path": "original-external-comparison.md",
+      "bytes": 1005,
+      "sha256": "50643f512665c68778e501a41ac5c9350e1447cc7f0ba84e28b1a1d89eb2e5dc"
+    },
+    {
+      "path": "shards/external-agent-0.json",
+      "bytes": 131497,
+      "sha256": "d8f6c212fc3d9bf477ab298919c837ed381218d5d8c1e1eb204990ae5e9ead05"
+    },
+    {
+      "path": "shards/external-agent-1.json",
+      "bytes": 151629,
+      "sha256": "fcf8d8fed2acf1981c260fdca7d6526470136a1151e98e4b862542cec2b46f2e"
+    },
+    {
+      "path": "shards/external-agent-2.json",
+      "bytes": 89234,
+      "sha256": "2580f3585c442b4a34b9bf74ffad6091c4fc742cce423297db217321baebbd3d"
+    },
+    {
+      "path": "shards/external-agent-3.json",
+      "bytes": 166515,
+      "sha256": "e661ddd30a8f71137053795746a5eba859d38b07f3598edb456683d13e38c273"
+    },
+    {
+      "path": "shards/external-agent-4.json",
+      "bytes": 163691,
+      "sha256": "2638d21ea2f5a85e8655d6b5238e47e504322e877acabe09ee789e14d980ff45"
+    },
+    {
+      "path": "shards/external-oneshot-0.json",
+      "bytes": 20127,
+      "sha256": "ef35332df9d45ec40b019cb86ee76d6437b4b329956116fea088d36cadf77b4b"
+    },
+    {
+      "path": "shards/external-oneshot-1.json",
+      "bytes": 32550,
+      "sha256": "95ff745ab54b6bf40ae6688ceb8aa660607bc374ab209f9eaa0a651902b5f146"
+    },
+    {
+      "path": "shards/external-oneshot-2.json",
+      "bytes": 19345,
+      "sha256": "5a674cce62740d3e97f76963d5bfc404616c93c7776af5a51668e4b31576dd09"
+    },
+    {
+      "path": "shards/external-oneshot-3.json",
+      "bytes": 21072,
+      "sha256": "39b5fac0e29f9074155f3c236f8b59f289cae0b1a59b3855762b688316f5569b"
+    },
+    {
+      "path": "shards/external-oneshot-4.json",
+      "bytes": 23184,
+      "sha256": "d6ea8d0eee195f83bbc908d9039e2b114aa6c8201b0a0dbbffda3afbd7ad1b6c"
+    },
+    {
+      "path": "shards/external-reference.json",
+      "bytes": 16035,
+      "sha256": "6f4b28181aa56da28f0d6a793ff6307097471d47fd0b5a54e13d0c11a5f57ee6"
+    }
+  ]
+}

@@ -123,6 +123,8 @@ python eval/run_benchmark.py --runs 1
 
 之后扩至 25 任务并加入 one-shot 对照。旧配置的两轮 25 题中，one-shot 各有 4 次模型超时；调整推理力度与流式传输后，[四题定向复测](https://github.com/Astrea-296111/RepoPilot/actions/runs/36568828589) 得到 Agent 3/4、Top-K one-shot 0/4；但[完整公开 Python 上下文复测](https://github.com/Astrea-296111/RepoPilot/actions/runs/36572978243)让 one-shot 达到 4/4，[导入图补全五题](https://github.com/Astrea-296111/RepoPilot/actions/runs/36574356369)得到 5/5。采用导入图的[Agent 五题复测](https://github.com/Astrea-296111/RepoPilot/actions/runs/36575414927)也是 5/5，但两题曾改公开测试（评分前恢复，严格无测试改动口径为 3/5）。每题只跑一次，原始四题不能证明 Agent Loop 优于单次调用；详见 [评测方法与限制](docs/13-真实模型Benchmark.md)。
 
+2026-09-30 完成 [外部历史 Bug 实测](docs/17-外部历史Bug实测结果.md)：3 个开源项目共 10 个 Bug，每种方法每题重复 3 次，共 60 次 Qwen3.8-Max 试验。Agent 补丁评分通过 **25/30**，正常结束并通过 **23/30**；单次补丁基线 **28/30**。固定评分包含 129 个公开/隐藏用例。当前结果没有证明多轮 Agent 优于单次调用；原始分片、失败轨迹和指标定义均已保存。
+
 ## 目录结构
 
 ```text
@@ -196,10 +198,13 @@ python eval/run_benchmark.py --fake --runs 1 --require-all
 
 ## Roadmap
 
-在相同模型配置下做每题多次重复运行，并合并 shard 做配对比较与 ablation；接入少量外部任务作为 smoke tests；BM25/Embedding 混合召回；更好的命令允许列表和审计；增量索引；容器可写区隔离及更严格资源/网络权限；认证和持久化 API 索引。
+优先改进重复动作后的转向与测试成功后的终止策略，做固定任务的上下文/动作策略对照；增加新的独立 Bug 与完整仓库集成测试；评估 BM25/Embedding 混合召回；命令允许列表和审计；增量索引；进一步验证容器隔离边界；认证和持久化 API 索引。
 
 ## 开源参考与 Attribution
 
 借鉴 `rasbt/mini-coding-agent` 的最小循环、`SWE-agent/mini-swe-agent` 的 issue→环境观察→重试思路、`Aider` 的 repository map 思路。项目核心代码独立编写，未复制它们的实现；详见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。可学习的顺序从 [`docs/00-项目总览.md`](docs/00-项目总览.md) 开始。
 
 - [外部历史 Bug 评测：10 个真实 Bug / 3 个项目 / 3 次重复](docs/15-外部历史Bug评测协议.md)
+
+- [项目 STAR、简历条目与技术决策](docs/16-项目STAR与简历.md)
+- [外部历史 Bug 实测结果与失败分析](docs/17-外部历史Bug实测结果.md)

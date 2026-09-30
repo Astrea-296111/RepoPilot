@@ -1,0 +1,238 @@
+{
+  "schema_version": 1,
+  "suite_sha256": "fc0eb01fc240b1147a93e465b9c96a0a1f96916b932c1c8ceedd4f0b30eb8987",
+  "model": "qwen3.8-max",
+  "reasoning_effort": "medium",
+  "stream": true,
+  "max_steps": 15,
+  "max_context_chars": 30000,
+  "mode": "oneshot",
+  "runs": 3,
+  "shard": 2,
+  "shards": 5,
+  "timing_scope": "Preparation + baseline Docker test + model/repair + fresh Docker grading",
+  "records": [
+    {
+      "task_id": "boltons_split",
+      "upstream": "mahmoud/boltons",
+      "run": 1,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________________________ test_zero ___________________________________\n\n    def test_zero():\n>       assert split([1,None,2],maxsplit=0) == [[1,None,2]]\nE       assert [[[1, None, 2]]] == [[1, None, 2]]\nE         \nE         At index 0 diff: [[1, None, 2]] != [1, None, 2]\nE         Use -v to get more diff\n\ntests/test_public.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_zero - assert [[[1, None, 2]]] == [[1, None...\n1 failed in 0.03s\n"
+      },
+      "retrieved_files": [
+        "boltons/iterutils.py",
+        "boltons/typeutils.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"boltons/iterutils.py\",\"old_text\":\"        if maxsplit == 0:\\n            yield [src]\\n            return\",\"new_text\":\"        if maxsplit == 0:\\n            yield list(src)\\n            return\"}],\"summary\":\"Fix maxsplit=0 in split_iter to yield list(src) (a flat group of elements) instead of [src] (which wraps the iterable in an extra list).\"}",
+      "token_usage": {
+        "prompt_tokens": 2866,
+        "completion_tokens": 352,
+        "total_tokens": 3218
+      },
+      "patches": 1,
+      "repair_seconds": 9.206,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "boltons/iterutils.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/boltons/iterutils.py b/boltons/iterutils.py\nindex 433eaf5..4e7a37f 100644\n--- a/boltons/iterutils.py\n+++ b/boltons/iterutils.py\n@@ -158,7 +158,7 @@ def split_iter(src, sep=None, maxsplit=None):\n     if maxsplit is not None:\n         maxsplit = int(maxsplit)\n         if maxsplit == 0:\n-            yield [src]\n+            yield list(src)\n             return\n \n     if callable(sep):\n",
+      "grader": {
+        "exit_code": 0,
+        "output": ".......                                                                  [100%]\n7 passed in 0.02s\n"
+      },
+      "end_to_end_seconds": 10.032
+    },
+    {
+      "task_id": "boltons_split",
+      "upstream": "mahmoud/boltons",
+      "run": 2,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________________________ test_zero ___________________________________\n\n    def test_zero():\n>       assert split([1,None,2],maxsplit=0) == [[1,None,2]]\nE       assert [[[1, None, 2]]] == [[1, None, 2]]\nE         \nE         At index 0 diff: [[1, None, 2]] != [1, None, 2]\nE         Use -v to get more diff\n\ntests/test_public.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_zero - assert [[[1, None, 2]]] == [[1, None...\n1 failed in 0.03s\n"
+      },
+      "retrieved_files": [
+        "boltons/iterutils.py",
+        "boltons/typeutils.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"boltons/iterutils.py\",\"old_text\":\"        if maxsplit == 0:\\n            yield [src]\\n            return\",\"new_text\":\"        if maxsplit == 0:\\n            yield list(src)\\n            return\"}],\"summary\":\"When maxsplit=0, yield list(src) instead of [src] so the original iterable is flattened into one group rather than wrapped as a nested element.\"}",
+      "token_usage": {
+        "prompt_tokens": 2866,
+        "completion_tokens": 378,
+        "total_tokens": 3244
+      },
+      "patches": 1,
+      "repair_seconds": 10.975,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "boltons/iterutils.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/boltons/iterutils.py b/boltons/iterutils.py\nindex 433eaf5..4e7a37f 100644\n--- a/boltons/iterutils.py\n+++ b/boltons/iterutils.py\n@@ -158,7 +158,7 @@ def split_iter(src, sep=None, maxsplit=None):\n     if maxsplit is not None:\n         maxsplit = int(maxsplit)\n         if maxsplit == 0:\n-            yield [src]\n+            yield list(src)\n             return\n \n     if callable(sep):\n",
+      "grader": {
+        "exit_code": 0,
+        "output": ".......                                                                  [100%]\n7 passed in 0.02s\n"
+      },
+      "end_to_end_seconds": 11.765
+    },
+    {
+      "task_id": "boltons_split",
+      "upstream": "mahmoud/boltons",
+      "run": 3,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________________________ test_zero ___________________________________\n\n    def test_zero():\n>       assert split([1,None,2],maxsplit=0) == [[1,None,2]]\nE       assert [[[1, None, 2]]] == [[1, None, 2]]\nE         \nE         At index 0 diff: [[1, None, 2]] != [1, None, 2]\nE         Use -v to get more diff\n\ntests/test_public.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_zero - assert [[[1, None, 2]]] == [[1, None...\n1 failed in 0.03s\n"
+      },
+      "retrieved_files": [
+        "boltons/iterutils.py",
+        "boltons/typeutils.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"boltons/iterutils.py\",\"old_text\":\"        if maxsplit == 0:\\n            yield [src]\\n            return\",\"new_text\":\"        if maxsplit == 0:\\n            yield list(src)\\n            return\"}],\"summary\":\"Fix maxsplit=0 in split_iter to yield list(src) instead of [src], returning one flat group of elements rather than wrapping the original iterable.\"}",
+      "token_usage": {
+        "prompt_tokens": 2866,
+        "completion_tokens": 364,
+        "total_tokens": 3230
+      },
+      "patches": 1,
+      "repair_seconds": 9.687,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "boltons/iterutils.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/boltons/iterutils.py b/boltons/iterutils.py\nindex 433eaf5..4e7a37f 100644\n--- a/boltons/iterutils.py\n+++ b/boltons/iterutils.py\n@@ -158,7 +158,7 @@ def split_iter(src, sep=None, maxsplit=None):\n     if maxsplit is not None:\n         maxsplit = int(maxsplit)\n         if maxsplit == 0:\n-            yield [src]\n+            yield list(src)\n             return\n \n     if callable(sep):\n",
+      "grader": {
+        "exit_code": 0,
+        "output": ".......                                                                  [100%]\n7 passed in 0.02s\n"
+      },
+      "end_to_end_seconds": 10.484
+    },
+    {
+      "task_id": "more_nth_permutation",
+      "upstream": "more-itertools/more-itertools",
+      "run": 1,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________________ test_empty_permutation_set __________________________\n\n    def test_empty_permutation_set():\n>       with pytest.raises(IndexError): nth_permutation('abc',5,0)\n                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_public.py:5: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\niterable = 'abc', r = 5, index = 0\n\n    def nth_permutation(iterable, r, index):\n        \"\"\"Equivalent to ``list(permutations(iterable, r))[index]```\n    \n        The subsequences of *iterable* that are of length *r* where order is\n        important can be ordered lexicographically. :func:`nth_permutation`\n        computes the subsequence at sort position *index* directly, without\n        computing the previous subsequences.\n    \n            >>> nth_permutation('ghijk', 2, 5)\n            ('h', 'i')\n    \n        ``ValueError`` will be raised If *r* is negative or greater than the length\n        of *iterable*.\n        ``IndexError`` will be raised if the given *index* is invalid.\n        \"\"\"\n        pool = list(iterable)\n        n = len(pool)\n    \n        if r is None or r == n:\n            r, c = n, factorial(n)\n        elif not 0 <= r < n:\n>           raise ValueError\nE           ValueError\n\nmore_itertools/more.py:4241: ValueError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_empty_permutation_set - ValueError\n1 failed in 0.07s\n"
+      },
+      "retrieved_files": [
+        "more_itertools/more.py",
+        "more_itertools/recipes.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"more_itertools/more.py\",\"old_text\":\"    if r is None or r == n:\\n        r, c = n, factorial(n)\\n    elif not 0 <= r < n:\\n        raise ValueError\\n    else:\\n        c = perm(n, r)\\n    assert c > 0  # factorial(n)>0, and r<n so perm(n,r) is never zero\",\"new_text\":\"    if r is None or r == n:\\n        r, c = n, factorial(n)\\n    elif r < 0:\\n        raise ValueError\\n    elif r > n:\\n        c = 0\\n    else:\\n        c = perm(n, r)\"}],\"summary\":\"When r > len(pool), set c=0 (empty permutation set) so any index triggers IndexError instead of raising ValueError. Negative r still raises ValueError.\"}",
+      "token_usage": {
+        "prompt_tokens": 3402,
+        "completion_tokens": 1195,
+        "total_tokens": 4597
+      },
+      "patches": 1,
+      "repair_seconds": 27.55,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "more_itertools/more.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/more_itertools/more.py b/more_itertools/more.py\nindex 1d4d183..8465a0e 100644\n--- a/more_itertools/more.py\n+++ b/more_itertools/more.py\n@@ -4237,11 +4237,12 @@ def nth_permutation(iterable, r, index):\n \n     if r is None or r == n:\n         r, c = n, factorial(n)\n-    elif not 0 <= r < n:\n+    elif r < 0:\n         raise ValueError\n+    elif r > n:\n+        c = 0\n     else:\n         c = perm(n, r)\n-    assert c > 0  # factorial(n)>0, and r<n so perm(n,r) is never zero\n \n     if index < 0:\n         index += c\n",
+      "grader": {
+        "exit_code": 0,
+        "output": "........                                                                 [100%]\n8 passed in 0.03s\n"
+      },
+      "end_to_end_seconds": 28.415
+    },
+    {
+      "task_id": "more_nth_permutation",
+      "upstream": "more-itertools/more-itertools",
+      "run": 2,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________________ test_empty_permutation_set __________________________\n\n    def test_empty_permutation_set():\n>       with pytest.raises(IndexError): nth_permutation('abc',5,0)\n                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_public.py:5: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\niterable = 'abc', r = 5, index = 0\n\n    def nth_permutation(iterable, r, index):\n        \"\"\"Equivalent to ``list(permutations(iterable, r))[index]```\n    \n        The subsequences of *iterable* that are of length *r* where order is\n        important can be ordered lexicographically. :func:`nth_permutation`\n        computes the subsequence at sort position *index* directly, without\n        computing the previous subsequences.\n    \n            >>> nth_permutation('ghijk', 2, 5)\n            ('h', 'i')\n    \n        ``ValueError`` will be raised If *r* is negative or greater than the length\n        of *iterable*.\n        ``IndexError`` will be raised if the given *index* is invalid.\n        \"\"\"\n        pool = list(iterable)\n        n = len(pool)\n    \n        if r is None or r == n:\n            r, c = n, factorial(n)\n        elif not 0 <= r < n:\n>           raise ValueError\nE           ValueError\n\nmore_itertools/more.py:4241: ValueError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_empty_permutation_set - ValueError\n1 failed in 0.07s\n"
+      },
+      "retrieved_files": [
+        "more_itertools/more.py",
+        "more_itertools/recipes.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"more_itertools/more.py\",\"old_text\":\"    elif not 0 <= r < n:\\n        raise ValueError\\n    else:\\n        c = perm(n, r)\\n    assert c > 0  # factorial(n)>0, and r<n so perm(n,r) is never zero\",\"new_text\":\"    elif r < 0:\\n        raise ValueError\\n    elif r > n:\\n        c = 0\\n    else:\\n        c = perm(n, r)\"}],\"summary\":\"When r > n, set c=0 (empty permutation set) so any index triggers IndexError instead of raising ValueError. Negative r still raises ValueError.\"}",
+      "token_usage": {
+        "prompt_tokens": 3402,
+        "completion_tokens": 917,
+        "total_tokens": 4319
+      },
+      "patches": 1,
+      "repair_seconds": 20.896,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "more_itertools/more.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/more_itertools/more.py b/more_itertools/more.py\nindex 1d4d183..8465a0e 100644\n--- a/more_itertools/more.py\n+++ b/more_itertools/more.py\n@@ -4237,11 +4237,12 @@ def nth_permutation(iterable, r, index):\n \n     if r is None or r == n:\n         r, c = n, factorial(n)\n-    elif not 0 <= r < n:\n+    elif r < 0:\n         raise ValueError\n+    elif r > n:\n+        c = 0\n     else:\n         c = perm(n, r)\n-    assert c > 0  # factorial(n)>0, and r<n so perm(n,r) is never zero\n \n     if index < 0:\n         index += c\n",
+      "grader": {
+        "exit_code": 0,
+        "output": "........                                                                 [100%]\n8 passed in 0.03s\n"
+      },
+      "end_to_end_seconds": 21.729
+    },
+    {
+      "task_id": "more_nth_permutation",
+      "upstream": "more-itertools/more-itertools",
+      "run": 3,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________________ test_empty_permutation_set __________________________\n\n    def test_empty_permutation_set():\n>       with pytest.raises(IndexError): nth_permutation('abc',5,0)\n                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_public.py:5: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\niterable = 'abc', r = 5, index = 0\n\n    def nth_permutation(iterable, r, index):\n        \"\"\"Equivalent to ``list(permutations(iterable, r))[index]```\n    \n        The subsequences of *iterable* that are of length *r* where order is\n        important can be ordered lexicographically. :func:`nth_permutation`\n        computes the subsequence at sort position *index* directly, without\n        computing the previous subsequences.\n    \n            >>> nth_permutation('ghijk', 2, 5)\n            ('h', 'i')\n    \n        ``ValueError`` will be raised If *r* is negative or greater than the length\n        of *iterable*.\n        ``IndexError`` will be raised if the given *index* is invalid.\n        \"\"\"\n        pool = list(iterable)\n        n = len(pool)\n    \n        if r is None or r == n:\n            r, c = n, factorial(n)\n        elif not 0 <= r < n:\n>           raise ValueError\nE           ValueError\n\nmore_itertools/more.py:4241: ValueError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_empty_permutation_set - ValueError\n1 failed in 0.07s\n"
+      },
+      "retrieved_files": [
+        "more_itertools/more.py",
+        "more_itertools/recipes.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"more_itertools/more.py\",\"old_text\":\"    if r is None or r == n:\\n        r, c = n, factorial(n)\\n    elif not 0 <= r < n:\\n        raise ValueError\\n    else:\\n        c = perm(n, r)\\n    assert c > 0  # factorial(n)>0, and r<n so perm(n,r) is never zero\",\"new_text\":\"    if r is None or r == n:\\n        r, c = n, factorial(n)\\n    elif r < 0:\\n        raise ValueError\\n    elif r > n:\\n        c = 0\\n    else:\\n        c = perm(n, r)\"}],\"summary\":\"When r > n the permutation set is empty; set c=0 so any index triggers IndexError instead of raising ValueError. Negative r still raises ValueError.\"}",
+      "token_usage": {
+        "prompt_tokens": 3402,
+        "completion_tokens": 915,
+        "total_tokens": 4317
+      },
+      "patches": 1,
+      "repair_seconds": 22.356,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "more_itertools/more.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/more_itertools/more.py b/more_itertools/more.py\nindex 1d4d183..8465a0e 100644\n--- a/more_itertools/more.py\n+++ b/more_itertools/more.py\n@@ -4237,11 +4237,12 @@ def nth_permutation(iterable, r, index):\n \n     if r is None or r == n:\n         r, c = n, factorial(n)\n-    elif not 0 <= r < n:\n+    elif r < 0:\n         raise ValueError\n+    elif r > n:\n+        c = 0\n     else:\n         c = perm(n, r)\n-    assert c > 0  # factorial(n)>0, and r<n so perm(n,r) is never zero\n \n     if index < 0:\n         index += c\n",
+      "grader": {
+        "exit_code": 0,
+        "output": "........                                                                 [100%]\n8 passed in 0.03s\n"
+      },
+      "end_to_end_seconds": 23.191
+    }
+  ],
+  "summary": {
+    "trials": 6,
+    "resolved": 6,
+    "task_successes": {
+      "boltons_split": 3,
+      "more_nth_permutation": 3
+    },
+    "median_end_to_end_seconds": 16.747,
+    "median_tokens": 3780.5,
+    "total_tokens": 22925,
+    "failure_categories": {}
+  }
+}
