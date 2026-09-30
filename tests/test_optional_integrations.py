@@ -8,6 +8,14 @@ from repopilot.config import Settings
 from repopilot.llm.base import FakeLLM
 
 
+def test_base_cli_custom_runtime_smoke(runtime_repo):
+    result = subprocess.run([sys.executable, "-m", "repopilot.cli", "run", str(runtime_repo),
+                             "fix duplicate email", "--fake-demo", "--executor", "local", "--approval", "auto"],
+                            capture_output=True, text=True, timeout=45)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "Status: completed" in result.stdout
+
+
 def test_tracing_disabled_does_not_import_sdk_or_contact_exporter(runtime_repo, monkeypatch):
     original = builtins.__import__
 

@@ -68,7 +68,7 @@ def validate(task, settings, local=False):
         return {'task_id':task['id'],'baseline':before,'reference':after}
 
 
-def trial(task, run, mode, settings):
+def trial(task, run, mode, settings, runtime='custom'):
     record={'task_id':task['id'],'upstream':task['upstream'],'run':run,'mode':mode,'resolved':False}
     started=time.monotonic()
     try:
@@ -82,10 +82,11 @@ def trial(task, run, mode, settings):
             public_task=task['task']+'\nTests are protected. Run '+task['test_command']+'\nInitial public failure:\n'+baseline['output']
             model_started=time.monotonic()
             if mode=='agent':
-                pilot=RepoPilot(repo,llm,settings,executor='docker',approval='auto',protected_paths=PROTECTED)
+                pilot=RepoPilot(repo,llm,settings,executor='docker',approval='auto',protected_paths=PROTECTED,runtime=runtime)
                 state=pilot.run(public_task)
                 record.update(status=state.status,error=state.error,steps=state.current_step,
                               tool_calls=len(state.tool_history),token_usage=state.token_usage,
+                              executed_tool_calls=sum(h.get('executed',True) for h in state.tool_history),runtime=runtime,
                               retrieved_files=state.retrieved_files,
                               trace=state.model_dump(mode='json'))
             else:
@@ -155,11 +156,19 @@ def main():
     parser.add_argument('--shards',type=int,default=5)
     parser.add_argument('--local-reference',action='store_true')
     parser.add_argument('--output',type=Path)
+    parser.add_argument('--runtime',choices=['custom','langgraph'],default='custom')
+    parser.add_argument('--task',action='append',default=[],help='Select fixed task IDs without changing scoring or task definitions')
     args=parser.parse_args()
     if args.local_reference and args.mode!='reference': parser.error('Local execution is only allowed for trusted reference validation')
     if not 0<=args.shard<args.shards or args.runs<1: parser.error('Invalid shard or runs')
     settings=Settings.load()
     tasks=json.loads(TASKS.read_text())
+    if args.task:
+        unknown=set(args.task)-{t['id'] for t in tasks}
+        if unknown: parser.error('Unknown task IDs: '+', '.join(sorted(unknown)))
+        tasks=[t for t in tasks if t['id'] in set(args.task)]
+    if args.mode != 'reference' and not tasks[args.shard::args.shards]:
+        parser.error('No tasks selected for this shard')
     out=args.output or ROOT/f'eval/results/external-{args.mode}-{args.shard}.json'
     out.parent.mkdir(parents=True,exist_ok=True)
     if args.mode=='reference':
@@ -171,11 +180,13 @@ def main():
               'reasoning_effort':settings.llm_reasoning_effort,'stream':settings.llm_stream,
               'max_steps':settings.max_steps,'max_context_chars':settings.max_context_chars,
               'mode':args.mode,'runs':args.runs,'shard':args.shard,'shards':args.shards,
+              'runtime':args.runtime if args.mode=='agent' else 'oneshot',
+              'runtime_policy_revision':'repeat-recovery-v1','task_ids':[t['id'] for t in tasks],
               'timing_scope':'Preparation + baseline Docker test + model/repair + fresh Docker grading', 'records':[]}
     for t in tasks[args.shard::args.shards]:
         for run in range(1,args.runs+1):
             print(f"START {args.mode} {t['id']} repeat {run}/{args.runs}",flush=True)
-            record=trial(t,run,args.mode,settings)
+            record=trial(t,run,args.mode,settings,args.runtime)
             document['records'].append(record)
             document['summary']=aggregate(document['records'])
             out.write_text(json.dumps(document,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')

@@ -1,16 +1,39 @@
 name: External historical bug evaluation
 on:
   push:
-    branches: [main]
+    branches: [main, 'work/**']
   workflow_dispatch:
+    inputs:
+      run_real_model:
+        description: 'Explicit opt-in: uses paid DashScope tokens; never reads or prints the Secret'
+        type: boolean
+        required: true
+        default: false
+      scope:
+        description: 'targeted = fixed 4 risk tasks / 24 trials; full = unchanged 10 bugs / 60 trials'
+        type: choice
+        required: true
+        default: targeted
+        options: [targeted, full]
+      runtime:
+        description: 'Agent orchestration; one-shot scoring and context stay unchanged'
+        type: choice
+        required: true
+        default: custom
+        options: [custom, langgraph]
 permissions:
   contents: read
 concurrency:
-  group: repopilot-external-eval
-  cancel-in-progress: true
+  group: repopilot-external-eval-${{ github.ref }}
+  cancel-in-progress: false
+# Deliberate commit markers are an alternative explicit opt-in for authorized
+# connector operations without workflow_dispatch. Ordinary push/PR never pays.
+env:
+  EVAL_SCOPE: ${{ inputs.scope || (contains(github.event.head_commit.message, '[external-eval]') && 'full' || 'targeted') }}
+  EVAL_RUNTIME: ${{ inputs.runtime || 'custom' }}
 jobs:
   reference:
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[external-eval]') }}
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_real_model) || contains(github.event.head_commit.message, '[external-targeted]') || contains(github.event.head_commit.message, '[external-eval]') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -20,10 +43,10 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - run: python -m pip install -e '.[dev]' pytest==8.4.2
+      - run: python -m pip install -e '.[dev,full]' pytest==8.4.2
       - run: python -m pytest -q
       - run: docker build -t repopilot-external:fixed -f eval/Dockerfile.external .
-      - name: Validate broken baselines and upstream fixes in Docker
+      - name: Validate all unchanged broken baselines and upstream fixes in Docker
         env:
           REPOPILOT_DOCKER_IMAGE: repopilot-external:fixed
         run: python eval/run_external.py --mode reference --output eval/results/external-reference.json
@@ -41,7 +64,7 @@ jobs:
       max-parallel: 4
       matrix:
         mode: [agent, oneshot]
-        shard: [0, 1, 2, 3, 4]
+        shard: ${{ fromJSON((inputs.scope == 'full' || contains(github.event.head_commit.message, '[external-eval]')) && '[0,1,2,3,4]' || '[0,1,2,3]') }}
     env:
       LLM_MODEL: qwen3.8-max
       LLM_BASE_URL: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -58,12 +81,14 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - run: python -m pip install -e '.[dev]' pytest==8.4.2
+      - run: python -m pip install -e '.[dev,full]' pytest==8.4.2
       - run: docker build -t repopilot-external:fixed -f eval/Dockerfile.external .
-      - name: Run fixed paired trials
+      - name: Run fixed three-repeat paired trials in selected scope
         env:
           LLM_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
-        run: python eval/run_external.py --mode ${{ matrix.mode }} --runs 3 --shard ${{ matrix.shard }} --shards 5
+          EVAL_MODE: ${{ matrix.mode }}
+          EVAL_SHARD: ${{ matrix.shard }}
+        run: python eval/run_external_actions.py
       - uses: actions/upload-artifact@v6
         if: always()
         with:
@@ -86,8 +111,14 @@ jobs:
         with:
           pattern: external-*
           path: eval/results/external-shards
-      - run: python eval/summarize_external.py eval/results/external-shards
-      - name: Show comparison
+      - name: Strict scope-specific comparison without mixing denominators
+        run: |
+          if [ "$EVAL_SCOPE" = "full" ]; then
+            python eval/summarize_external.py eval/results/external-shards
+          else
+            python eval/summarize_targeted.py eval/results/external-shards
+          fi
+      - name: Show task counts and patch versus terminal outcome definitions
         run: cat eval/results/external-comparison.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v6
         with:

@@ -24,6 +24,10 @@ def summarize(inputs):
             paired[key][r['mode']]=r
     task_ids=sorted({t for t,_ in paired})
     if len(task_ids)!=10 or len(paired)!=30: raise ValueError('Missing tasks/repeats')
+    agent_runtimes={d.get('runtime','custom') for d in docs if d.get('mode')=='agent'}
+    if len(agent_runtimes)!=1: raise ValueError('Mixed Agent runtimes')
+    reference['agent_runtime']=agent_runtimes.pop()
+    reference['runtime_policy_revision']=docs[0].get('runtime_policy_revision','legacy')
     if any(set(v)!= {'agent','oneshot'} for v in paired.values()): raise ValueError('Unpaired trial')
     if any({n for (t,n) in paired if t==task}!={1,2,3} for task in task_ids): raise ValueError('Missing repeat index')
     methods={m:aggregate([v[m] for v in paired.values()]) for m in ('agent','oneshot')}
@@ -36,6 +40,12 @@ def summarize(inputs):
             if error:
                 summary['terminal_errors'][error]=summary['terminal_errors'].get(error,0)+1
         summary['max_end_to_end_seconds']=max(r['end_to_end_seconds'] for r in runs)
+        summary['median_steps']=statistics.median(r['steps'] for r in runs if 'steps' in r) if any('steps' in r for r in runs) else None
+        summary['median_tool_records']=statistics.median(r['tool_calls'] for r in runs if 'tool_calls' in r) if any('tool_calls' in r for r in runs) else None
+        summary['median_executed_tool_calls']=statistics.median(r.get('executed_tool_calls',r['tool_calls']) for r in runs if 'tool_calls' in r) if any('tool_calls' in r for r in runs) else None
+        summary['loop_detection']=sum(r.get('error')=='loop_detection' for r in runs)
+        summary['max_steps']=sum(r.get('error')=='max_steps' for r in runs)
+        summary['protocol_failures']=sum('JSON' in r.get('error','') or 'ValidationError' in r.get('error','') for r in runs)
     by_task=[]
     for task in task_ids:
         a=[paired[(task,n)]['agent'] for n in (1,2,3)]
@@ -56,7 +66,8 @@ def summarize(inputs):
                      'Repeated trials on one task are correlated; bootstrap resamples tasks, only 10 clusters.',
                      'Additional completed_and_resolved metric audits saved Agent terminal status; patch grading remains the preregistered resolved outcome.',
                      'Public historical fixes may have been in model training data; no guarantee of contamination-free holdout.',
-                     'No harness/prompt tuning based on these real-model outcomes. Public reproducers + custom frozen hidden edge cases; not the entire upstream test suite.']}
+                     ('Runtime repeat/termination feedback was revised using historical failure trajectories; current outcomes did not retune task definitions or graders.' if reference['runtime_policy_revision']!='legacy' else 'No harness/prompt tuning based on these real-model outcomes.'),
+                     'Public reproducers + custom frozen hidden edge cases; not the entire upstream test suite.']}
 
 
 def main():

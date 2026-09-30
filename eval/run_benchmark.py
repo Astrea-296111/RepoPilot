@@ -154,7 +154,7 @@ def classify_failure(record: dict) -> str | None:
     return "evaluation_failure"
 
 
-def run_one(task: dict, run_number: int, *, fake: bool, settings: Settings, fixes: dict) -> dict:
+def run_one(task: dict, run_number: int, *, fake: bool, settings: Settings, fixes: dict, runtime: str = "custom") -> dict:
     record = {"task_id": task["id"], "run": run_number, "category": task["category"], "difficulty": task["difficulty"], "resolved": False}
     try:
         with tempfile.TemporaryDirectory(prefix=f"repopilot-{task['id']}-") as temp:
@@ -170,7 +170,7 @@ def run_one(task: dict, run_number: int, *, fake: bool, settings: Settings, fixe
                 retrying = RetryingLLM(OpenAICompatibleLLM(settings))
                 inner = retrying
             model = ObservedLLM(inner)
-            state = RepoPilot(repo, model, settings, executor="local", approval="auto").run(task["task"])
+            state = RepoPilot(repo, model, settings, executor="local", approval="auto", runtime=runtime).run(task["task"])
             changed = git_changed_files(repo)
             protected = protected_modified(changed, task.get("protected_paths", []))
             added, deleted = diff_stats(repo)
@@ -179,6 +179,8 @@ def run_one(task: dict, run_number: int, *, fake: bool, settings: Settings, fixe
                 "plan": state.plan.model_dump() if state.plan else None,
                 "steps": state.current_step, "test_status": state.test_status,
                 "tool_calls": len(state.tool_history), "changed_files": changed,
+                "executed_tool_calls": sum(h.get("executed", True) for h in state.tool_history),
+                "runtime": runtime,
                 "retrieved_files": state.retrieved_files,
                 "token_usage": state.token_usage, "duration_seconds": state.duration_seconds,
             }
@@ -235,6 +237,7 @@ def summarize(records: list[dict], model_name: str) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--fake", action="store_true")
+    parser.add_argument("--runtime", choices=["custom", "langgraph"], default="custom")
     parser.add_argument("--runs", type=int, default=1)
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--task", action="append", default=[])
@@ -267,7 +270,7 @@ def main() -> int:
         for n in range(1, args.runs + 1):
             index += 1
             print(f"[agent] {index}/{total} start task={task['id']} run={n}", flush=True)
-            item = run_one(task, n, fake=args.fake, settings=settings, fixes=fixes)
+            item = run_one(task, n, fake=args.fake, settings=settings, fixes=fixes, runtime=args.runtime)
             records.append(item)
             details = item.get("agent") or {}
             tokens = (details.get("token_usage") or {}).get("total_tokens")
@@ -281,10 +284,11 @@ def main() -> int:
               "config": {"model": model_name, "base_url": settings.llm_base_url,
                          "reasoning_effort": settings.llm_reasoning_effort or "provider_default",
                          "stream": settings.llm_stream, "timeout_seconds": settings.llm_timeout_seconds,
-                         "runs_per_task": args.runs, "retrieval_mode": "graph"}}
+                         "runs_per_task": args.runs, "retrieval_mode": "graph", "runtime": args.runtime}}
     suffix = "fake" if args.fake else "qwen"
     shard = f"-shard{args.shard_index}" if args.shard_count > 1 else ""
-    output = ROOT / "eval" / "results" / f"agent-{suffix}{shard}.json"
+    runtime_suffix = "-langgraph" if args.runtime == "langgraph" else ""
+    output = ROOT / "eval" / "results" / f"agent{runtime_suffix}-{suffix}{shard}.json"
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(report["summary"], ensure_ascii=False, indent=2))
