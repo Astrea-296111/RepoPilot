@@ -72,6 +72,17 @@ def resume(session_id: str, repo: Path = typer.Option(Path(".")),
 
 
 @app.command()
+def mcp(repo: Path):
+    """Start the optional, read-only MCP server over stdio; no API key is required."""
+    from repopilot.mcp_server import create_server
+    try:
+        create_server(repo).run(transport="stdio")
+    except (ValueError, OSError) as exc:
+        typer.echo(f"MCP 配置错误: {exc}", err=True)
+        raise typer.Exit(2) from exc
+
+
+@app.command()
 def serve(host: str = "127.0.0.1", port: int = 8000):
     """Start the local REST API (no authentication; keep it private)."""
     import uvicorn
