@@ -1,4 +1,7 @@
-# RepoPilot 构建与验证报告
+# RepoPilot 构建记录
+
+> 本文保留 2026-09-28 初始构建时的检查与限制。它不是当前能力清单；最新测试、Docker/真实模型、LangGraph/MCP/OTel 和未验证项以 [本轮验证报告](docs/18-runtime-mcp-observability-refactor.md) 为准。
+
 
 日期：2026-09-28。项目在全新目录编写，核心源码为独立实现。下面只记录执行过的检查；没有把计划或未运行的 Docker/真实模型写成成功。
 
