@@ -1,0 +1,64 @@
+{
+  "registered_before_run": true,
+  "date_utc": "2026-09-30",
+  "baseline_head": "bfbfa46089a489e6763f1405f45a4301ec5f6e87",
+  "tested_code_commit": "3037cfe06aa81e779f79722abeb8ee81f9061a22",
+  "deterministic_ci": "https://github.com/Astrea-296111/RepoPilot/actions/runs/36700554318",
+  "historical_external_run": "https://github.com/Astrea-296111/RepoPilot/actions/runs/36677551664",
+  "historical_external_commit": "ff9d52b6164b58c17d33a8dd3a17802765487965",
+  "scope": "targeted",
+  "task_ids": [
+    "boltons_research",
+    "more_predicate_sentinel",
+    "slugify_hex",
+    "slugify_truncation"
+  ],
+  "selection_reason": "All four historical repeat/termination/shared-behavior risks, selected before evaluating the new policy. This is not a representative sample of all bugs.",
+  "methods": [
+    "agent",
+    "oneshot"
+  ],
+  "agent_runtime": "custom",
+  "runtime_policy_revision": "repeat-recovery-v1",
+  "runs_per_task_per_method": 3,
+  "expected_trial_count": 24,
+  "model_configuration": {
+    "model": "qwen3.8-max",
+    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "temperature": 0,
+    "reasoning_effort": "medium",
+    "stream": true,
+    "timeout_seconds": 180,
+    "max_steps": 15,
+    "max_context_chars": 30000,
+    "executor": "docker"
+  },
+  "frozen_suite_sha256": "fc0eb01fc240b1147a93e465b9c96a0a1f96916b932c1c8ceedd4f0b30eb8987",
+  "fixed_grading": "Unchanged public + hidden tests, source allowlist, patch-resolved and completed+resolved definitions. All runs retained, including failures.",
+  "historical_same_scope": {
+    "agent_patch_resolved": 7,
+    "agent_completed_and_resolved": 5,
+    "agent_loop_detection": 5,
+    "oneshot_patch_resolved": 10,
+    "denominator_per_method": 12
+  },
+  "primary_metrics": [
+    "patch_resolved",
+    "completed_and_resolved",
+    "loop_detection",
+    "max_steps",
+    "protocol_failure",
+    "median_steps",
+    "median_tool_calls",
+    "median_executed_tool_calls",
+    "median_total_tokens",
+    "median_end_to_end_seconds"
+  ],
+  "full_run_gate": "Run the unchanged 10-bug/60-trial full suite only after deterministic CI and this targeted evaluation finish reliably; do not select new tasks/seeds based on outcomes.",
+  "limitations": [
+    "Four selected risk tasks, not a general capability estimate",
+    "Repeated trials of the same bug are not independent bugs",
+    "Historical comparison uses a mutable model alias and is not contemporaneous",
+    "Custom runtime is used in paid evaluation; LangGraph parity is tested with deterministic integration cases"
+  ]
+}

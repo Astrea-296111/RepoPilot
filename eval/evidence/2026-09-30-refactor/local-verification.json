@@ -1,0 +1,429 @@
+{
+  "base_commit": "bfbfa46089a489e6763f1405f45a4301ec5f6e87",
+  "code_commit": "3037cfe06aa81e779f79722abeb8ee81f9061a22",
+  "local_python": "3.12.14",
+  "pytest": {
+    "command": "python -m pytest -q",
+    "result": "79 passed, 5 skipped in 77.20s",
+    "note": "Run before adding 7 targeted-report safeguards; those were separately validated with 17 passed in 3.20s."
+  },
+  "integration_phase_results": {
+    "langgraph": "50 passed; real CLI/API; InMemorySaver and JSON session resume",
+    "mcp": "8 passed (4 MCP tests plus shared safety/parity); official v2 stdio subprocess and in-memory client",
+    "otel": "9 passed; console CLI exported 24 spans; real local OTLP HTTP export"
+  },
+  "packaging": {
+    "commands": [
+      "python -m pip install -e '.[dev,full]'",
+      "python -m pip check",
+      "python -m pip wheel --no-deps . --wheel-dir /tmp/repopilot-wheel"
+    ],
+    "result": "success; no broken requirements"
+  },
+  "fake_benchmarks": {
+    "agent-fake": {
+      "summary": {
+        "suite": "RepoPilot Mini Benchmark v3",
+        "runner": "agent",
+        "model": "scripted FakeLLM",
+        "task_count": 25,
+        "runs": 25,
+        "resolved_runs": 25,
+        "resolved_without_protected_edits": 25,
+        "protected_edit_runs": 0,
+        "run_resolved_rate": 1.0,
+        "first_run_resolved": 25,
+        "first_run_tasks": 25,
+        "first_run_resolved_rate": 1.0,
+        "median_steps": 2.0,
+        "median_tool_calls": 3.0,
+        "median_total_tokens": 0.0,
+        "median_duration_seconds": 0.874,
+        "failure_categories": {},
+        "categories": {
+          "authorization": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "boundary-condition": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "business-rule": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "collection-order": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "configuration": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "cross-module-paths": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "date-boundary": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "empty-input": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "exception-handling": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "file-filtering": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "input-normalization": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "merge-logic": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "parsing": {
+            "runs": 2,
+            "resolved": 2
+          },
+          "path-security": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "retry-logic": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "shared-configuration": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "shared-normalization": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "shared-policy": {
+            "runs": 2,
+            "resolved": 2
+          },
+          "state-management": {
+            "runs": 2,
+            "resolved": 2
+          },
+          "text-normalization": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "time-boundary": {
+            "runs": 2,
+            "resolved": 2
+          }
+        },
+        "difficulties": {
+          "easy": {
+            "runs": 12,
+            "resolved": 12
+          },
+          "hard": {
+            "runs": 6,
+            "resolved": 6
+          },
+          "medium": {
+            "runs": 7,
+            "resolved": 7
+          }
+        }
+      },
+      "configuration": {
+        "model": "scripted FakeLLM",
+        "base_url": "https://api.openai.com/v1",
+        "reasoning_effort": "provider_default",
+        "stream": false,
+        "timeout_seconds": 90.0,
+        "runs_per_task": 1,
+        "retrieval_mode": "graph"
+      }
+    },
+    "agent-langgraph-fake": {
+      "summary": {
+        "suite": "RepoPilot Mini Benchmark v3",
+        "runner": "agent",
+        "model": "scripted FakeLLM",
+        "task_count": 25,
+        "runs": 25,
+        "resolved_runs": 25,
+        "resolved_without_protected_edits": 25,
+        "protected_edit_runs": 0,
+        "run_resolved_rate": 1.0,
+        "first_run_resolved": 25,
+        "first_run_tasks": 25,
+        "first_run_resolved_rate": 1.0,
+        "median_steps": 2.0,
+        "median_tool_calls": 3.0,
+        "median_total_tokens": 0.0,
+        "median_duration_seconds": 0.937,
+        "failure_categories": {},
+        "categories": {
+          "authorization": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "boundary-condition": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "business-rule": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "collection-order": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "configuration": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "cross-module-paths": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "date-boundary": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "empty-input": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "exception-handling": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "file-filtering": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "input-normalization": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "merge-logic": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "parsing": {
+            "runs": 2,
+            "resolved": 2
+          },
+          "path-security": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "retry-logic": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "shared-configuration": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "shared-normalization": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "shared-policy": {
+            "runs": 2,
+            "resolved": 2
+          },
+          "state-management": {
+            "runs": 2,
+            "resolved": 2
+          },
+          "text-normalization": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "time-boundary": {
+            "runs": 2,
+            "resolved": 2
+          }
+        },
+        "difficulties": {
+          "easy": {
+            "runs": 12,
+            "resolved": 12
+          },
+          "hard": {
+            "runs": 6,
+            "resolved": 6
+          },
+          "medium": {
+            "runs": 7,
+            "resolved": 7
+          }
+        }
+      },
+      "configuration": {
+        "model": "scripted FakeLLM",
+        "base_url": "https://api.openai.com/v1",
+        "reasoning_effort": "provider_default",
+        "stream": false,
+        "timeout_seconds": 90.0,
+        "runs_per_task": 1,
+        "retrieval_mode": "graph",
+        "runtime": "langgraph"
+      }
+    },
+    "oneshot-fake": {
+      "summary": {
+        "suite": "RepoPilot Mini Benchmark v3",
+        "runner": "one-shot",
+        "model": "scripted FakeLLM",
+        "task_count": 25,
+        "runs": 25,
+        "resolved_runs": 25,
+        "resolved_without_protected_edits": 25,
+        "protected_edit_runs": 0,
+        "run_resolved_rate": 1.0,
+        "first_run_resolved": 25,
+        "first_run_tasks": 25,
+        "first_run_resolved_rate": 1.0,
+        "median_total_tokens": 0.0,
+        "median_duration_seconds": 0.0,
+        "median_all_call_duration_seconds": 0.0,
+        "median_patch_count": 1.0,
+        "failure_categories": {},
+        "categories": {
+          "authorization": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "boundary-condition": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "business-rule": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "collection-order": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "configuration": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "cross-module-paths": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "date-boundary": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "empty-input": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "exception-handling": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "file-filtering": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "input-normalization": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "merge-logic": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "parsing": {
+            "runs": 2,
+            "resolved": 2
+          },
+          "path-security": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "retry-logic": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "shared-configuration": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "shared-normalization": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "shared-policy": {
+            "runs": 2,
+            "resolved": 2
+          },
+          "state-management": {
+            "runs": 2,
+            "resolved": 2
+          },
+          "text-normalization": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "time-boundary": {
+            "runs": 2,
+            "resolved": 2
+          }
+        },
+        "difficulties": {
+          "easy": {
+            "runs": 12,
+            "resolved": 12
+          },
+          "hard": {
+            "runs": 6,
+            "resolved": 6
+          },
+          "medium": {
+            "runs": 7,
+            "resolved": 7
+          }
+        }
+      },
+      "configuration": {
+        "model": "scripted FakeLLM",
+        "base_url": "https://api.openai.com/v1",
+        "reasoning_effort": "provider_default",
+        "stream": false,
+        "timeout_seconds": 90.0,
+        "runs_per_task": 1,
+        "context_mode": "retrieved"
+      }
+    }
+  },
+  "docker": "Verified in Actions run 36700554318, job 109840977567; no local Docker daemon",
+  "ordinary_ci_url": "https://github.com/Astrea-296111/RepoPilot/actions/runs/36700554318",
+  "official_references": {
+    "langgraph": "https://docs.langchain.com/oss/python/langgraph/persistence",
+    "mcp_v2": "https://py.sdk.modelcontextprotocol.io/",
+    "otel": "https://opentelemetry.io/docs/languages/python/instrumentation/"
+  },
+  "ci_results": {
+    "linux_full": "86 passed, 5 Docker-only skipped in 61.15s; packaging/import/CLI and all 3 fake methods passed",
+    "windows_base": "57 passed, 14 extras-only skipped, 1 warning in 23.44s",
+    "linux_base": "success; Python 3.11 base extras",
+    "docker": "5 passed in 14.68s; sandbox build and all 10 frozen external baselines/reference fixes validated"
+  }
+}
