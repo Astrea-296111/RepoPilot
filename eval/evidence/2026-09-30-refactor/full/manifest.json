@@ -1,0 +1,160 @@
+{
+  "evaluated_commit": "192627da77a2520df07d5e5b9c87e03e9424bfaf",
+  "run_id": 36730079890,
+  "run_url": "https://github.com/Astrea-296111/RepoPilot/actions/runs/36730079890",
+  "run_created_utc": "2026-09-30T14:34:02Z",
+  "run_started_utc": "2026-09-30T14:34:02Z",
+  "run_completed_utc": "2026-09-30T15:29:33Z",
+  "scope": {
+    "independent_tasks": 10,
+    "repeats_per_task_per_method": 3,
+    "trials": 60
+  },
+  "configuration": {
+    "suite_sha256": "fc0eb01fc240b1147a93e465b9c96a0a1f96916b932c1c8ceedd4f0b30eb8987",
+    "model": "qwen3.8-max",
+    "reasoning_effort": "medium",
+    "stream": true,
+    "max_steps": 15,
+    "max_context_chars": 30000,
+    "runs": 3,
+    "shards": 5,
+    "timing_scope": "Preparation + baseline Docker test + model/repair + fresh Docker grading",
+    "agent_runtime": "custom",
+    "runtime_policy_revision": "repeat-recovery-v1"
+  },
+  "additional_configuration": {
+    "temperature": 0,
+    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "llm_read_timeout_seconds": 180,
+    "transport_retry_limit": 1,
+    "docker_command_timeout_seconds": 60,
+    "batch_supervisor_seconds": 5400,
+    "workflow_job_minutes": 100
+  },
+  "artifact_ids": {
+    "external-comparison": 11107686126,
+    "external-agent-3": 11106704640,
+    "external-oneshot-3": 11106455887,
+    "external-agent-4": 11106016244,
+    "external-oneshot-2": 11105915436,
+    "external-agent-0": 11105757274,
+    "external-oneshot-1": 11105727926,
+    "external-oneshot-4": 11105524460,
+    "external-agent-2": 11105136493,
+    "external-agent-1": 11104948236,
+    "external-oneshot-0": 11104884307,
+    "external-reference": 11104521657
+  },
+  "artifact_zip_digests": {
+    "external-comparison": "sha256:0427341645851b3f46c546172abe1c9d65ab774dfbb0814232e20ef5651cfc9a",
+    "external-agent-3": "sha256:c7e3b63df1545f85327c85cf60303cc05b9fd31bf999069afe87b613c25dfad1",
+    "external-oneshot-3": "sha256:c46cce4adf9a6b9dace94a7e8eb083a526e43257ed9f1c72bdbd354965b3c112",
+    "external-agent-4": "sha256:1afca2a44856edb43d1cebf27871d57bffa4a21053557322bb793146590e696d",
+    "external-oneshot-2": "sha256:f5f2e0d0720f3a4375cc8159e812743823db6fd619e7cbcaff9cf868bb8d9eb2",
+    "external-agent-0": "sha256:44061429b560934cba8db3fb14b70a066c41f058c49d22f4e644883c436ddb25",
+    "external-oneshot-1": "sha256:174c925438b690634bb4eb8bb2ffa8c602fc8a889dfca9407627ec7d3f62af89",
+    "external-oneshot-4": "sha256:32837e1ba21d3749e2a67fa9e76d86de34b72f61d33217ba177e76a028cb4083",
+    "external-agent-2": "sha256:04b9c0e690ed890b80a43e31051db79448ec0eb63bee7f984b04529ccb64ac6c",
+    "external-agent-1": "sha256:054258b5dacd1f19a61e913e5f9e33cb97e5f007c4c58f6d11e45241add9c3a9",
+    "external-oneshot-0": "sha256:e787fe283c255bc7c8026c6b87ab244559284fedb84bfe0701ba797304ce784b",
+    "external-reference": "sha256:8b5e83ea52141c5abe8e119e1200cd0373eac555ad46bb006ed6d90541b0912b"
+  },
+  "post_benchmark_code_commit": "74aa01887c3cf2fb2a32cf5b10161cfcfc54756b",
+  "post_benchmark_delta": "Literal Git path containment and blank OTLP endpoint fallback only; no model/recovery/task/scoring/budget change. Paid benchmark was not rerun on this independent boundary/config fix.",
+  "audit_notes": [
+    "Original shards/reference/comparison copied byte-for-byte from completed Actions artifacts; each ZIP digest matched GitHub metadata before extraction.",
+    "Strict recomputed JSON and Markdown are byte-for-byte identical to original Actions comparison; all expected 60 (method, task, repeat) keys present exactly once.",
+    "Same frozen suite/task/public+hidden bytes, source allowlist and scoring definition; no denominator change or removal of failure.",
+    "Historical same-scope comparison was recomputed from immutable historical shards using current summarizer metadata only; original historical report/evidence remain unchanged.",
+    "Full batch supervisor 5400s/job100min is a scheduling difference preregistered before full results; historical model/test/trial timing definitions unchanged.",
+    "Mutable model alias, noncontemporaneous historical run, 10 correlated task clusters, public historical fixes and module snapshots limit generalization and causal inference."
+  ],
+  "files": [
+    {
+      "path": "external-comparison.json",
+      "bytes": 5719,
+      "sha256": "bb4c176b447de66aaf1d32a5154c8047f0e84aa69f9ab0fc6a63a02b3194d80b"
+    },
+    {
+      "path": "external-comparison.md",
+      "bytes": 1043,
+      "sha256": "5495460736da61a7fb28cd6f10f81f9f1dd3e913f03db966149c9188e7e1e2d3"
+    },
+    {
+      "path": "external-reference.json",
+      "bytes": 16035,
+      "sha256": "d8c877165d47e558c1f6b2c05382f5f04fb9945814467a9881adb0fb9182504b"
+    },
+    {
+      "path": "historical-same-scope-comparison.json",
+      "bytes": 5232,
+      "sha256": "84ab4c91bac226bcd01ad8b5df529dc4142f4f629ff9b127c86ffae61e1216c0"
+    },
+    {
+      "path": "original-external-comparison.json",
+      "bytes": 5719,
+      "sha256": "bb4c176b447de66aaf1d32a5154c8047f0e84aa69f9ab0fc6a63a02b3194d80b"
+    },
+    {
+      "path": "original-external-comparison.md",
+      "bytes": 1043,
+      "sha256": "5495460736da61a7fb28cd6f10f81f9f1dd3e913f03db966149c9188e7e1e2d3"
+    },
+    {
+      "path": "shards/external-agent-0.json",
+      "bytes": 137328,
+      "sha256": "70505b86bcde1613cd6d1d8f19352f5376bc3c82b612277e100d9e6349def811"
+    },
+    {
+      "path": "shards/external-agent-1.json",
+      "bytes": 165185,
+      "sha256": "157b9907c82b3d1deadd80c11b3bc552a82bee64c8b6c52f31321ec88abeaa45"
+    },
+    {
+      "path": "shards/external-agent-2.json",
+      "bytes": 92271,
+      "sha256": "3b8d92af580206698118a92b540b9e89c40bf7cb47b529cfffbfbfd8d746faea"
+    },
+    {
+      "path": "shards/external-agent-3.json",
+      "bytes": 223128,
+      "sha256": "075ab1b636d4ea7c249e559aa307725d0dd073b0341747fa57d4dba57afbe864"
+    },
+    {
+      "path": "shards/external-agent-4.json",
+      "bytes": 162833,
+      "sha256": "d7264e8bbc5754c7f8fb9ea0868b0de9af6e28b651f37e7dd2cf0b32a1544626"
+    },
+    {
+      "path": "shards/external-oneshot-0.json",
+      "bytes": 21130,
+      "sha256": "78a56ec2f59a434a88e8586895ffb9e713ed12e0a50dc8bc53bd1d305d9156f0"
+    },
+    {
+      "path": "shards/external-oneshot-1.json",
+      "bytes": 33648,
+      "sha256": "dd6b1e41b998c547f1c50896f23255597fbb90bce411884c295c8482da8e53bb"
+    },
+    {
+      "path": "shards/external-oneshot-2.json",
+      "bytes": 19529,
+      "sha256": "395b7bbfcef01d2b6051832fd14cc42dd8a46e1e56ced8f2659ee74ad6991cd9"
+    },
+    {
+      "path": "shards/external-oneshot-3.json",
+      "bytes": 21391,
+      "sha256": "cf6b2d1d9a726a28887eab21d96640a656c3ed437e8201b3f58c9bc460539232"
+    },
+    {
+      "path": "shards/external-oneshot-4.json",
+      "bytes": 23860,
+      "sha256": "44195f575a9d8aea694c36ef214071da16dd71620937add2d7e1f95c99340f69"
+    },
+    {
+      "path": "trajectory-audit.json",
+      "bytes": 5939,
+      "sha256": "75dc0a886a11979339003c3385d6c125ce0b7287fbc508af73bb15706a9df3be"
+    }
+  ]
+}

@@ -804,5 +804,15 @@
   "live_api_smoke": {
     "command": "repopilot serve --host 127.0.0.1 --port 8765",
     "result": "live HTTP health returned status ok; graceful shutdown; no model call"
+  },
+  "stage_history_note": "Earlier final_* fields describe their then-current phase and are preserved. Latest executable code and exact final CI are identified below; do not mix 79/86/88 passed with the final 89 passed.",
+  "latest_code_verification": {
+    "commit": "74aa01887c3cf2fb2a32cf5b10161cfcfc54756b",
+    "run": 36736511730,
+    "evidence": "final-ci-verification.json",
+    "full_pytest": "89 passed, 5 skipped in 64.44s",
+    "base_pytest": "59 passed, 14 skipped",
+    "docker_pytest": "5 passed in 14.26s",
+    "local_scoped_tests": "5 MCP passed in 3.80s; 12 observability/optional passed in 21.73s"
   }
 }

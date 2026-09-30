@@ -102,7 +102,7 @@ python eval/demo.py --runtime custom --executor docker
 python eval/demo.py --runtime langgraph --executor docker
 ```
 
-对自己的 Git 仓库，入口是 `repopilot run REPO TASK --runtime custom` 或 `--runtime langgraph`，真实模型时去掉演示脚本的 FakeLLM。`repopilot serve` 提供本机 API；`POST /api/tasks` 的 `runtime` 字段接受 `custom|langgraph`，默认 custom。CLI/API selector 均有 integration test。
+对自己的 Git 仓库，入口是 `repopilot run REPO TASK --runtime custom` 或 `--runtime langgraph`，真实模型时去掉演示脚本的 FakeLLM。`repopilot serve --host 127.0.0.1 --port 8765` 提供本机 API；`POST /api/tasks` 的 `runtime` 字段接受 `custom|langgraph`，默认 custom。CLI/API selector 均有 integration test。
 
 Docker 实测覆盖禁网、512 MiB 内存、1 CPU、128 PID、只读容器根目录、无宿主模型 Key、受保护测试只读挂载和超时移除。文件工具检查根目录与符号链接；`ask/auto/never` 审批作用于两个 runtime。`auto` 与 local 仅用于可信副本。Docker 仍共享宿主内核和可写仓库，不构成绝对安全证明。
 
@@ -117,13 +117,13 @@ python eval/run_benchmark.py --fake --runtime langgraph --runs 1 --require-all
 python eval/run_one_shot.py --fake --runs 1 --require-all
 ```
 
-脚本化开发集：Custom Agent、LangGraph Agent、one-shot 均 **25/25**。完整依赖 CI 为 **86 passed、5 Docker-only skipped**；Docker 独立 job **5 passed**，Windows 基础组合 **57 passed、14 optional skipped**。验证入口、安装组合与命令见 [重构报告](docs/18-runtime-mcp-observability-refactor.md)。
+脚本化开发集：Custom Agent、LangGraph Agent、one-shot 均 **25/25**。最终代码完整依赖 CI 为 **89 passed、5 Docker-only skipped**；Docker 独立 job **5 passed**，Windows 基础组合 **59 passed、14 optional/Docker skipped**。[代码 CI](https://github.com/Astrea-296111/RepoPilot/actions/runs/36736511730)、安装组合与实际命令见 [重构报告](docs/18-runtime-mcp-observability-refactor.md)。
 
 外部基准固定 3 个项目的 10 个历史 Bug，每方法每题 3 次，共 60 次真实试验；10 个公开复现 +119 个隐藏参数化用例。运行期保护 public tests，结束后在干净副本注入 hidden tests 评分；隐藏测试不进入 Agent 工作区。任务是目标模块与所需导入快照，不能外推为完整大仓库评测。
 
 **历史全量结果（2026-09-30，qwen3.8-max）：** Agent patch resolved **25/30**、completed + resolved **23/30**；one-shot **28/30**。Agent / one-shot token 中位数 **34337.5 /5003**，端到端中位数 **123.904 /36.492 秒**。[历史 run](https://github.com/Astrea-296111/RepoPilot/actions/runs/36677551664)、[原始证据](eval/evidence/2026-09-30)、[旧报告](docs/17-外部历史Bug实测结果.md) 保留不变。该结果没有证明 Agent 优于 one-shot。
 
-本轮先按预注册的四个风险任务做 targeted 对照，再决定全量重跑；最新范围、原始 shard、前后指标和限制统一记录在 [本轮报告](docs/18-runtime-mcp-observability-refactor.md)。不混合 targeted 与 full 分母，重复试验不能写成独立 Bug 数；模型服务别名可能变化，历史比较属于描述性对照。
+本轮预注册四个风险任务、每方法每题 3 次：Agent patch / completed 均 **12/12**，同轮 one-shot **7/12**；历史同范围为 7/12、5/12 与 10/12。随后固定 60 次全量复跑中，Agent patch 为 **27/30**、completed + resolved 为 **26/30**，one-shot 为 **28/30**；Agent / one-shot token 中位数 **32642 /4946.5**、端到端中位数 **103.693 /38.398 秒**。全量仍未证明多轮优于 one-shot；research 从定向 3/3 变为全量 0/3，参数漂移读取、连接超时与空流式正文异常全部保留。[全量 run](https://github.com/Astrea-296111/RepoPilot/actions/runs/36730079890)、[原始分片与 hash](eval/evidence/2026-09-30-refactor/full)、[本轮报告](docs/18-runtime-mcp-observability-refactor.md) 给出 commit、日期、前后指标及失败分析。不混合 targeted 与 full 分母，重复试验不能写成独立 Bug 数；模型服务别名可能变化，历史比较属于描述性对照。
 
 普通 push / PR 只运行无付费模型 CI，覆盖 base/full extras、官方 MCP stdio、OTel、包装、CLI 与 Docker。真实模型 workflow 必须显式 opt-in；`workflow_dispatch` 选择 scope/runtime，或授权提交使用 `[external-targeted]` / `[external-eval]` 标记，完整 raw artifact 与严格配对报告均保存。工作流成功不等于所有补丁通过。
 

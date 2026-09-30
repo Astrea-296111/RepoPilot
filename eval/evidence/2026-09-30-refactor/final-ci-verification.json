@@ -1,0 +1,168 @@
+{
+  "verified_code_commit": "74aa01887c3cf2fb2a32cf5b10161cfcfc54756b",
+  "run_id": 36736511730,
+  "run_url": "https://github.com/Astrea-296111/RepoPilot/actions/runs/36736511730",
+  "started_utc": "2026-09-30T15:24:38Z",
+  "completed_utc": "2026-09-30T15:30:26Z",
+  "conclusion": "success",
+  "jobs": [
+    {
+      "id": 109959513894,
+      "name": "Tests and scripted 25-task benchmark",
+      "conclusion": "success",
+      "commands": [
+        "Set up job",
+        "Run actions/checkout@v6",
+        "Run actions/setup-python@v6",
+        "Install",
+        "Project tests",
+        "Key-free CLI demo in a fresh temporary repository",
+        "Scripted Agent benchmark",
+        "Scripted one-shot benchmark",
+        "File retrieval diagnostic",
+        "Upload scripted diagnostics",
+        "Post Run actions/setup-python@v6",
+        "Post Run actions/checkout@v6",
+        "Complete job"
+      ],
+      "pytest_summary": "2026-09-30T15:26:02.2821165Z 59 passed, 14 skipped, 1 warning in 35.96s\r",
+      "cli_completed_count": 1,
+      "cli_passed_count": 1
+    },
+    {
+      "id": 109959514263,
+      "name": "Linux Python 3.12 (dev,full)",
+      "conclusion": "success",
+      "commands": [
+        "Set up job",
+        "Run actions/checkout@v6",
+        "Run actions/setup-python@v6",
+        "Install selected optional dependency combination",
+        "Run python -m pip check",
+        "Unit, graph, MCP stdio and OTel integration tests",
+        "Run python eval/run_benchmark.py --fake --runs 1 --require-all",
+        "Run python eval/run_one_shot.py --fake --runs 1 --require-all",
+        "Same 25 scripted tasks with LangGraph orchestration",
+        "Documented custom CLI demo",
+        "Documented LangGraph console trace demo",
+        "Packaging, import and CLI smoke",
+        "Run actions/upload-artifact@v6",
+        "Post Run actions/setup-python@v6",
+        "Post Run actions/checkout@v6",
+        "Complete job"
+      ],
+      "pytest_summary": "2026-09-30T15:26:08.7239388Z 89 passed, 5 skipped in 64.44s (0:01:04)",
+      "cli_completed_count": 2,
+      "cli_passed_count": 2
+    },
+    {
+      "id": 109959514352,
+      "name": "Linux Python 3.11 (dev)",
+      "conclusion": "success",
+      "commands": [
+        "Set up job",
+        "Run actions/checkout@v6",
+        "Run actions/setup-python@v6",
+        "Install selected optional dependency combination",
+        "Run python -m pip check",
+        "Unit, graph, MCP stdio and OTel integration tests",
+        "Run python eval/run_benchmark.py --fake --runs 1 --require-all",
+        "Run python eval/run_one_shot.py --fake --runs 1 --require-all",
+        "Documented custom CLI demo",
+        "Packaging, import and CLI smoke",
+        "Run actions/upload-artifact@v6",
+        "Post Run actions/setup-python@v6",
+        "Post Run actions/checkout@v6",
+        "Complete job"
+      ],
+      "pytest_summary": "2026-09-30T15:24:59.9863935Z 59 passed, 14 skipped, 1 warning in 8.02s",
+      "cli_completed_count": 1,
+      "cli_passed_count": 1
+    },
+    {
+      "id": 109961538368,
+      "name": "Real Docker isolation and fixed external references",
+      "conclusion": "success",
+      "commands": [
+        "Set up job",
+        "Run actions/checkout@v6",
+        "Run actions/setup-python@v6",
+        "Run python -m pip install -e '.[dev,full]'",
+        "Run docker build -t repopilot-sandbox:dev -f Dockerfile.sandbox .",
+        "Trusted custom and LangGraph demos, protected mounts, resources, network and timeout",
+        "Documented Docker CLI demos for both runtimes",
+        "Run docker build -t repopilot-external:fixed -f eval/Dockerfile.external .",
+        "Validate the unchanged 10 historical bugs and 129 public plus hidden cases",
+        "Run actions/upload-artifact@v6",
+        "Post Run actions/setup-python@v6",
+        "Post Run actions/checkout@v6",
+        "Complete job"
+      ],
+      "pytest_summary": "2026-09-30T15:30:02.7882767Z 5 passed in 14.26s",
+      "cli_completed_count": 2,
+      "cli_passed_count": 2
+    }
+  ],
+  "verified_results": {
+    "full_pytest": "89 passed, 5 skipped in 64.44s",
+    "windows_base_pytest": "59 passed, 14 skipped, 1 warning in 35.96s",
+    "linux_base_pytest": "59 passed, 14 skipped, 1 warning in 8.02s",
+    "docker_pytest": "5 passed in 14.26s",
+    "fake_benchmarks": {
+      "custom": "25/25",
+      "langgraph": "25/25",
+      "oneshot": "25/25"
+    },
+    "documented_cli_demos": "Both runtimes passed in local and actual Docker CLI execution; 24 actual console spans with LangGraph trace demo",
+    "external_references": "All unchanged 10 broken snapshots fail and their upstream fixes pass 129 fixed public+hidden cases",
+    "packaging": "Wheel, imports, --help and pip check passed"
+  },
+  "last_scoped_local_tests": [
+    {
+      "command": "python -m pytest tests/test_mcp_integration.py -q",
+      "result": "5 passed in 3.80s"
+    },
+    {
+      "command": "python -m pytest tests/test_observability.py tests/test_optional_integrations.py -q",
+      "result": "12 passed in 21.73s"
+    }
+  ],
+  "code_delta_after_paid_benchmark": {
+    "evaluated_commit": "192627da77a2520df07d5e5b9c87e03e9424bfaf",
+    "files": [
+      "repopilot/tools/git.py",
+      "repopilot/config.py",
+      "tests/test_mcp_integration.py",
+      "tests/test_observability.py"
+    ],
+    "changes": "Literal positive Git paths keep nested workspace boundaries; blank specific OTLP endpoint falls back to generic full traces URL. No model/runtime/recovery/task/scoring/budget change."
+  },
+  "additional_readme_mcp_smoke": {
+    "command": "repopilot mcp examples/demo_repo",
+    "transport": "Official MCP Client / actual console entrypoint stdio subprocess",
+    "result": "four tool calls succeeded, nested-workspace diff is blank, graceful lifecycle exit",
+    "tools": [
+      {
+        "tool": "repo_map",
+        "is_error": false,
+        "characters": 240
+      },
+      {
+        "tool": "search_code",
+        "is_error": false,
+        "characters": 163
+      },
+      {
+        "tool": "read_file",
+        "is_error": false,
+        "characters": 663
+      },
+      {
+        "tool": "git_diff",
+        "is_error": false,
+        "characters": 1
+      }
+    ],
+    "verification_note": "Initial smoke assertion expected the literal No changes message; a clean diff actually returns whitespace. Corrected the verification assertion to accept an empty/blank successful diff; no product change."
+  }
+}

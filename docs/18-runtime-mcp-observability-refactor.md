@@ -13,8 +13,9 @@
 | 历史外部评测 commit | `ff9d52b6164b58c17d33a8dd3a17802765487965` |
 | 历史外部 workflow | [36677551664](https://github.com/Astrea-296111/RepoPilot/actions/runs/36677551664)，2026-09-30 06:18:24–06:59:02 UTC |
 | 基线普通 CI | [36688972457](https://github.com/Astrea-296111/RepoPilot/actions/runs/36688972457) |
-| 已验证核心代码 commit | `3037cfe06aa81e779f79722abeb8ee81f9061a22` |
-| 核心代码普通 CI | [36700554318](https://github.com/Astrea-296111/RepoPilot/actions/runs/36700554318)，Windows / Linux base / Linux full / Docker 全绿 |
+| `FINAL_CODE_SHA`（最终可执行代码；后续仅文档与证据） | `74aa01887c3cf2fb2a32cf5b10161cfcfc54756b` |
+| 最终代码普通 CI | [36736511730](https://github.com/Astrea-296111/RepoPilot/actions/runs/36736511730)，Windows / Linux base / Linux full / Docker 全绿，两个 Docker CLI 演示实际 completed；[命令与 job 证据](../eval/evidence/2026-09-30-refactor/final-ci-verification.json) |
+| 全量真实模型实际执行版本 | `192627da77a2520df07d5e5b9c87e03e9424bfaf`；与最终代码差异为独立 Git 边界和 OTLP 配置修复，详见下文 |
 | 演示入口 commit | `a121b18e23d628e7d8ab57eb7498d86a62e95c69`，仅新增演示、示例配置与 CI 演示步骤，runtime 与评分器不变 |
 
 基线审计的命令与 raw hash 见 [baseline.json](../eval/evidence/2026-09-30-refactor/baseline.json)。旧证据 manifest 的所有文件 hash 已重新校验。外部任务、allowed source、public/hidden tests 的冻结 suite SHA-256 始终为：
@@ -48,6 +49,8 @@
 | Windows 编码修复 | `3037cfe06aa81e779f79722abeb8ee81f9061a22` |
 | targeted 预注册并执行 | `68a4c49a72d9f61fe0ee7daabcf55c43147b999e` |
 | 一键 CLI/Docker 演示 | `a121b18e23d628e7d8ab57eb7498d86a62e95c69` |
+| targeted 完整证据与 full 调度等待上限 | `192627da77a2520df07d5e5b9c87e03e9424bfaf` |
+| Git literal 路径边界 / OTLP endpoint 回退 | `74aa01887c3cf2fb2a32cf5b10161cfcfc54756b` |
 
 ## 两个 runtime 的实际状态机
 
@@ -105,26 +108,30 @@ flowchart TD
 | `python -m pip install -e '.[mcp]'` | 官方 v2 SDK 安装成功 |
 | `python -m pip install -e '.[observability]'` | SDK 与 OTLP HTTP exporter 安装成功 |
 | `python -m pip install -e '.[dev,full]'`、`python -m pip check` | full 自引用 extra 安装成功，无 broken requirements |
-| `python -m pip wheel --no-deps . --wheel-dir /tmp/repopilot-wheel` | wheel 构建成功；CI 同时验证 import 与 `repopilot --help` |
-| `python -m pytest -q` | full CI `86 passed, 5 skipped in 61.15s`；5 个跳过项为独立 Docker job 实测 |
+| `python -m pip wheel --no-deps . --wheel-dir /tmp/repopilot-final-wheel` | 最终 README 下 wheel 构建成功；pip check、import 与 `repopilot --help` 通过 |
+| `repopilot serve --host 127.0.0.1 --port 8765` | 实际启动 Uvicorn，HTTP `/health` 返回 `status=ok`，随后正常关闭；未调用模型 |
+| `python -m pytest -q` | 最终代码 CI `89 passed, 5 skipped in 64.44s`；此前本地 `86 passed, 5 skipped in 98.90s`，随后增加 2 个调度入口和 1 个 MCP 边界测试；5 个跳过项由独立 Docker job 实测 |
 | `python eval/run_benchmark.py --fake --runs 1 --require-all` | Custom 25/25 |
 | `python eval/run_benchmark.py --fake --runtime langgraph --runs 1 --require-all` | LangGraph 25/25 |
 | `python eval/run_one_shot.py --fake --runs 1 --require-all` | one-shot 25/25 |
 | `python eval/demo.py --runtime custom` | 真实 CLI subprocess completed，实际测试 passed |
 | `python eval/demo.py --runtime langgraph` | 真实 CLI subprocess completed，实际测试 passed |
 | `python eval/demo.py --runtime langgraph --trace` | completed，24 个实际 console span，[demo-verification.json](../eval/evidence/2026-09-30-refactor/demo-verification.json) |
-| `python -m pytest tests/test_mcp_integration.py -q` | 4 tests：官方 client 完整 stdio 与内存 transport、四工具、越界/私有路径/大小/非 Git/关闭 |
-| `python -m pytest tests/test_observability.py -q` | memory exporter 树、token/duration/status、默认关闭、bad config、exporter failure、真实 OTLP HTTP protobuf 接收 |
-| `python -m pytest tests/test_runtime_recovery.py -q` | 13 个参数化场景，两个 runtime 共用恢复/终止/复验规则 |
+| `python -m pytest tests/test_mcp_integration.py -q` | 最后本地 5 passed in 3.80s：官方 client 完整 stdio 与内存 transport、四工具、越界/私有路径/大小/非 Git/关闭，以及 Git 特殊路径名边界 |
+| `python -m pytest tests/test_observability.py -q` | 9 passed in 12.71s；memory exporter 树、token/duration/status、默认关闭、bad config、exporter failure、真实 OTLP HTTP protobuf 接收 |
+| `python -m pytest tests/test_observability.py tests/test_optional_integrations.py -q` | 最后本地 12 passed in 21.73s；真实 OTLP 接收测试另验证空专用 endpoint 回退到通用完整 traces URL |
+| `python -m pytest tests/test_runtime_recovery.py -q` | 13 passed in 14.16s；参数化场景，两个 runtime 共用恢复/终止/复验规则 |
 | `python -m pytest tests/test_optional_integrations.py tests/test_langgraph_runtime.py::test_graph_cli_smoke -q` | 本地最后一次 4 passed in 12.79s；缺 SDK 安装提示和 UTF-8 CLI 均验证 |
 
-基础环境组合 `57 passed, 14 skipped`：14 个 skip 来自未安装 optional SDK 的集成模块及 Docker opt-in。额外依赖组合不会因需要 SaaS 而崩溃。第一次普通 CI 的 Windows 失败来自重定向 cp1252 与默认文本解码，已显式 UTF-8 修复并整轮全绿；没有删掉 Windows 测试避开失败。
+最终基础环境组合 `59 passed, 14 skipped`：Windows 35.96s，Linux Python 3.11 为 8.02s；14 个 skip 来自未安装 optional SDK 的集成模块及 Docker opt-in。额外依赖组合不会因需要 SaaS 而崩溃。第一次普通 CI 的 Windows 失败来自重定向 cp1252 与默认文本解码，已显式 UTF-8 修复并整轮全绿；没有删掉 Windows 测试避开失败。
 
-完整命令摘要与历史本地中间结果保存于 [local-verification.json](../eval/evidence/2026-09-30-refactor/local-verification.json)。其中每条结果标明阶段，不将测试增加前的 79 passed 与最终 full CI 的 86 passed 混用。
+完整命令摘要与历史本地中间结果保存于 [local-verification.json](../eval/evidence/2026-09-30-refactor/local-verification.json)。最终代码证据独立保存在 [final-ci-verification.json](../eval/evidence/2026-09-30-refactor/final-ci-verification.json)，不将早期 79/86/88 passed 与最终 full CI 的 89 passed 混用。
 
 ## MCP 与 OTel：验证到哪一层
 
 MCP 使用官方 [Python SDK v2](https://py.sdk.modelcontextprotocol.io/) 的 `MCPServer`、`Client`、`StdioServerParameters`。stdio client 实际启动 `python -m repopilot.cli mcp REPO`，执行 list_tools 和四个工具，检查 traversal、symlink、`.env`、`.git`、session 路径拒绝，再关闭 subprocess。内存 client 还验证文件/output limits 与非 Git 错误。readonly annotations 与实际工具集合都受测试覆盖；没有开放 apply_patch/write_file/run_command，没有验证第三方编辑器接入。
+
+最后边界审计发现真实 POSIX 文件名 `:(top)` 会被 Git 当作 pathspec magic，可能从嵌套 workspace 选中父仓库内容。修复将正向用户路径标记为 `:(literal)`，只保留应用写出的私有路径 exclusion 为 magic。官方 client 测试同时验证默认 diff 与指定文件不输出父仓库 tracked 内容或 untracked 文件名；[修复前复现与修复后验证](../eval/evidence/2026-09-30-refactor/git-literal-path-verification.json)。Windows 不允许这种文件名，相关场景由 Linux full CI 验证。
 
 OTel 使用官方 SDK 独立 provider。`repopilot.task` 是根 span；retrieval、planning、agent.turn、tool.*、verification 是任务阶段，LLM 属于对应 planning/turn，最终 run_command 是 verification 子 span。只记录 allowlist scalar metadata；不自动记录 exception body。FakeLLM 的 usage 为 0；单测使用带 usage 的 model fixture 校验数值，不能把零 token 演示写成模型成本节省。
 
@@ -136,11 +143,11 @@ OTLP test 启动本地 HTTP 接收端，使用实际 exporter POST 并解码官�
 
 ## Docker 与 Actions
 
-本地没有 Docker；通过 [36700554318 的真实 Docker job](https://github.com/Astrea-296111/RepoPilot/actions/runs/36700554318/job/109840977567) 验证，而不是把 mock 或语法检查当成 Docker 已运行：
+本地没有 Docker；通过 [最终代码真实 Docker job](https://github.com/Astrea-296111/RepoPilot/actions/runs/36736511730/job/109961538368) 验证，而不是把 mock 或语法检查当成 Docker 已运行：
 
 - sandbox image 实际 build。
-- `REPOPILOT_DOCKER_TESTS=1 python -m pytest tests/test_docker_integration.py -q`：**5 passed in 14.68s**。
-- Custom / LangGraph trusted demo 真正执行、独立验证通过；protected tests 只读挂载拒绝 shell 改写。
+- `REPOPILOT_DOCKER_TESTS=1 python -m pytest tests/test_docker_integration.py -q`：**5 passed in 14.26s**。
+- `python eval/demo.py --runtime custom --executor docker` 与 `--runtime langgraph --executor docker` 两个 CLI 命令实际 completed、tests passed；Custom / LangGraph trusted demo 真正执行、独立验证通过；protected tests 只读挂载拒绝 shell 改写。
 - cgroup 验证 512 MiB /1 CPU /128 PID，network 无默认路由，readonly rootfs、tmp 可写、NoNewPrivs、宿主模型 Key 不继承。
 - 超时路径移除容器；`eval/Dockerfile.external` 实际 build，再校验全部 10 个破损基线与上游参考修复。
 
@@ -155,7 +162,67 @@ OTLP test 启动本地 HTTP 接收端，使用实际 exporter POST 并解码官�
 | Custom Agent | 25/30 | 23/30 | 34337.5 | 123.904 |
 | one-shot | 28/30 | 28/30 | 5003 | 36.492 |
 
-本轮 targeted 先固定 `boltons_research`、`more_predicate_sentinel`、`slugify_hex`、`slugify_truncation`：4 bugs ×3 ×2 =24 trials，Agent 选择 Custom Runtime。预注册证据见 [targeted-protocol.json](../eval/evidence/2026-09-30-refactor/targeted-protocol.json)；评测 [36720727948](https://github.com/Astrea-296111/RepoPilot/actions/runs/36720727948)，执行 commit `68a4c49a72d9f61fe0ee7daabcf55c43147b999e`。历史同范围 Agent patch 7/12、completed+resolved 5/12、loop detection 5；one-shot 10/12。必须待所有 24 条记录完成后严格配对，再形成新结果，不依据已完成单个 shard 下结论。
+本轮 targeted 先固定 `boltons_research`、`more_predicate_sentinel`、`slugify_hex`、`slugify_truncation`：4 bugs ×3 ×2 =24 trials，Agent 选择 Custom Runtime。预注册证据见 [targeted-protocol.json](../eval/evidence/2026-09-30-refactor/targeted-protocol.json)；评测 [36720727948](https://github.com/Astrea-296111/RepoPilot/actions/runs/36720727948)，执行 commit `68a4c49a72d9f61fe0ee7daabcf55c43147b999e`。历史同范围 Agent patch 7/12、completed+resolved 5/12、loop detection 5；one-shot 10/12。24 条记录全部完成，严格重算 JSON 与 Actions 原报告一致；[manifest / hash](../eval/evidence/2026-09-30-refactor/targeted/manifest.json)、[原始分片](../eval/evidence/2026-09-30-refactor/targeted/shards)、[配对报告](../eval/evidence/2026-09-30-refactor/targeted/external-comparison.md) 和 [轨迹审计](../eval/evidence/2026-09-30-refactor/targeted/trajectory-audit.json) 均已封存。运行时间 13:18:48–14:20:37 UTC。
+
+| 范围/阶段 | 方法 | patch resolved | completed + resolved | loop / max steps / protocol | steps 中位数 | 工具记录 / 实际 dispatch 中位数 | token 中位数 | 端到端秒中位数 |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| 同四题历史切片 | Agent | 7/12 | 5/12 | 5 /0 /0 | 7 | 6 /6 | 50781 | 187.462 |
+| 同四题历史切片 | one-shot | 10/12 | 10/12 | 0 /0 /0 | — | — | 6010 | 56.966 |
+| 本轮 targeted | Agent | 12/12 | 12/12 | 0 /0 /0 | 7.5 | 8.5 /8 | 50297.5 | 154.870 |
+| 本轮 targeted | one-shot | 7/12 | 7/12 | 0 /0 /0 | — | — | 6128.5 | 53.090 |
+
+| 任务 | Agent patch / completed 通过 | one-shot 通过 |
+|---|---:|---:|
+| boltons_research | 3/3；3/3 | 1/3 |
+| more_predicate_sentinel | 3/3；3/3 | 3/3 |
+| slugify_hex | 3/3；3/3 | 1/3 |
+| slugify_truncation | 3/3；3/3 | 2/3 |
+
+实际轨迹中，12 次 Agent 全部含成功的独立最终验证；8 次触发“测试已通过后的再次请求转最终验证”；5 条成功只读观察被复用，107 条工具观察对应 102 次实际 dispatch。历史研究任务全部 loop stop，本轮三次在 13/13/9 个 decision 内修好，均在原 15 步预算内。这支持机制确实被执行，不构成单因素因果估计。
+
+代价仍很明显：Agent 本轮总 usage 913866 tokens，历史同范围为 691309；最长单题 1595.108 秒，三个 research trial 合计 3540.560 秒。中位数略低不意味着总 token/长尾都改善。one-shot 的五次 miss 原始记录全部保留，其中三次为精确 old_text 匹配异常，另有隐藏回归失败。四题选自历史风险，模型别名也可变化；不能把 12/12 外推为通用成功率。
+
+### 固定全量复跑
+
+targeted 完整、deterministic CI 全绿后，执行固定 10 bugs ×3 repeats ×2 methods 的 60 次复跑：[36730079890](https://github.com/Astrea-296111/RepoPilot/actions/runs/36730079890)，source commit `192627da77a2520df07d5e5b9c87e03e9424bfaf`，预注册 [full-protocol.json](../eval/evidence/2026-09-30-refactor/full-protocol.json)。runtime / model / temperature / reasoning / context / max steps / 任务 / public+hidden tests / scoring 均未根据 targeted 新结果调优。
+
+调度差异单独记录：full 每分片含两道题、六次试验，targeted 每分片一道题、三次；测得 research 单分片接近一小时，因此只把 full 整组子进程上限设为 5400 秒、job 上限 100 分钟（targeted 仍为 3900 秒/70 分钟）。LLM 的 180 秒 read timeout、Docker 测试的 60 秒定义、每 trial timer 和评分规则保持不变。这是评测前记录的批次调度差异，不声称所有 timeout 配置完全相同。
+
+本轮 full 于 **14:34:02–15:29:33 UTC** 完成。严格校验全部 60 个 `(method, task, repeat)` key、10 个分片和冻结 hash；重算 JSON/Markdown 与 Actions 原报告逐字节相同。[manifest](../eval/evidence/2026-09-30-refactor/full/manifest.json)、[全部 raw shards](../eval/evidence/2026-09-30-refactor/full/shards)、[报告](../eval/evidence/2026-09-30-refactor/full/external-comparison.md)、[失败轨迹审计](../eval/evidence/2026-09-30-refactor/full/trajectory-audit.json) 均已归档；定向记录没有进入这个分母。
+
+| 全量阶段 | 方法 | patch resolved | completed + resolved | loop / max steps / JSON protocol | steps 中位数 | 工具记录 / 实际 dispatch 中位数 | token 中位数 | 端到端秒中位数 |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| 历史 | Agent | 25/30 | 23/30 | 5 /0 /0 | 4 | 5 /5 | 34337.5 | 123.904 |
+| 历史 | one-shot | 28/30 | 28/30 | 0 /0 /0 | — | — | 5003 | 36.492 |
+| 本轮 full | Agent | **27/30** | **26/30** | 0 /1 /0 | 5 | 6 /5.5 | 32642 | 103.693 |
+| 本轮 full | one-shot | **28/30** | **28/30** | 0 /0 /0 | — | — | 4946.5 | 38.398 |
+
+| 全量阶段 | Agent 总 tokens /最长 trial 秒 | one-shot 总 tokens /最长 trial 秒 |
+|---|---:|---:|
+| 历史 | 1296515 /952.422 | 164566 /171.681 |
+| 本轮 | 1261197 /1727.493 | 166346 /128.218 |
+
+Agent 26 次正常完成均执行成功的独立最终验证；其中 5 次由成功测试后的重复请求转入验证。5 条只读观察被复用，179 条工具记录对应 174 次实际 dispatch。`loop_detection` 从历史 5 次到本轮 0 次，只描述完全相同连续动作的终止记录：research repeat 1 仍用完 15 步读取相邻或交替区间，未产生补丁。没有 loop stop 不等于没有无效循环。
+
+| 保留的异常试验 | 结果与原因 |
+|---|---|
+| boltons_research，Agent repeat 1 | 失败，15 步耗尽，1727.493s；参数漂移/非连续读取没有被现有 guard 覆盖 |
+| boltons_research，Agent repeats 2/3 | 失败，ConnectTimeout；分别 804.289s /324.304s；未重跑或删除 |
+| boltons_backoff，Agent repeat 3 | 补丁评分通过，但后续模型流式响应缺少正文，未进入独立最终验证，终态 failed；因此 patch 27 与 completed 26 不相同 |
+| slugify_hex /slugify_truncation，one-shot repeat 3 | 两次精确 old_text 匹配错误，计入失败分母 |
+
+JSON/ValidationError protocol 指标为 0，不包括上述空正文、连接错误和补丁应用错误；不能将其解释为所有协议/执行过程均无异常。full research 为 0/3，而 targeted 为 3/3，说明定向成功没有稳定复现到全量运行。Agent 本轮生成的 27 份补丁均通过固定公开+隐藏评分，但仅是这 10 题的观察，没有证明通用 shared-symbol 策略已解决。
+
+**结果解释：** 全量 Agent patch 比历史多 2 次、completed+resolved 多 3 次，但仍少于同轮 one-shot 的 28/30，且 token 中位数约为 6.6 倍、耗时中位数约为 2.7 倍。本轮配对成功率差为 −3.33 个百分点，按 10 个任务重采样区间约 [−30.00, 13.33]，不支持优于 one-shot 的结论。历史与本轮模型别名相同但不同时，只有 10 个相关 task clusters，公开上游修复可能进入训练数据；这些是描述性对照，不做因果或通用修复率宣称。
+
+全量付费运行之后，`74aa018...` 修复了 Git literal 路径与空 OTLP endpoint 回退，并新增相关测试。未改模型、恢复策略、任务、评分或预算；冻结任务没有 Git magic-looking 文件名。该修复通过最终普通 CI，但没有再消费 60 次模型试验。因此本报告明确区分付费执行 commit `192627da...` 与最终代码 commit `74aa018...`。
+
+重算命令（无需模型密钥）：
+
+```bash
+python eval/summarize_targeted.py eval/evidence/2026-09-30-refactor/targeted/shards --output /tmp/repopilot-targeted-comparison.json
+python eval/summarize_external.py eval/evidence/2026-09-30-refactor/full/shards --output /tmp/repopilot-full-comparison.json
+```
 
 ## 已知限制与未验证项
 
@@ -167,6 +234,38 @@ OTLP test 启动本地 HTTP 接收端，使用实际 exporter POST 并解码官�
 6. 模型兼容性推理并未被通用算法解决；public tests 通过不能代替 hidden/完整回归。没有因为新技术栈就删掉旧失败。
 7. Docker 共享宿主内核，workspace 可写，镜像/daemon 供应链仍有边界；本轮未做恶意代码攻防、API 认证或 Compose 真实模型后台 E2E。
 8. 外部套件只有 10 个独立 Bug、三个项目的模块快照；三次重复不独立，模型 alias 可变化，历史/当前 run 不同时，不给统计显著性或大仓库泛化结论。
-9. 当前 context budget 按字符计；token 数来自 provider usage，不把字符数或 FakeLLM 的零用量当成节省率。
+9. 当前 context budget 按字符计；token 数只累计已返回的 provider usage，报错/截断调用可能没有完整 usage，不能当成全部账单。FakeLLM 的零用量不是节省率。
+10. `LLM_TIMEOUT_SECONDS=180` 保持原 HTTPX 单次 read timeout 定义。持续返回 stream chunk 的调用总耗时可能超过 180 秒；没有为了改善成绩改成新的 end-to-end deadline。workflow/子进程另有整体时间上限，长尾可能影响整组完成。
 
-简历与面试措辞见 [16｜项目 STAR 与简历](16-项目STAR与简历.md)，只包含当前代码和证据支持的能力。
+## 最终验收清单
+
+以下是本轮已执行范围；未验证部署与泛化能力仍按上一节列出，不因打勾扩大范围。
+
+文件 hash、文档链接和交付材料的结构检查见 [final-consistency-verification.json](../eval/evidence/2026-09-30-refactor/final-consistency-verification.json)。
+
+- [x] baseline / 最终可执行 commit 已记录：本报告版本表、baseline.json。
+- [x] base pytest：Windows / Linux 均 59 passed、14 skipped，最终代码 CI。
+- [x] fake Agent：Custom 25/25，最终代码 CI。
+- [x] fake one-shot：25/25，最终代码 CI。
+- [x] Custom 默认入口保持可运行：CLI、25 题、完整模型评测均使用同一 runtime。
+- [x] LangGraph 为真实六节点图：[源码](../repopilot/runtime/langgraph.py)；测试禁止旧循环调用。
+- [x] LangGraph CLI/demo 实际 completed：本地、console trace、真实 Docker CLI。
+- [x] LangGraph success/failure/budget/checkpoint/API tests：[test_langgraph_runtime.py](../tests/test_langgraph_runtime.py)，full CI。
+- [x] MCP server 实际启动：stdio client 启动 CLI subprocess 并正常关闭。
+- [x] 官方 MCP client integration：list_tools、四工具和内存 transport，[tests](../tests/test_mcp_integration.py)。
+- [x] MCP traversal / symlink / 私有文件 / 大小 / Git literal 路径边界：5 个测试，Linux full CI。
+- [x] OTel 实际 memory span / token / status / parent：[tests](../tests/test_observability.py)；console 24 spans、OTLP HTTP protobuf 接收。
+- [x] tracing 默认关闭、不导入 SDK、不联系 exporter：[optional tests](../tests/test_optional_integrations.py)。
+- [x] repeat recovery：两个 runtime 参数化序列，[recovery tests](../tests/test_runtime_recovery.py)。
+- [x] post-test termination：成功观察后再次请求转独立验证，实际模型轨迹也出现。
+- [x] final verification 保留：回归覆盖复验失败回决策；全量 26 次正常完成均含实际复验。
+- [x] Docker 在 Actions 实测：5 passed、资源/禁网/Key/保护挂载/超时、两个 CLI 演示。
+- [x] 普通代码 CI 全绿：[36736511730](https://github.com/Astrea-296111/RepoPilot/actions/runs/36736511730)，付费 job skipped。
+- [x] targeted real-model：预注册四题、24 个完整 key，[36720727948](https://github.com/Astrea-296111/RepoPilot/actions/runs/36720727948)。
+- [x] full external：固定十题、60 个完整 key，[36730079890](https://github.com/Astrea-296111/RepoPilot/actions/runs/36730079890)。
+- [x] README 安装/测试/CLI/MCP/tracing/API/Docker 命令实际验证；仓库与任务占位符是入口说明。
+- [x] README 技术栈与实现一致：没有 Langfuse、embedding、BM25、Multi-Agent 或 SWE-bench 得分。
+- [x] 简历数字对应日期/model/commit/run/raw：[16](16-项目STAR与简历.md) 与本报告。
+- [x] 全部失败和限制保留：历史、targeted、full 各自 manifest 与原始分片；报告明确 full research 0/3 和服务异常。
+
+简历与面试措辞见 [16｜项目 STAR 与简历](16-项目STAR与简历.md)，包含 3 条中文 bullet、约 90 秒介绍、runtime 追问表和 10 个回答，只使用当前代码和证据支持的能力。

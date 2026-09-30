@@ -1,6 +1,6 @@
 # 02｜从零理解 Agent Loop
 
-只调用一次 LLM 像医生没看化验单就下结论。修 Bug 要先看代码，再看失败，再检查改动，所以 `repopilot/agent/agent.py:RepoPilot._run_custom` 里有 `while state.current_step < self.settings.max_steps`。这不是为了让模型「想得更久」，而是允许它每得到一个新事实就调整下一步。
+只调用一次 LLM 像医生没看化验单就下结论。修 Bug 要先看代码，再看失败，再检查改动，所以 `repopilot/agent/agent.py:RepoPilot._run_custom` 中以 `while state.status == "running"` 循环，`_decide` 在每次决定前检查 `max_steps`。这不是为了让模型「想得更久」，而是允许它每得到一个新事实就调整下一步。
 
 按源码读：
 

@@ -1,0 +1,174 @@
+{
+  "agent_trial_count": 30,
+  "independent_verification_count": 26,
+  "successful_independent_verification_count": 26,
+  "test_repeat_termination_redirect_count": 5,
+  "cached_read_observations": 5,
+  "actual_dispatches": 174,
+  "tool_observation_records": 179,
+  "connection_timeout_count": 2,
+  "empty_model_response_count": 1,
+  "oneshot_exact_patch_application_failures": 2,
+  "reported_json_validation_protocol_failures": {
+    "agent": 0,
+    "oneshot": 0
+  },
+  "max_end_to_end_seconds": 1727.493,
+  "failures_and_noncompleted_passing_patches": [
+    {
+      "mode": "agent",
+      "task_id": "boltons_backoff",
+      "run": 3,
+      "resolved": true,
+      "status": "failed",
+      "error": "模型服务流式响应缺少正文",
+      "steps": 3,
+      "tool_calls": 3,
+      "executed_tool_calls": 3,
+      "token_usage": {
+        "prompt_tokens": 20168,
+        "completion_tokens": 2201,
+        "total_tokens": 22369
+      },
+      "end_to_end_seconds": 61.721,
+      "changed_files": [
+        "boltons/iterutils.py"
+      ],
+      "failure_category": null,
+      "independent_verifications": 0,
+      "grader_exit_code": 0
+    },
+    {
+      "mode": "agent",
+      "task_id": "boltons_research",
+      "run": 1,
+      "resolved": false,
+      "status": "failed",
+      "error": "max_steps",
+      "steps": 15,
+      "tool_calls": 15,
+      "executed_tool_calls": 15,
+      "token_usage": {
+        "prompt_tokens": 128610,
+        "completion_tokens": 85609,
+        "total_tokens": 214219
+      },
+      "end_to_end_seconds": 1727.493,
+      "changed_files": [],
+      "failure_category": "agent_max_steps",
+      "independent_verifications": 0,
+      "grader_exit_code": 1,
+      "tool_names": {
+        "read_file": 15
+      },
+      "distinct_read_arguments": 10
+    },
+    {
+      "mode": "agent",
+      "task_id": "boltons_research",
+      "run": 2,
+      "resolved": false,
+      "status": "failed",
+      "error": "模型服务请求超时（180 秒，ConnectTimeout，已等待 180.5 秒）",
+      "steps": 4,
+      "tool_calls": 4,
+      "executed_tool_calls": 4,
+      "token_usage": {
+        "prompt_tokens": 38202,
+        "completion_tokens": 28909,
+        "total_tokens": 67111
+      },
+      "end_to_end_seconds": 804.289,
+      "changed_files": [],
+      "failure_category": "agent_模型服务请求超时（180 秒，ConnectTimeout，已等待 180.5 秒）",
+      "independent_verifications": 0,
+      "grader_exit_code": 1,
+      "tool_names": {
+        "read_file": 4
+      },
+      "distinct_read_arguments": 3
+    },
+    {
+      "mode": "agent",
+      "task_id": "boltons_research",
+      "run": 3,
+      "resolved": false,
+      "status": "failed",
+      "error": "模型服务请求超时（180 秒，ConnectTimeout，已等待 180.4 秒）",
+      "steps": 1,
+      "tool_calls": 1,
+      "executed_tool_calls": 1,
+      "token_usage": {
+        "prompt_tokens": 7585,
+        "completion_tokens": 6311,
+        "total_tokens": 13896
+      },
+      "end_to_end_seconds": 324.304,
+      "changed_files": [],
+      "failure_category": "agent_模型服务请求超时（180 秒，ConnectTimeout，已等待 180.4 秒）",
+      "independent_verifications": 0,
+      "grader_exit_code": 1,
+      "tool_names": {
+        "read_file": 1
+      },
+      "distinct_read_arguments": 1
+    },
+    {
+      "mode": "oneshot",
+      "task_id": "slugify_hex",
+      "run": 3,
+      "resolved": false,
+      "status": null,
+      "error": "ValueError: old_text 必须在目标文件中恰好出现一次",
+      "steps": null,
+      "tool_calls": null,
+      "executed_tool_calls": null,
+      "token_usage": {
+        "prompt_tokens": 3525,
+        "completion_tokens": 663,
+        "total_tokens": 4188
+      },
+      "end_to_end_seconds": 15.62,
+      "changed_files": null,
+      "failure_category": "runner_or_protocol_failure",
+      "independent_verifications": 0,
+      "grader_exit_code": null
+    },
+    {
+      "mode": "oneshot",
+      "task_id": "slugify_truncation",
+      "run": 3,
+      "resolved": false,
+      "status": null,
+      "error": "ValueError: old_text 必须在目标文件中恰好出现一次",
+      "steps": null,
+      "tool_calls": null,
+      "executed_tool_calls": null,
+      "token_usage": {
+        "prompt_tokens": 3600,
+        "completion_tokens": 2754,
+        "total_tokens": 6354
+      },
+      "end_to_end_seconds": 53.744,
+      "changed_files": null,
+      "failure_category": "runner_or_protocol_failure",
+      "independent_verifications": 0,
+      "grader_exit_code": null
+    }
+  ],
+  "criteria": {
+    "independent_verification": "trace.tool_history[].phase == verification",
+    "test_repeat_redirect": "trace.summary starts Planned tests passed;",
+    "cache": "trace.tool_history[].cached == true",
+    "actual_dispatch": "trace.tool_history[].executed (legacy default true)"
+  },
+  "notes": [
+    "All 60 expected trials retained. Agent has 27 graded patches, 26 completed-and-resolved; one-shot has 28 graded patches.",
+    "boltons_backoff repeat 3 passed public tests and fresh hidden grading, but a subsequent model response lacked body; no independent final verification occurred and status remains failed.",
+    "boltons_research remains 0/3: repeat 1 used all 15 decisions on reading adjacent/alternating ranges, repeats 2 and 3 failed on ConnectTimeout. Targeted research 3/3 did not reproduce in full.",
+    "No same-arguments loop stop does not mean no unproductive looping. Parameter drift and non-consecutive repeats remain outside current guard.",
+    "protocol_failures is the existing JSON/ValidationError metric, not all response/patch errors. Empty body, connection errors and two exact old_text errors are separately retained.",
+    "No retry, extra repeat, task exclusion or policy retuning was used to improve this full score.",
+    "Observed recovery/cache/termination mechanisms are not single-variable causal evidence."
+  ]
+}

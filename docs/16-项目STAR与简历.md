@@ -10,19 +10,17 @@ Python、FastAPI、Pydantic、LangGraph、MCP、OpenTelemetry、Docker、GitHub 
 
 - 设计可解释的 Plan–Act–Observe–Verify Coding Agent，自研有界 runtime，以 Pydantic JSON 协议管理 6 类工具；提供六节点 LangGraph 等价状态机，复用 context、审批、Workspace 与独立测试复验，支持 CLI/API selector 和 JSON 会话恢复，避免维护两套业务策略。
 - 将仓库地图、代码搜索、文件读取与 Git diff 封装为 4 个只读 MCP tools，通过官方 client 验证 stdio 调用、越界拒绝和生命周期；以默认关闭的 OpenTelemetry 记录 LLM/tool/verification 的 token、耗时与失败 metadata，完成真实 console、memory 与 OTLP HTTP export 验证。
-- 构建 3 个项目、10 个历史 Bug、129 个固定 public/hidden 用例的 Agent / one-shot 重复对照评测；通过轨迹定位重复读取和测试成功后终止失效，落实只读观察复用、结构化转向与最终独立验证，保存所有试验、评分分母和成本，依据实测判断多轮策略取舍。
+- 构建 3 个项目、10 个历史 Bug、129 个固定 public/hidden 用例、每方法每题 3 次的真实模型对照；针对连续重复和测试成功后终止失效实现有界恢复与独立验证，2026-09-30 qwen3.8-max 全量 60 次中 Agent 补丁通过 27/30、正常完成且通过 26/30，one-shot 28/30，完整保存失败、token 与耗时。
 
-这三条优先表达机制与验证，避免未经支持的“修复率提升”。FakeLLM 25/25 是链路回归；本轮真实指标须同时引用报告中的 scope、模型、日期、commit、run 和原始数据。写“独立开发”或具体个人职责前，应按自己的实际参与核实。
+这三条优先表达机制与验证，避免未经支持的“修复率提升”。代码验收 commit `74aa01887c3cf2fb2a32cf5b10161cfcfc54756b` / [CI](https://github.com/Astrea-296111/RepoPilot/actions/runs/36736511730)；全量模型执行 commit `192627da77a2520df07d5e5b9c87e03e9424bfaf` / [run](https://github.com/Astrea-296111/RepoPilot/actions/runs/36730079890) / [raw manifest](../eval/evidence/2026-09-30-refactor/full/manifest.json)。FakeLLM 25/25 是链路回归；写“独立开发”或具体个人职责前，应按自己的实际参与核实。
 
 ## 90 秒项目介绍
 
-我做的 RepoPilot 是一个能读 Python 仓库、修改代码并实际跑测试的 Coding Agent。核心问题是让模型决定、真实执行和可验证结果连起来，而不是生成一段看起来正确的补丁。我先用 AST 仓库地图、词法和导入图准备上下文，再用 Pydantic 校验模型的 JSON 动作，由程序执行读、搜、改、测工具；测试失败回到下一轮，结束前独立复验。
+RepoPilot 是一个读 Python 仓库、改代码并跑测试的 Coding Agent。先用 AST 地图、词法与导入图准备上下文，再用 Pydantic 校验 JSON 动作，由程序执行读、搜、改、测；失败进入下一轮，结束前独立复验。
 
-我保留了自研循环，同时用 LangGraph 的六个节点和条件边重建相同状态机，两者共用工具、审批、安全策略和会话逻辑。这样可以解释框架抽象对应哪一段代码，而不是把旧循环包进一个节点。对外工具用官方 MCP SDK，只开放四项只读能力；OpenTelemetry 默认关闭，记录 token、耗时和失败 metadata，已经实际验证 stdio client、console 和 OTLP 出口。
+我保留自研循环，以 LangGraph 六个节点和条件边表达同一状态机，共用工具、审批、安全策略与会话逻辑，便于解释框架抽象。官方 MCP SDK 只开放四项只读工具；OTel 默认关闭，记录 token、耗时与失败，stdio client、console、OTLP 和 Docker 都有实测。
 
-评测让我发现更重要的问题：旧轮十个历史 Bug、每方法三次试验中，Agent 补丁通过 25/30，正常结束且通过只有 23/30，one-shot 是 28/30。我据此修复重复动作反馈和测试成功后的终止，同时保留最终独立验证，先固定风险任务回归再做对照。这个项目的价值是能解释状态、执行、评分和代价，也能诚实说明多轮 Agent 的适用边界。
-
-这段约 90 秒，语速因人而异。准备面试时，应将最后一段替换为 [本轮报告](18-runtime-mcp-observability-refactor.md) 的最终同范围结果；不要把旧轮数字直接说成新策略效果。
+真实轨迹暴露了重复读取和测试通过后仍循环，我据此实现反馈、只读复用和独立验证后终止。四个风险 Bug 的定向回归中 Agent 通过 12/12；随后十个 Bug、每方法三次的完整对照中，Agent 补丁通过 27/30、正常完成且通过 26/30，one-shot 28/30。research 的定向成功未在全量复现，Agent 仍更耗 token，存在参数漂移读取和服务异常。因此我会解释机制、成本和失败，不能宣称多轮更优。
 
 ## Custom Runtime vs LangGraph Runtime 追问表
 
@@ -76,6 +74,8 @@ InMemorySaver 保存 node snapshot，测试在同进程的 tool node 后中断�
 ### 9. 你的成功率、token 与耗时如何计算？
 
 patch resolved 是最终干净评分通过；completed+resolved 还要求 Agent 正常结束。外部每方法是 10 bugs ×3 repeats=30 trials，只有 10 个独立 Bug。Token 用 provider usage 累积，端到端耗时来自包含执行/验证的 trial timer；不能混成单次模型 latency。工具 observation 数与实际 dispatch 数分开，定向 4 题不能并入全量 10 题分母。模型 alias 可变化，历史比较仅描述性，不声称显著因果提升。
+
+本轮 Agent 27 个评分通过与 26 个正常通过的差，来自 backoff repeat 3：公开测试和最终隐藏评分通过，但后续模型空流式正文使流程中断，没有独立最终验证。保留 failed 状态，没有因为补丁正确就补记 completed。
 
 ### 10. 现在最值得继续改什么，为什么不加更多框架或向量库？
 

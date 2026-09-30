@@ -1,0 +1,29 @@
+{
+  "eval/evidence/2026-09-30": {
+    "file_hashes_verified": 15,
+    "run_id": 36677551664,
+    "evaluated_commit": "ff9d52b6164b58c17d33a8dd3a17802765487965"
+  },
+  "eval/evidence/2026-09-30-refactor/targeted": {
+    "file_hashes_verified": 14,
+    "run_id": 36720727948,
+    "evaluated_commit": "68a4c49a72d9f61fe0ee7daabcf55c43147b999e"
+  },
+  "eval/evidence/2026-09-30-refactor/full": {
+    "file_hashes_verified": 17,
+    "run_id": 36730079890,
+    "evaluated_commit": "192627da77a2520df07d5e5b9c87e03e9424bfaf"
+  },
+  "markdown_relative_links_verified": 87,
+  "acceptance_checks": 24,
+  "resume_bullets": 3,
+  "interview_questions": 10,
+  "intro_characters": 489,
+  "code_commit": "74aa01887c3cf2fb2a32cf5b10161cfcfc54756b",
+  "paid_full_commit": "192627da77a2520df07d5e5b9c87e03e9424bfaf",
+  "historical_suite_and_evidence_unchanged": true,
+  "notes": [
+    "This final consistency check follows strict 60-key comparison, complete raw ZIP digest validation and green code CI.",
+    "Final delivery commit contains documentation and evidence only; executable code is the validated code_commit."
+  ]
+}

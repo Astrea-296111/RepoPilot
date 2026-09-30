@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "suite_sha256": "fc0eb01fc240b1147a93e465b9c96a0a1f96916b932c1c8ceedd4f0b30eb8987",
+  "model": "qwen3.8-max",
+  "reasoning_effort": "medium",
+  "stream": true,
+  "max_steps": 15,
+  "max_context_chars": 30000,
+  "mode": "oneshot",
+  "runs": 3,
+  "shard": 3,
+  "shards": 5,
+  "runtime": "oneshot",
+  "runtime_policy_revision": "repeat-recovery-v1",
+  "task_ids": [
+    "boltons_xfrange",
+    "boltons_backoff",
+    "boltons_split",
+    "boltons_research",
+    "more_numeric_slice",
+    "more_predicate_sentinel",
+    "more_nth_combination",
+    "more_nth_permutation",
+    "slugify_hex",
+    "slugify_truncation"
+  ],
+  "timing_scope": "Preparation + baseline Docker test + model/repair + fresh Docker grading",
+  "records": [
+    {
+      "task_id": "boltons_research",
+      "upstream": "mahmoud/boltons",
+      "run": 1,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_________________________________ test_shared __________________________________\n\n    def test_shared():\n        item=('hello',)\n        tree={'a':item,'b':item}\n        paths=[p for p,v in research(tree) if v=='hello']\n>       assert paths == [('a',0),('b',0)]\nE       AssertionError: assert [('a', 0)] == [('a', 0), ('b', 0)]\nE         \nE         Right contains one more item: ('b', 0)\nE         Use -v to get more diff\n\ntests/test_public.py:7: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_shared - AssertionError: assert [('a', 0)] ...\n1 failed in 0.02s\n"
+      },
+      "retrieved_files": [
+        "boltons/iterutils.py",
+        "boltons/typeutils.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"boltons/iterutils.py\",\"old_text\":\"    ret = []\\n\\n    if not callable(query):\\n        raise TypeError('query expected callable, not: %r' % query)\\n\\n    def _enter(path, key, value):\\n        try:\\n            if query(path, key, value):\\n                ret.append((path + (key,), value))\\n        except Exception:\\n            if reraise:\\n                raise\\n        return enter(path, key, value)\\n\\n    remap(root, enter=_enter)\\n    return ret\",\"new_text\":\"    ret = []\\n\\n    if not callable(query):\\n        raise TypeError('query expected callable, not: %r' % query)\\n\\n    def _traverse(path, key, value, ancestors):\\n        try:\\n            if query(path, key, value):\\n                ret.append((path + (key,), value))\\n        except Exception:\\n            if reraise:\\n                raise\\n        res = enter(path, key, value)\\n        try:\\n            new_parent, new_items = res\\n        except TypeError:\\n            raise TypeError('enter should return a tuple of (new_parent,'\\n                            ' items_iterator), not: %r' % res)\\n        if new_items is False:\\n            return\\n        id_value = id(value)\\n        if id_value in ancestors:\\n            return\\n        ancestors = ancestors | {id_value}\\n        child_path = path + (key,) if key is not None else path\\n        if new_items:\\n            for k, v in new_items:\\n                _traverse(child_path, k, v, ancestors)\\n\\n    _traverse((), None, root, set())\\n    return ret\"}],\"summary\":\"Replace research's remap-based traversal with a recursive traversal that visits every branch of acyclic shared containers (using per-path ancestor sets for cycle detection) instead of relying on remap's global identity registry, which skips re-entering shared objects.\"}",
+      "token_usage": {
+        "prompt_tokens": 3980,
+        "completion_tokens": 6717,
+        "total_tokens": 10697
+      },
+      "patches": 1,
+      "repair_seconds": 127.069,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "boltons/iterutils.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/boltons/iterutils.py b/boltons/iterutils.py\nindex e0a5b90..1ada491 100644\n--- a/boltons/iterutils.py\n+++ b/boltons/iterutils.py\n@@ -1379,16 +1379,31 @@ def research(root, query=lambda p, k, v: True, reraise=False, enter=default_ente\n     if not callable(query):\n         raise TypeError('query expected callable, not: %r' % query)\n \n-    def _enter(path, key, value):\n+    def _traverse(path, key, value, ancestors):\n         try:\n             if query(path, key, value):\n                 ret.append((path + (key,), value))\n         except Exception:\n             if reraise:\n                 raise\n-        return enter(path, key, value)\n+        res = enter(path, key, value)\n+        try:\n+            new_parent, new_items = res\n+        except TypeError:\n+            raise TypeError('enter should return a tuple of (new_parent,'\n+                            ' items_iterator), not: %r' % res)\n+        if new_items is False:\n+            return\n+        id_value = id(value)\n+        if id_value in ancestors:\n+            return\n+        ancestors = ancestors | {id_value}\n+        child_path = path + (key,) if key is not None else path\n+        if new_items:\n+            for k, v in new_items:\n+                _traverse(child_path, k, v, ancestors)\n \n-    remap(root, enter=_enter)\n+    _traverse((), None, root, set())\n     return ret\n \n \n",
+      "grader": {
+        "exit_code": 0,
+        "output": "....                                                                     [100%]\n4 passed in 0.02s\n"
+      },
+      "end_to_end_seconds": 128.218
+    },
+    {
+      "task_id": "boltons_research",
+      "upstream": "mahmoud/boltons",
+      "run": 2,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_________________________________ test_shared __________________________________\n\n    def test_shared():\n        item=('hello',)\n        tree={'a':item,'b':item}\n        paths=[p for p,v in research(tree) if v=='hello']\n>       assert paths == [('a',0),('b',0)]\nE       AssertionError: assert [('a', 0)] == [('a', 0), ('b', 0)]\nE         \nE         Right contains one more item: ('b', 0)\nE         Use -v to get more diff\n\ntests/test_public.py:7: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_shared - AssertionError: assert [('a', 0)] ...\n1 failed in 0.02s\n"
+      },
+      "retrieved_files": [
+        "boltons/iterutils.py",
+        "boltons/typeutils.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"boltons/iterutils.py\",\"old_text\":\"    ret = []\\n\\n    if not callable(query):\\n        raise TypeError('query expected callable, not: %r' % query)\\n\\n    def _enter(path, key, value):\\n        try:\\n            if query(path, key, value):\\n                ret.append((path + (key,), value))\\n        except Exception:\\n            if reraise:\\n                raise\\n        return enter(path, key, value)\\n\\n    remap(root, enter=_enter)\\n    return ret\",\"new_text\":\"    ret = []\\n\\n    if not callable(query):\\n        raise TypeError('query expected callable, not: %r' % query)\\n\\n    def _traverse(path, key, value, ancestors):\\n        try:\\n            if query(path, key, value):\\n                ret.append((path + (key,), value))\\n        except Exception:\\n            if reraise:\\n                raise\\n        new_parent, new_items = enter(path, key, value)\\n        if new_items is not False:\\n            id_val = id(value)\\n            if id_val in ancestors:\\n                return\\n            ancestors.add(id_val)\\n            child_path = path + (key,) if key is not None else path\\n            if new_items:\\n                for k, v in new_items:\\n                    _traverse(child_path, k, v, ancestors)\\n            ancestors.discard(id_val)\\n\\n    _traverse((), None, root, set())\\n    return ret\"}],\"summary\":\"Replace research's remap-based traversal with a direct recursive traversal that uses an ancestor set for cycle detection instead of a global id registry, so shared (but non-cyclic) containers are visited through every branch.\"}",
+      "token_usage": {
+        "prompt_tokens": 3980,
+        "completion_tokens": 5386,
+        "total_tokens": 9366
+      },
+      "patches": 1,
+      "repair_seconds": 99.655,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "boltons/iterutils.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/boltons/iterutils.py b/boltons/iterutils.py\nindex e0a5b90..ea620e6 100644\n--- a/boltons/iterutils.py\n+++ b/boltons/iterutils.py\n@@ -1379,16 +1379,26 @@ def research(root, query=lambda p, k, v: True, reraise=False, enter=default_ente\n     if not callable(query):\n         raise TypeError('query expected callable, not: %r' % query)\n \n-    def _enter(path, key, value):\n+    def _traverse(path, key, value, ancestors):\n         try:\n             if query(path, key, value):\n                 ret.append((path + (key,), value))\n         except Exception:\n             if reraise:\n                 raise\n-        return enter(path, key, value)\n-\n-    remap(root, enter=_enter)\n+        new_parent, new_items = enter(path, key, value)\n+        if new_items is not False:\n+            id_val = id(value)\n+            if id_val in ancestors:\n+                return\n+            ancestors.add(id_val)\n+            child_path = path + (key,) if key is not None else path\n+            if new_items:\n+                for k, v in new_items:\n+                    _traverse(child_path, k, v, ancestors)\n+            ancestors.discard(id_val)\n+\n+    _traverse((), None, root, set())\n     return ret\n \n \n",
+      "grader": {
+        "exit_code": 0,
+        "output": "....                                                                     [100%]\n4 passed in 0.02s\n"
+      },
+      "end_to_end_seconds": 100.798
+    },
+    {
+      "task_id": "boltons_research",
+      "upstream": "mahmoud/boltons",
+      "run": 3,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_________________________________ test_shared __________________________________\n\n    def test_shared():\n        item=('hello',)\n        tree={'a':item,'b':item}\n        paths=[p for p,v in research(tree) if v=='hello']\n>       assert paths == [('a',0),('b',0)]\nE       AssertionError: assert [('a', 0)] == [('a', 0), ('b', 0)]\nE         \nE         Right contains one more item: ('b', 0)\nE         Use -v to get more diff\n\ntests/test_public.py:7: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_shared - AssertionError: assert [('a', 0)] ...\n1 failed in 0.02s\n"
+      },
+      "retrieved_files": [
+        "boltons/iterutils.py",
+        "boltons/typeutils.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"boltons/iterutils.py\",\"old_text\":\"    reraise_visit = kwargs.pop('reraise_visit', True)\\n    trace = kwargs.pop('trace', ())\",\"new_text\":\"    reraise_visit = kwargs.pop('reraise_visit', True)\\n    _no_cache = kwargs.pop('_no_cache', False)\\n    trace = kwargs.pop('trace', ())\"},{\"path\":\"boltons/iterutils.py\",\"old_text\":\"        elif id_value in registry:\\n            value = registry[id_value]\",\"new_text\":\"        elif id_value in registry and not _no_cache:\\n            value = registry[id_value]\"},{\"path\":\"boltons/iterutils.py\",\"old_text\":\"    remap(root, enter=_enter)\\n    return ret\",\"new_text\":\"    remap(root, enter=_enter, _no_cache=True)\\n    return ret\"}],\"summary\":\"Add _no_cache kwarg to remap so research can traverse every branch of acyclic shared containers instead of short-circuiting on identity-cached objects.\"}",
+      "token_usage": {
+        "prompt_tokens": 3980,
+        "completion_tokens": 1458,
+        "total_tokens": 5438
+      },
+      "patches": 3,
+      "repair_seconds": 30.146,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "boltons/iterutils.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/boltons/iterutils.py b/boltons/iterutils.py\nindex e0a5b90..925f42c 100644\n--- a/boltons/iterutils.py\n+++ b/boltons/iterutils.py\n@@ -1165,6 +1165,7 @@ def remap(root, visit=default_visit, enter=default_enter, exit=default_exit,\n     if not callable(exit):\n         raise TypeError('exit expected callable, not: %r' % exit)\n     reraise_visit = kwargs.pop('reraise_visit', True)\n+    _no_cache = kwargs.pop('_no_cache', False)\n     trace = kwargs.pop('trace', ())\n     if trace is True:\n         trace = ('visit', 'enter', 'exit')\n@@ -1195,7 +1196,7 @@ def remap(root, visit=default_visit, enter=default_enter, exit=default_exit,\n             registry[id_value] = value\n             if not new_items_stack:\n                 continue\n-        elif id_value in registry:\n+        elif id_value in registry and not _no_cache:\n             value = registry[id_value]\n         else:\n             if trace_enter:\n@@ -1388,7 +1389,7 @@ def research(root, query=lambda p, k, v: True, reraise=False, enter=default_ente\n                 raise\n         return enter(path, key, value)\n \n-    remap(root, enter=_enter)\n+    remap(root, enter=_enter, _no_cache=True)\n     return ret\n \n \n",
+      "grader": {
+        "exit_code": 0,
+        "output": "....                                                                     [100%]\n4 passed in 0.02s\n"
+      },
+      "end_to_end_seconds": 31.208
+    },
+    {
+      "task_id": "slugify_hex",
+      "upstream": "un33k/python-slugify",
+      "run": 1,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n________________________________ test_uppercase ________________________________\n\n    def test_uppercase():\n>       assert slugify('&#X41;',algorithm='modern') == 'a'\nE       AssertionError: assert 'x41' == 'a'\nE         \nE         - a\nE         + x41\n\ntests/test_public.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_uppercase - AssertionError: assert 'x41' ==...\n1 failed in 0.02s\n"
+      },
+      "retrieved_files": [
+        "slugify/slugify.py",
+        "slugify/__main__.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"slugify/slugify.py\",\"old_text\":\"            text = HEX_PATTERN.sub(lambda m: _numeric_reference(m, 16), text)\",\"new_text\":\"            text = re.sub(r'&#[xX]([0-9a-fA-F]+);', lambda m: _numeric_reference(m, 16), text)\"}],\"summary\":\"Use a case-insensitive x/X hex-entity pattern in the modern branch of _decode_entities so &#X41; is decoded, while leaving the legacy HEX_PATTERN path untouched.\"}",
+      "token_usage": {
+        "prompt_tokens": 3525,
+        "completion_tokens": 2295,
+        "total_tokens": 5820
+      },
+      "patches": 1,
+      "repair_seconds": 46.866,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "slugify/slugify.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/slugify/slugify.py b/slugify/slugify.py\nindex abfc099..932e3ab 100644\n--- a/slugify/slugify.py\n+++ b/slugify/slugify.py\n@@ -50,7 +50,7 @@ def _decode_entities(text: str, entities: bool, decimal: bool, hexadecimal: bool\n                 pass\n     if hexadecimal:\n         if algorithm == 'modern':\n-            text = HEX_PATTERN.sub(lambda m: _numeric_reference(m, 16), text)\n+            text = re.sub(r'&#[xX]([0-9a-fA-F]+);', lambda m: _numeric_reference(m, 16), text)\n         else:\n             try:\n                 text = HEX_PATTERN.sub(lambda m: chr(int(m.group(1), 16)), text)\n",
+      "grader": {
+        "exit_code": 0,
+        "output": "......                                                                   [100%]\n6 passed in 0.02s\n"
+      },
+      "end_to_end_seconds": 48.075
+    },
+    {
+      "task_id": "slugify_hex",
+      "upstream": "un33k/python-slugify",
+      "run": 2,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n________________________________ test_uppercase ________________________________\n\n    def test_uppercase():\n>       assert slugify('&#X41;',algorithm='modern') == 'a'\nE       AssertionError: assert 'x41' == 'a'\nE         \nE         - a\nE         + x41\n\ntests/test_public.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_uppercase - AssertionError: assert 'x41' ==...\n1 failed in 0.02s\n"
+      },
+      "retrieved_files": [
+        "slugify/slugify.py",
+        "slugify/__main__.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"slugify/slugify.py\",\"old_text\":\"            text = HEX_PATTERN.sub(lambda m: _numeric_reference(m, 16), text)\",\"new_text\":\"            text = re.sub(r'&#[xX]([0-9a-fA-F]+);', lambda m: _numeric_reference(m, 16), text)\"}],\"summary\":\"Use a regex that matches both &#x and &#X in the modern hexadecimal decoding path, leaving the legacy HEX_PATTERN unchanged.\"}",
+      "token_usage": {
+        "prompt_tokens": 3525,
+        "completion_tokens": 2525,
+        "total_tokens": 6050
+      },
+      "patches": 1,
+      "repair_seconds": 49.662,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "slugify/slugify.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/slugify/slugify.py b/slugify/slugify.py\nindex abfc099..932e3ab 100644\n--- a/slugify/slugify.py\n+++ b/slugify/slugify.py\n@@ -50,7 +50,7 @@ def _decode_entities(text: str, entities: bool, decimal: bool, hexadecimal: bool\n                 pass\n     if hexadecimal:\n         if algorithm == 'modern':\n-            text = HEX_PATTERN.sub(lambda m: _numeric_reference(m, 16), text)\n+            text = re.sub(r'&#[xX]([0-9a-fA-F]+);', lambda m: _numeric_reference(m, 16), text)\n         else:\n             try:\n                 text = HEX_PATTERN.sub(lambda m: chr(int(m.group(1), 16)), text)\n",
+      "grader": {
+        "exit_code": 0,
+        "output": "......                                                                   [100%]\n6 passed in 0.02s\n"
+      },
+      "end_to_end_seconds": 50.643
+    },
+    {
+      "task_id": "slugify_hex",
+      "upstream": "un33k/python-slugify",
+      "run": 3,
+      "mode": "oneshot",
+      "resolved": false,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n________________________________ test_uppercase ________________________________\n\n    def test_uppercase():\n>       assert slugify('&#X41;',algorithm='modern') == 'a'\nE       AssertionError: assert 'x41' == 'a'\nE         \nE         - a\nE         + x41\n\ntests/test_public.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_uppercase - AssertionError: assert 'x41' ==...\n1 failed in 0.02s\n"
+      },
+      "retrieved_files": [
+        "slugify/slugify.py",
+        "slugify/__main__.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"slugify/slugify.py\",\"old_text\":\"HEX_PATTERN = re.compile(r'&#x([0-9a-fA-F]+);')\",\"new_text\":\"HEX_PATTERN = re.compile(r'&#[xX]([0-9a-fA-F]+);')\"}],\"summary\":\"Allow uppercase X in hexadecimal HTML entity references by changing the HEX_PATTERN regex from &#x to &#[xX].\"}",
+      "token_usage": {
+        "prompt_tokens": 3525,
+        "completion_tokens": 663,
+        "total_tokens": 4188
+      },
+      "error": "ValueError: old_text 必须在目标文件中恰好出现一次",
+      "failure_category": "runner_or_protocol_failure",
+      "end_to_end_seconds": 15.62
+    }
+  ],
+  "summary": {
+    "trials": 6,
+    "resolved": 5,
+    "task_successes": {
+      "boltons_research": 3,
+      "slugify_hex": 2
+    },
+    "median_end_to_end_seconds": 49.359,
+    "median_tokens": 5935.0,
+    "total_tokens": 41559,
+    "failure_categories": {
+      "runner_or_protocol_failure": 1
+    }
+  }
+}

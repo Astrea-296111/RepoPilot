@@ -1,0 +1,252 @@
+{
+  "schema_version": 1,
+  "suite_sha256": "fc0eb01fc240b1147a93e465b9c96a0a1f96916b932c1c8ceedd4f0b30eb8987",
+  "model": "qwen3.8-max",
+  "reasoning_effort": "medium",
+  "stream": true,
+  "max_steps": 15,
+  "max_context_chars": 30000,
+  "mode": "oneshot",
+  "runs": 3,
+  "shard": 1,
+  "shards": 5,
+  "runtime": "oneshot",
+  "runtime_policy_revision": "repeat-recovery-v1",
+  "task_ids": [
+    "boltons_xfrange",
+    "boltons_backoff",
+    "boltons_split",
+    "boltons_research",
+    "more_numeric_slice",
+    "more_predicate_sentinel",
+    "more_nth_combination",
+    "more_nth_permutation",
+    "slugify_hex",
+    "slugify_truncation"
+  ],
+  "timing_scope": "Preparation + baseline Docker test + model/repair + fresh Docker grading",
+  "records": [
+    {
+      "task_id": "boltons_backoff",
+      "upstream": "mahmoud/boltons",
+      "run": 1,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________________________ test_equal __________________________________\n\n    def test_equal():\n>       assert backoff(5,5,factor=1.0) == [5.0]\n               ^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_public.py:4: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nboltons/iterutils.py:579: in backoff\n    return list(backoff_iter(start, stop, count=count,\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nstart = 5.0, stop = 5.0, count = None, factor = 1.0, jitter = False\n\n    def backoff_iter(start, stop, count=None, factor=2.0, jitter=False):\n        \"\"\"Generates a sequence of geometrically-increasing floats, suitable\n        for usage with `exponential backoff`_. Starts with *start*,\n        increasing by *factor* until *stop* is reached, optionally\n        stopping iteration once *count* numbers are yielded. *factor*\n        defaults to 2. In general retrying with properly-configured\n        backoff creates a better-behaved component for a larger service\n        ecosystem.\n    \n        .. _exponential backoff: https://en.wikipedia.org/wiki/Exponential_backoff\n    \n        >>> list(backoff_iter(1.0, 10.0, count=5))\n        [1.0, 2.0, 4.0, 8.0, 10.0]\n        >>> list(backoff_iter(1.0, 10.0, count=8))\n        [1.0, 2.0, 4.0, 8.0, 10.0, 10.0, 10.0, 10.0]\n        >>> list(backoff_iter(0.25, 100.0, factor=10))\n        [0.25, 2.5, 25.0, 100.0]\n    \n        A simplified usage example:\n    \n        .. code-block:: python\n    \n          for timeout in backoff_iter(0.25, 5.0):\n              try:\n                  res = network_call()\n                  break\n              except Exception as e:\n                  log(e)\n                  time.sleep(timeout)\n    \n        An enhancement for large-scale systems would be to add variation,\n        or *jitter*, to timeout values. This is done to avoid a thundering\n        herd on the receiving end of the network call.\n    \n        Finally, for *count*, the special value ``'repeat'`` can be passed to\n        continue yielding indefinitely.\n    \n        Args:\n    \n            start (float): Positive number for baseline.\n            stop (float): Positive number for maximum.\n            count (int): Number of steps before stopping\n                iteration. Defaults to the number of steps between *start* and\n                *stop*. Pass the string, `'repeat'`, to continue iteration\n                indefinitely.\n            factor (float): Rate of exponential increase. Defaults to `2.0`,\n                e.g., `[1, 2, 4, 8, 16]`.\n            jitter (float): A factor between `-1.0` and `1.0`, used to\n                uniformly randomize and thus spread out timeouts in a distributed\n                system, avoiding rhythm effects. Positive values use the base\n                backoff curve as a maximum, negative values use the curve as a\n                minimum. Set to 1.0 or `True` for a jitter approximating\n                Ethernet's time-tested backoff solution. Defaults to `False`.\n    \n        \"\"\"\n        start = float(start)\n        stop = float(stop)\n        factor = float(factor)\n        if start < 0.0:\n            raise ValueError('expected start >= 0, not %r' % start)\n        if factor < 1.0:\n            raise ValueError('expected factor >= 1.0, not %r' % factor)\n        if stop == 0.0:\n            raise ValueError('expected stop >= 0')\n        if stop < start:\n            raise ValueError('expected stop >= start, not %r' % stop)\n        if count is None:\n            denom = start if start else 1\n>           count = 1 + math.ceil(math.log(stop/denom, factor))\n                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE           ZeroDivisionError: float division by zero\n\nboltons/iterutils.py:651: ZeroDivisionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_equal - ZeroDivisionError: float division b...\n1 failed in 0.05s\n"
+      },
+      "retrieved_files": [
+        "boltons/iterutils.py",
+        "boltons/typeutils.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"boltons/iterutils.py\",\"old_text\":\"    if count is None:\\n        denom = start if start else 1\\n        count = 1 + math.ceil(math.log(stop/denom, factor))\\n        count = count if start else count + 1\",\"new_text\":\"    if count is None:\\n        if start == stop:\\n            count = 1\\n        elif factor == 1.0:\\n            raise ValueError('cannot infer count when factor is 1.0'\\n                             ' and start != stop')\\n        else:\\n            denom = start if start else 1\\n            count = 1 + math.ceil(math.log(stop/denom, factor))\\n            count = count if start else count + 1\"}],\"summary\":\"Handle factor=1 in backoff_iter: return single value when start==stop, raise ValueError when start!=stop and count not given, avoiding ZeroDivisionError from log base 1.\"}",
+      "token_usage": {
+        "prompt_tokens": 3888,
+        "completion_tokens": 890,
+        "total_tokens": 4778
+      },
+      "patches": 1,
+      "repair_seconds": 17.018,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "boltons/iterutils.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/boltons/iterutils.py b/boltons/iterutils.py\nindex 4e7a37f..1c79a0c 100644\n--- a/boltons/iterutils.py\n+++ b/boltons/iterutils.py\n@@ -647,9 +647,15 @@ def backoff_iter(start, stop, count=None, factor=2.0, jitter=False):\n     if stop < start:\n         raise ValueError('expected stop >= start, not %r' % stop)\n     if count is None:\n-        denom = start if start else 1\n-        count = 1 + math.ceil(math.log(stop/denom, factor))\n-        count = count if start else count + 1\n+        if start == stop:\n+            count = 1\n+        elif factor == 1.0:\n+            raise ValueError('cannot infer count when factor is 1.0'\n+                             ' and start != stop')\n+        else:\n+            denom = start if start else 1\n+            count = 1 + math.ceil(math.log(stop/denom, factor))\n+            count = count if start else count + 1\n     if count != 'repeat' and count < 0:\n         raise ValueError('count must be positive or \"repeat\", not %r' % count)\n     if jitter:\n",
+      "grader": {
+        "exit_code": 0,
+        "output": "...........                                                              [100%]\n11 passed in 0.03s\n"
+      },
+      "end_to_end_seconds": 18.027
+    },
+    {
+      "task_id": "boltons_backoff",
+      "upstream": "mahmoud/boltons",
+      "run": 2,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________________________ test_equal __________________________________\n\n    def test_equal():\n>       assert backoff(5,5,factor=1.0) == [5.0]\n               ^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_public.py:4: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nboltons/iterutils.py:579: in backoff\n    return list(backoff_iter(start, stop, count=count,\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nstart = 5.0, stop = 5.0, count = None, factor = 1.0, jitter = False\n\n    def backoff_iter(start, stop, count=None, factor=2.0, jitter=False):\n        \"\"\"Generates a sequence of geometrically-increasing floats, suitable\n        for usage with `exponential backoff`_. Starts with *start*,\n        increasing by *factor* until *stop* is reached, optionally\n        stopping iteration once *count* numbers are yielded. *factor*\n        defaults to 2. In general retrying with properly-configured\n        backoff creates a better-behaved component for a larger service\n        ecosystem.\n    \n        .. _exponential backoff: https://en.wikipedia.org/wiki/Exponential_backoff\n    \n        >>> list(backoff_iter(1.0, 10.0, count=5))\n        [1.0, 2.0, 4.0, 8.0, 10.0]\n        >>> list(backoff_iter(1.0, 10.0, count=8))\n        [1.0, 2.0, 4.0, 8.0, 10.0, 10.0, 10.0, 10.0]\n        >>> list(backoff_iter(0.25, 100.0, factor=10))\n        [0.25, 2.5, 25.0, 100.0]\n    \n        A simplified usage example:\n    \n        .. code-block:: python\n    \n          for timeout in backoff_iter(0.25, 5.0):\n              try:\n                  res = network_call()\n                  break\n              except Exception as e:\n                  log(e)\n                  time.sleep(timeout)\n    \n        An enhancement for large-scale systems would be to add variation,\n        or *jitter*, to timeout values. This is done to avoid a thundering\n        herd on the receiving end of the network call.\n    \n        Finally, for *count*, the special value ``'repeat'`` can be passed to\n        continue yielding indefinitely.\n    \n        Args:\n    \n            start (float): Positive number for baseline.\n            stop (float): Positive number for maximum.\n            count (int): Number of steps before stopping\n                iteration. Defaults to the number of steps between *start* and\n                *stop*. Pass the string, `'repeat'`, to continue iteration\n                indefinitely.\n            factor (float): Rate of exponential increase. Defaults to `2.0`,\n                e.g., `[1, 2, 4, 8, 16]`.\n            jitter (float): A factor between `-1.0` and `1.0`, used to\n                uniformly randomize and thus spread out timeouts in a distributed\n                system, avoiding rhythm effects. Positive values use the base\n                backoff curve as a maximum, negative values use the curve as a\n                minimum. Set to 1.0 or `True` for a jitter approximating\n                Ethernet's time-tested backoff solution. Defaults to `False`.\n    \n        \"\"\"\n        start = float(start)\n        stop = float(stop)\n        factor = float(factor)\n        if start < 0.0:\n            raise ValueError('expected start >= 0, not %r' % start)\n        if factor < 1.0:\n            raise ValueError('expected factor >= 1.0, not %r' % factor)\n        if stop == 0.0:\n            raise ValueError('expected stop >= 0')\n        if stop < start:\n            raise ValueError('expected stop >= start, not %r' % stop)\n        if count is None:\n            denom = start if start else 1\n>           count = 1 + math.ceil(math.log(stop/denom, factor))\n                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE           ZeroDivisionError: float division by zero\n\nboltons/iterutils.py:651: ZeroDivisionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_equal - ZeroDivisionError: float division b...\n1 failed in 0.05s\n"
+      },
+      "retrieved_files": [
+        "boltons/iterutils.py",
+        "boltons/typeutils.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"boltons/iterutils.py\",\"old_text\":\"    if count is None:\\n        denom = start if start else 1\\n        count = 1 + math.ceil(math.log(stop/denom, factor))\\n        count = count if start else count + 1\",\"new_text\":\"    if count is None:\\n        if start == stop:\\n            count = 1\\n        elif factor == 1.0:\\n            raise ValueError('cannot infer count when factor is 1.0 and start != stop')\\n        else:\\n            denom = start if start else 1\\n            count = 1 + math.ceil(math.log(stop/denom, factor))\\n            count = count if start else count + 1\"}],\"summary\":\"Handle factor=1.0 in backoff_iter: return single value when start==stop, raise ValueError when start!=stop and count cannot be inferred.\"}",
+      "token_usage": {
+        "prompt_tokens": 3888,
+        "completion_tokens": 808,
+        "total_tokens": 4696
+      },
+      "patches": 1,
+      "repair_seconds": 16.327,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "boltons/iterutils.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/boltons/iterutils.py b/boltons/iterutils.py\nindex 4e7a37f..1b56309 100644\n--- a/boltons/iterutils.py\n+++ b/boltons/iterutils.py\n@@ -647,9 +647,14 @@ def backoff_iter(start, stop, count=None, factor=2.0, jitter=False):\n     if stop < start:\n         raise ValueError('expected stop >= start, not %r' % stop)\n     if count is None:\n-        denom = start if start else 1\n-        count = 1 + math.ceil(math.log(stop/denom, factor))\n-        count = count if start else count + 1\n+        if start == stop:\n+            count = 1\n+        elif factor == 1.0:\n+            raise ValueError('cannot infer count when factor is 1.0 and start != stop')\n+        else:\n+            denom = start if start else 1\n+            count = 1 + math.ceil(math.log(stop/denom, factor))\n+            count = count if start else count + 1\n     if count != 'repeat' and count < 0:\n         raise ValueError('count must be positive or \"repeat\", not %r' % count)\n     if jitter:\n",
+      "grader": {
+        "exit_code": 0,
+        "output": "...........                                                              [100%]\n11 passed in 0.03s\n"
+      },
+      "end_to_end_seconds": 17.255
+    },
+    {
+      "task_id": "boltons_backoff",
+      "upstream": "mahmoud/boltons",
+      "run": 3,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________________________ test_equal __________________________________\n\n    def test_equal():\n>       assert backoff(5,5,factor=1.0) == [5.0]\n               ^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_public.py:4: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nboltons/iterutils.py:579: in backoff\n    return list(backoff_iter(start, stop, count=count,\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nstart = 5.0, stop = 5.0, count = None, factor = 1.0, jitter = False\n\n    def backoff_iter(start, stop, count=None, factor=2.0, jitter=False):\n        \"\"\"Generates a sequence of geometrically-increasing floats, suitable\n        for usage with `exponential backoff`_. Starts with *start*,\n        increasing by *factor* until *stop* is reached, optionally\n        stopping iteration once *count* numbers are yielded. *factor*\n        defaults to 2. In general retrying with properly-configured\n        backoff creates a better-behaved component for a larger service\n        ecosystem.\n    \n        .. _exponential backoff: https://en.wikipedia.org/wiki/Exponential_backoff\n    \n        >>> list(backoff_iter(1.0, 10.0, count=5))\n        [1.0, 2.0, 4.0, 8.0, 10.0]\n        >>> list(backoff_iter(1.0, 10.0, count=8))\n        [1.0, 2.0, 4.0, 8.0, 10.0, 10.0, 10.0, 10.0]\n        >>> list(backoff_iter(0.25, 100.0, factor=10))\n        [0.25, 2.5, 25.0, 100.0]\n    \n        A simplified usage example:\n    \n        .. code-block:: python\n    \n          for timeout in backoff_iter(0.25, 5.0):\n              try:\n                  res = network_call()\n                  break\n              except Exception as e:\n                  log(e)\n                  time.sleep(timeout)\n    \n        An enhancement for large-scale systems would be to add variation,\n        or *jitter*, to timeout values. This is done to avoid a thundering\n        herd on the receiving end of the network call.\n    \n        Finally, for *count*, the special value ``'repeat'`` can be passed to\n        continue yielding indefinitely.\n    \n        Args:\n    \n            start (float): Positive number for baseline.\n            stop (float): Positive number for maximum.\n            count (int): Number of steps before stopping\n                iteration. Defaults to the number of steps between *start* and\n                *stop*. Pass the string, `'repeat'`, to continue iteration\n                indefinitely.\n            factor (float): Rate of exponential increase. Defaults to `2.0`,\n                e.g., `[1, 2, 4, 8, 16]`.\n            jitter (float): A factor between `-1.0` and `1.0`, used to\n                uniformly randomize and thus spread out timeouts in a distributed\n                system, avoiding rhythm effects. Positive values use the base\n                backoff curve as a maximum, negative values use the curve as a\n                minimum. Set to 1.0 or `True` for a jitter approximating\n                Ethernet's time-tested backoff solution. Defaults to `False`.\n    \n        \"\"\"\n        start = float(start)\n        stop = float(stop)\n        factor = float(factor)\n        if start < 0.0:\n            raise ValueError('expected start >= 0, not %r' % start)\n        if factor < 1.0:\n            raise ValueError('expected factor >= 1.0, not %r' % factor)\n        if stop == 0.0:\n            raise ValueError('expected stop >= 0')\n        if stop < start:\n            raise ValueError('expected stop >= start, not %r' % stop)\n        if count is None:\n            denom = start if start else 1\n>           count = 1 + math.ceil(math.log(stop/denom, factor))\n                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE           ZeroDivisionError: float division by zero\n\nboltons/iterutils.py:651: ZeroDivisionError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_equal - ZeroDivisionError: float division b...\n1 failed in 0.05s\n"
+      },
+      "retrieved_files": [
+        "boltons/iterutils.py",
+        "boltons/typeutils.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"boltons/iterutils.py\",\"old_text\":\"    if count is None:\\n        denom = start if start else 1\\n        count = 1 + math.ceil(math.log(stop/denom, factor))\\n        count = count if start else count + 1\",\"new_text\":\"    if count is None:\\n        if start == stop:\\n            count = 1\\n        elif factor == 1.0:\\n            raise ValueError('cannot infer count when start != stop and factor is 1.0')\\n        else:\\n            denom = start if start else 1\\n            count = 1 + math.ceil(math.log(stop/denom, factor))\\n            count = count if start else count + 1\"}],\"summary\":\"Handle factor=1.0 in backoff_iter: return single value when start==stop, raise ValueError when start!=stop and count not given; avoids ZeroDivisionError from math.log with base 1.\"}",
+      "token_usage": {
+        "prompt_tokens": 3888,
+        "completion_tokens": 1227,
+        "total_tokens": 5115
+      },
+      "patches": 1,
+      "repair_seconds": 24.03,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "boltons/iterutils.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/boltons/iterutils.py b/boltons/iterutils.py\nindex 4e7a37f..ca778b0 100644\n--- a/boltons/iterutils.py\n+++ b/boltons/iterutils.py\n@@ -647,9 +647,14 @@ def backoff_iter(start, stop, count=None, factor=2.0, jitter=False):\n     if stop < start:\n         raise ValueError('expected stop >= start, not %r' % stop)\n     if count is None:\n-        denom = start if start else 1\n-        count = 1 + math.ceil(math.log(stop/denom, factor))\n-        count = count if start else count + 1\n+        if start == stop:\n+            count = 1\n+        elif factor == 1.0:\n+            raise ValueError('cannot infer count when start != stop and factor is 1.0')\n+        else:\n+            denom = start if start else 1\n+            count = 1 + math.ceil(math.log(stop/denom, factor))\n+            count = count if start else count + 1\n     if count != 'repeat' and count < 0:\n         raise ValueError('count must be positive or \"repeat\", not %r' % count)\n     if jitter:\n",
+      "grader": {
+        "exit_code": 0,
+        "output": "...........                                                              [100%]\n11 passed in 0.03s\n"
+      },
+      "end_to_end_seconds": 24.95
+    },
+    {
+      "task_id": "more_nth_combination",
+      "upstream": "more-itertools/more-itertools",
+      "run": 1,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_________________________________ test_long_r __________________________________\n\n    def test_long_r():\n>       assert nth('ab',3,0) == ('a','a','a')\n               ^^^^^^^^^^^^^\n\ntests/test_public.py:4: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\niterable = 'ab', r = 3, index = 0\n\n    def nth_combination_with_replacement(iterable, r, index):\n        \"\"\"Equivalent to\n        ``list(combinations_with_replacement(iterable, r))[index]``.\n    \n    \n        The subsequences with repetition of *iterable* that are of length *r* can\n        be ordered lexicographically. :func:`nth_combination_with_replacement`\n        computes the subsequence at sort position *index* directly, without\n        computing the previous subsequences with replacement.\n    \n            >>> nth_combination_with_replacement(range(5), 3, 5)\n            (0, 1, 1)\n    \n        ``ValueError`` will be raised If *r* is negative or greater than the length\n        of *iterable*.\n        ``IndexError`` will be raised if the given *index* is invalid.\n        \"\"\"\n        pool = tuple(iterable)\n        n = len(pool)\n        if (r < 0) or (r > n):\n>           raise ValueError\nE           ValueError\n\nmore_itertools/more.py:4277: ValueError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_long_r - ValueError\n1 failed in 0.08s\n"
+      },
+      "retrieved_files": [
+        "more_itertools/more.py",
+        "more_itertools/recipes.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"more_itertools/more.py\",\"old_text\":\"    ``ValueError`` will be raised If *r* is negative or greater than the length\\n    of *iterable*.\\n    ``IndexError`` will be raised if the given *index* is invalid.\",\"new_text\":\"    ``ValueError`` will be raised If *r* is negative.\\n    ``IndexError`` will be raised if the given *index* is invalid.\"},{\"path\":\"more_itertools/more.py\",\"old_text\":\"    pool = tuple(iterable)\\n    n = len(pool)\\n    if (r < 0) or (r > n):\\n        raise ValueError\\n\\n    c = comb(n + r - 1, r)\",\"new_text\":\"    pool = tuple(iterable)\\n    n = len(pool)\\n    if r < 0:\\n        raise ValueError\\n\\n    if n == 0:\\n        c = 1 if r == 0 else 0\\n    else:\\n        c = comb(n + r - 1, r)\"}],\"summary\":\"Remove the incorrect r > n guard (replacement allows r > len(pool)), and handle the empty-pool edge case so comb() is never called with a negative first argument.\"}",
+      "token_usage": {
+        "prompt_tokens": 1868,
+        "completion_tokens": 2168,
+        "total_tokens": 4036
+      },
+      "patches": 2,
+      "repair_seconds": 38.9,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "more_itertools/more.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/more_itertools/more.py b/more_itertools/more.py\nindex 2801e4d..db34a30 100644\n--- a/more_itertools/more.py\n+++ b/more_itertools/more.py\n@@ -4267,16 +4267,18 @@ def nth_combination_with_replacement(iterable, r, index):\n         >>> nth_combination_with_replacement(range(5), 3, 5)\n         (0, 1, 1)\n \n-    ``ValueError`` will be raised If *r* is negative or greater than the length\n-    of *iterable*.\n+    ``ValueError`` will be raised If *r* is negative.\n     ``IndexError`` will be raised if the given *index* is invalid.\n     \"\"\"\n     pool = tuple(iterable)\n     n = len(pool)\n-    if (r < 0) or (r > n):\n+    if r < 0:\n         raise ValueError\n \n-    c = comb(n + r - 1, r)\n+    if n == 0:\n+        c = 1 if r == 0 else 0\n+    else:\n+        c = comb(n + r - 1, r)\n \n     if index < 0:\n         index += c\n",
+      "grader": {
+        "exit_code": 0,
+        "output": "........                                                                 [100%]\n8 passed in 0.04s\n"
+      },
+      "end_to_end_seconds": 39.856
+    },
+    {
+      "task_id": "more_nth_combination",
+      "upstream": "more-itertools/more-itertools",
+      "run": 2,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_________________________________ test_long_r __________________________________\n\n    def test_long_r():\n>       assert nth('ab',3,0) == ('a','a','a')\n               ^^^^^^^^^^^^^\n\ntests/test_public.py:4: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\niterable = 'ab', r = 3, index = 0\n\n    def nth_combination_with_replacement(iterable, r, index):\n        \"\"\"Equivalent to\n        ``list(combinations_with_replacement(iterable, r))[index]``.\n    \n    \n        The subsequences with repetition of *iterable* that are of length *r* can\n        be ordered lexicographically. :func:`nth_combination_with_replacement`\n        computes the subsequence at sort position *index* directly, without\n        computing the previous subsequences with replacement.\n    \n            >>> nth_combination_with_replacement(range(5), 3, 5)\n            (0, 1, 1)\n    \n        ``ValueError`` will be raised If *r* is negative or greater than the length\n        of *iterable*.\n        ``IndexError`` will be raised if the given *index* is invalid.\n        \"\"\"\n        pool = tuple(iterable)\n        n = len(pool)\n        if (r < 0) or (r > n):\n>           raise ValueError\nE           ValueError\n\nmore_itertools/more.py:4277: ValueError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_long_r - ValueError\n1 failed in 0.08s\n"
+      },
+      "retrieved_files": [
+        "more_itertools/more.py",
+        "more_itertools/recipes.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"more_itertools/more.py\",\"old_text\":\"    pool = tuple(iterable)\\n    n = len(pool)\\n    if (r < 0) or (r > n):\\n        raise ValueError\\n\\n    c = comb(n + r - 1, r)\",\"new_text\":\"    pool = tuple(iterable)\\n    n = len(pool)\\n    if r < 0:\\n        raise ValueError\\n\\n    if r == 0:\\n        c = 1\\n    elif n == 0:\\n        c = 0\\n    else:\\n        c = comb(n + r - 1, r)\"}],\"summary\":\"Remove the r>n guard (combinations with replacement allow r>len(pool)) and handle edge cases for c computation when n=0 or r=0 to avoid invalid math.comb arguments.\"}",
+      "token_usage": {
+        "prompt_tokens": 1868,
+        "completion_tokens": 2060,
+        "total_tokens": 3928
+      },
+      "patches": 1,
+      "repair_seconds": 38.627,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "more_itertools/more.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/more_itertools/more.py b/more_itertools/more.py\nindex 2801e4d..44e6186 100644\n--- a/more_itertools/more.py\n+++ b/more_itertools/more.py\n@@ -4273,10 +4273,15 @@ def nth_combination_with_replacement(iterable, r, index):\n     \"\"\"\n     pool = tuple(iterable)\n     n = len(pool)\n-    if (r < 0) or (r > n):\n+    if r < 0:\n         raise ValueError\n \n-    c = comb(n + r - 1, r)\n+    if r == 0:\n+        c = 1\n+    elif n == 0:\n+        c = 0\n+    else:\n+        c = comb(n + r - 1, r)\n \n     if index < 0:\n         index += c\n",
+      "grader": {
+        "exit_code": 0,
+        "output": "........                                                                 [100%]\n8 passed in 0.04s\n"
+      },
+      "end_to_end_seconds": 39.597
+    },
+    {
+      "task_id": "more_nth_combination",
+      "upstream": "more-itertools/more-itertools",
+      "run": 3,
+      "mode": "oneshot",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_________________________________ test_long_r __________________________________\n\n    def test_long_r():\n>       assert nth('ab',3,0) == ('a','a','a')\n               ^^^^^^^^^^^^^\n\ntests/test_public.py:4: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\niterable = 'ab', r = 3, index = 0\n\n    def nth_combination_with_replacement(iterable, r, index):\n        \"\"\"Equivalent to\n        ``list(combinations_with_replacement(iterable, r))[index]``.\n    \n    \n        The subsequences with repetition of *iterable* that are of length *r* can\n        be ordered lexicographically. :func:`nth_combination_with_replacement`\n        computes the subsequence at sort position *index* directly, without\n        computing the previous subsequences with replacement.\n    \n            >>> nth_combination_with_replacement(range(5), 3, 5)\n            (0, 1, 1)\n    \n        ``ValueError`` will be raised If *r* is negative or greater than the length\n        of *iterable*.\n        ``IndexError`` will be raised if the given *index* is invalid.\n        \"\"\"\n        pool = tuple(iterable)\n        n = len(pool)\n        if (r < 0) or (r > n):\n>           raise ValueError\nE           ValueError\n\nmore_itertools/more.py:4277: ValueError\n=========================== short test summary info ============================\nFAILED tests/test_public.py::test_long_r - ValueError\n1 failed in 0.08s\n"
+      },
+      "retrieved_files": [
+        "more_itertools/more.py",
+        "more_itertools/recipes.py",
+        "tests/test_public.py"
+      ],
+      "model_response": "{\"patches\":[{\"path\":\"more_itertools/more.py\",\"old_text\":\"    pool = tuple(iterable)\\n    n = len(pool)\\n    if (r < 0) or (r > n):\\n        raise ValueError\\n\\n    c = comb(n + r - 1, r)\",\"new_text\":\"    pool = tuple(iterable)\\n    n = len(pool)\\n    if r < 0:\\n        raise ValueError\\n\\n    c = comb(n + r - 1, r) if n else (1 if r == 0 else 0)\"}],\"summary\":\"Remove the incorrect r>n guard (replacement allows r>len(pool)) and handle the empty-pool edge case so comb is never called with a negative first argument.\"}",
+      "token_usage": {
+        "prompt_tokens": 1868,
+        "completion_tokens": 2352,
+        "total_tokens": 4220
+      },
+      "patches": 1,
+      "repair_seconds": 46.517,
+      "llm_transport_retries": 0,
+      "changed_files": [
+        "more_itertools/more.py"
+      ],
+      "invalid_changes": [],
+      "diff": "diff --git a/more_itertools/more.py b/more_itertools/more.py\nindex 2801e4d..a137687 100644\n--- a/more_itertools/more.py\n+++ b/more_itertools/more.py\n@@ -4273,10 +4273,10 @@ def nth_combination_with_replacement(iterable, r, index):\n     \"\"\"\n     pool = tuple(iterable)\n     n = len(pool)\n-    if (r < 0) or (r > n):\n+    if r < 0:\n         raise ValueError\n \n-    c = comb(n + r - 1, r)\n+    c = comb(n + r - 1, r) if n else (1 if r == 0 else 0)\n \n     if index < 0:\n         index += c\n",
+      "grader": {
+        "exit_code": 0,
+        "output": "........                                                                 [100%]\n8 passed in 0.04s\n"
+      },
+      "end_to_end_seconds": 47.501
+    }
+  ],
+  "summary": {
+    "trials": 6,
+    "resolved": 6,
+    "task_successes": {
+      "boltons_backoff": 3,
+      "more_nth_combination": 3
+    },
+    "median_end_to_end_seconds": 32.2735,
+    "median_tokens": 4458.0,
+    "total_tokens": 26773,
+    "failure_categories": {}
+  }
+}
