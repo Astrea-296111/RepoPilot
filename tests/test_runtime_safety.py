@@ -48,13 +48,16 @@ def test_failed_final_verification_returns_to_agent(runtime_repo):
     assert any("Final verification failed" in m["content"] for m in state.messages)
 
 
-def test_successful_test_repeat_reproduces_historical_failure(runtime_repo):
+def test_successful_test_repeat_finishes_with_independent_verification(runtime_repo):
     script = demo_responses()
     state = RepoPilot(runtime_repo, FakeLLM([script[0], script[3], *([script[4]] * 3)]),
                       Settings(), executor="local", approval="auto").run("fix")
-    # Regression fixture captured before changing termination policy.
-    assert state.status == "failed" and state.error == "loop_detection"
+    # Same sequence reproduced loop_detection in the baseline commit.
+    assert state.status == "completed" and state.error == ""
     assert state.test_status == "passed"
+    commands = [h for h in state.tool_history if h["tool"] == "run_command"]
+    assert len(commands) == 2 and commands[-1]["phase"] == "verification"
+    assert all(h["executed"] for h in commands)
 
 
 def test_external_hidden_suite_is_injected_only_into_grader(monkeypatch):

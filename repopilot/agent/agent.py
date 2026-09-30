@@ -4,6 +4,7 @@ import json
 import logging
 from pathlib import Path
 import time
+from uuid import uuid4
 from typing import Callable, Literal
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError
 from typing import Annotated, Union
@@ -81,6 +82,7 @@ class RepoPilot:
         if runtime not in {"custom", "langgraph"}:
             raise ValueError("runtime must be custom or langgraph")
         self.runtime = runtime
+        self._invocation_id = uuid4().hex
         shell = DockerExecutor(self.workspace.root, settings.docker_image, protected_paths) if executor == "docker" else LocalExecutor(self.workspace.root)
         self.tools = {tool.name: tool for tool in [ReadFile(self.workspace), SearchCode(self.workspace),
             ApplyPatch(self.workspace), WriteFile(self.workspace), RunCommand(self.workspace, shell), GitDiff(self.workspace)]}
@@ -127,8 +129,14 @@ class RepoPilot:
         with self.tracing.span("tool." + tool, {"repopilot.tool.name": tool,
                                                  "repopilot.step": state.current_step}) as span:
             started = time.monotonic()
+            planned_test = bool(tool == "run_command" and state.plan and args.get("command") == state.plan.test_command)
+            # Arbitrary commands may mutate source even on failure; invalidate previous passing evidence.
+            if tool == "run_command" and not planned_test:
+                state.workspace_revision += 1
+                state.test_status, state.test_revision = "not_run", None
+            permitted = self._permitted(tool, args)
             try:
-                result = self.tools[tool].execute(args) if self._permitted(tool, args) else ToolResult(False, "Approval denied for " + tool)
+                result = self.tools[tool].execute(args) if permitted else ToolResult(False, "Approval denied for " + tool)
             except (ValueError, KeyError, TypeError, OSError) as exc:
                 result = ToolResult(False, f"{type(exc).__name__}: {exc}")
             result.output = bounded_output(result.output)
@@ -136,13 +144,22 @@ class RepoPilot:
                      tool, time.monotonic() - started, result.ok)
             if result.changed_file and result.changed_file not in state.changed_files:
                 state.changed_files.append(result.changed_file)
-            if tool == "run_command" and state.plan and args.get("command") == state.plan.test_command:
+            if result.changed_file:
+                state.workspace_revision += 1
+                state.test_status, state.test_revision = "not_run", None
+            if planned_test:
                 state.test_status = "passed" if result.ok else "failed"
+                state.test_revision = state.workspace_revision if result.ok else None
+                if result.ok:
+                    state.recovery = {"event": "planned_test_passed", "test_status": "passed",
+                                      "next": "Review the diff or return final. Re-requesting the planned suite starts independent final verification."}
             state.tool_history.append({"step": state.current_step, "tool": tool, "arguments": args,
                                        "ok": result.ok, "exit_code": result.exit_code, "output": result.output,
+                                       "executed": permitted, "cached": False, "revision": state.workspace_revision,
+                                       "invocation": self._invocation_id,
                                        "latency_seconds": round(time.monotonic() - started, 3)})
             state.messages.append({"role": "tool", "content": f"{tool}: {result.output}"})
-            span.set({"repopilot.ok": result.ok})
+            span.set({"repopilot.ok": result.ok, "repopilot.tool.executed": permitted})
             if not result.ok:
                 category = "timeout" if result.exit_code == 124 else ("approval_denied" if result.output.startswith("Approval denied") else "tool_error")
                 span.fail(category)
@@ -178,16 +195,47 @@ class RepoPilot:
             return action
 
     def _tool_step(self, state: AgentState, action: ToolAction) -> tuple[str, ToolAction | FinalAction]:
+        # A repeated passing planned suite is a request to verify/finalize, never a cached success.
+        if (action.tool == "run_command" and action.arguments.get("command") == state.plan.test_command
+                and state.test_status == "passed" and state.test_revision == state.workspace_revision):
+            state.recovery = {"event": "planned_test_already_passed", "next": "independent_final_verification"}
+            final = FinalAction(type="final", summary="Planned tests passed; completed after independent final verification.",
+                                tests=state.plan.test_command, changed_files=list(state.changed_files))
+            return "verify", final
         fingerprint = json.dumps([action.tool, action.arguments], sort_keys=True, ensure_ascii=False)
-        recent = [item.get("fingerprint") for item in state.tool_history[-2:]]
-        if recent == [fingerprint, fingerprint]:
-            state.finish("failed", "检测到连续 3 次相同工具调用，已停止")
+        state.repeat_count = state.repeat_count + 1 if state.repeat_fingerprint == fingerprint else 1
+        state.repeat_fingerprint = fingerprint
+        state.recovery = {}
+        if state.repeat_count >= 4:
+            state.finish("failed", "Repeated action persisted after recovery feedback; stopped at 4 identical decisions")
             state.error = "loop_detection"
             return "finalize", action
-        self._execute(action.tool, action.arguments, state)
-        state.tool_history[-1]["fingerprint"] = fingerprint
-        if recent and recent[-1] == fingerprint:
-            state.messages.append({"role": "system", "content": "连续重复同一工具调用；请改变方法或完成任务。"})
+        previous = state.tool_history[-1] if state.tool_history else {}
+        reusable = (action.tool in {"read_file", "search_code", "git_diff"} and previous.get("ok")
+                    and previous.get("fingerprint") == fingerprint
+                    and previous.get("revision") == state.workspace_revision
+                    and previous.get("invocation") == self._invocation_id)
+        if reusable:
+            # Recheck the shared path policy before reusing an observation, including symlink aliases.
+            self.workspace.resolve(action.arguments.get("path", "."))
+            with self.tracing.span("tool.reuse", {"repopilot.tool.name": action.tool,
+                                                  "repopilot.tool.cached": True, "repopilot.tool.executed": False,
+                                                  "repopilot.step": state.current_step, "repopilot.ok": True}):
+                state.tool_history.append({**previous, "step": state.current_step, "executed": False,
+                                           "cached": True, "latency_seconds": 0.0})
+        elif state.repeat_count == 3:
+            # Give one bounded opportunity to redirect; never replay a third identical mutation or command.
+            state.tool_history.append({"step": state.current_step, "tool": action.tool, "arguments": action.arguments,
+                                       "ok": False, "output": "Repeated execution withheld. Change strategy using the existing observation.",
+                                       "exit_code": None, "executed": False, "cached": False,
+                                       "latency_seconds": 0.0, "fingerprint": fingerprint})
+        else:
+            self._execute(action.tool, action.arguments, state)
+            state.tool_history[-1]["fingerprint"] = fingerprint
+        if state.repeat_count >= 2:
+            state.recovery = {"event": "repeated_action", "count": state.repeat_count,
+                              "observation_reused": bool(reusable), "hard_stop_at": 4,
+                              "next": "Do not repeat this action. Search dependencies/call sites, inspect a different implementation, or patch based on existing evidence."}
         return "agent_decide", action
 
     def _verify(self, state: AgentState) -> bool:
@@ -196,6 +244,9 @@ class RepoPilot:
             result = self._execute("run_command", {"command": state.plan.test_command, "timeout": 60}, state)
             state.tool_history[-1]["phase"] = "verification"
             if not result.ok:
+                state.repeat_fingerprint, state.repeat_count = "", 0
+                state.recovery = {"event": "verification_failed", "test_status": "failed",
+                                  "next": "Fix the observed failing suite before final. Passing evidence cannot be reused."}
                 state.messages.append({"role": "system", "content": "Final verification failed. Fix the observed error before final."})
             span.set({"repopilot.test.status": state.test_status})
             if not result.ok:
@@ -244,6 +295,9 @@ class RepoPilot:
         if state.status == "completed":
             raise ValueError("已完成的会话无需恢复")
         state.status, state.error = "running", ""
+        self._invocation_id = uuid4().hex
+        # Cross-process resumes may follow external edits; cached evidence never authorizes termination.
+        state.test_status, state.test_revision = "not_run", None
         state.finished_at = state.duration_seconds = None
         self.store.save(state)
         with self.tracing.span("repopilot.task", {"repopilot.session.id": state.id,

@@ -28,6 +28,11 @@ class AgentState(BaseModel):
     changed_files: list[str] = Field(default_factory=list)
     retrieved_files: list[str] = Field(default_factory=list)
     test_status: str = "not_run"
+    workspace_revision: int = 0
+    test_revision: int | None = None
+    repeat_fingerprint: str = ""
+    repeat_count: int = 0
+    recovery: dict[str, Any] = Field(default_factory=dict)
     token_usage: dict[str, int] = Field(default_factory=lambda: {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0})
     status: str = "pending"
     summary: str = ""

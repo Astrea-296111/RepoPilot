@@ -58,8 +58,8 @@ def test_graph_max_steps(runtime_repo):
 
 def test_graph_repeat_guard(runtime_repo):
     s = demo_responses()
-    state = pilot(runtime_repo, [s[0], s[1], s[1], s[1]]).run("fix")
-    assert state.error == "loop_detection" and state.current_step == 3
+    state = pilot(runtime_repo, [s[0], s[1], s[1], s[1], s[1]]).run("fix")
+    assert state.error == "loop_detection" and state.current_step == 4
 
 
 def test_graph_session_bridge_across_instances(runtime_repo):

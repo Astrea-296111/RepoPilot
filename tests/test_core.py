@@ -149,8 +149,8 @@ def test_agent_loop_demo_end_to_end(repo):
 def test_agent_loop_detection(repo):
     plan = demo_responses()[0]
     repeat = json.dumps({"type": "tool", "tool": "read_file", "arguments": {"path": "app/users.py"}, "reason": "again"})
-    state = RepoPilot(repo, FakeLLM([plan, repeat, repeat, repeat]), Settings(), executor="local", approval="auto").run("fix")
-    assert state.status == "failed" and state.error == "loop_detection" and state.current_step == 3
+    state = RepoPilot(repo, FakeLLM([plan, repeat, repeat, repeat, repeat]), Settings(), executor="local", approval="auto").run("fix")
+    assert state.status == "failed" and state.error == "loop_detection" and state.current_step == 4
 
 
 def test_approval_never_blocks_patch(repo):

@@ -13,6 +13,7 @@ ATTRIBUTES = {
     "repopilot.ok", "repopilot.failure.category", "repopilot.duration_seconds",
     "repopilot.retrieved_file_count", "repopilot.changed_file_count", "repopilot.test.status",
     "gen_ai.usage.input_tokens", "gen_ai.usage.output_tokens", "gen_ai.usage.total_tokens",
+    "repopilot.tool.cached", "repopilot.tool.executed",
 }
 
 
