@@ -1,0 +1,281 @@
+{
+  "base_head_sha": "bfbfa46089a489e6763f1405f45a4301ec5f6e87",
+  "python": "3.12.14",
+  "base_test_result": "33 passed in 17.07s (before additional regression guards)",
+  "commands": [
+    "python -m pip install -e .[dev]",
+    "python -m pytest -q",
+    "python eval/run_benchmark.py --fake --runs 1 --require-all",
+    "python eval/run_one_shot.py --fake --runs 1 --require-all"
+  ],
+  "base_fake_benchmark_result": {
+    "agent": {
+      "summary": {
+        "suite": "RepoPilot Mini Benchmark v3",
+        "runner": "agent",
+        "model": "scripted FakeLLM",
+        "task_count": 25,
+        "runs": 25,
+        "resolved_runs": 25,
+        "resolved_without_protected_edits": 25,
+        "protected_edit_runs": 0,
+        "run_resolved_rate": 1.0,
+        "first_run_resolved": 25,
+        "first_run_tasks": 25,
+        "first_run_resolved_rate": 1.0,
+        "median_steps": 2.0,
+        "median_tool_calls": 3.0,
+        "median_total_tokens": 0.0,
+        "median_duration_seconds": 0.379,
+        "failure_categories": {},
+        "categories": {
+          "authorization": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "boundary-condition": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "business-rule": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "collection-order": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "configuration": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "cross-module-paths": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "date-boundary": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "empty-input": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "exception-handling": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "file-filtering": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "input-normalization": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "merge-logic": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "parsing": {
+            "runs": 2,
+            "resolved": 2
+          },
+          "path-security": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "retry-logic": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "shared-configuration": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "shared-normalization": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "shared-policy": {
+            "runs": 2,
+            "resolved": 2
+          },
+          "state-management": {
+            "runs": 2,
+            "resolved": 2
+          },
+          "text-normalization": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "time-boundary": {
+            "runs": 2,
+            "resolved": 2
+          }
+        },
+        "difficulties": {
+          "easy": {
+            "runs": 12,
+            "resolved": 12
+          },
+          "hard": {
+            "runs": 6,
+            "resolved": 6
+          },
+          "medium": {
+            "runs": 7,
+            "resolved": 7
+          }
+        }
+      },
+      "raw_sha256": "c4419eff5ae51af3843d5e18257b7b98d01dae2ce53520a05133fc3230110971"
+    },
+    "oneshot": {
+      "summary": {
+        "suite": "RepoPilot Mini Benchmark v3",
+        "runner": "one-shot",
+        "model": "scripted FakeLLM",
+        "task_count": 25,
+        "runs": 25,
+        "resolved_runs": 25,
+        "resolved_without_protected_edits": 25,
+        "protected_edit_runs": 0,
+        "run_resolved_rate": 1.0,
+        "first_run_resolved": 25,
+        "first_run_tasks": 25,
+        "first_run_resolved_rate": 1.0,
+        "median_total_tokens": 0.0,
+        "median_duration_seconds": 0.0,
+        "median_all_call_duration_seconds": 0.0,
+        "median_patch_count": 1.0,
+        "failure_categories": {},
+        "categories": {
+          "authorization": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "boundary-condition": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "business-rule": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "collection-order": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "configuration": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "cross-module-paths": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "date-boundary": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "empty-input": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "exception-handling": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "file-filtering": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "input-normalization": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "merge-logic": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "parsing": {
+            "runs": 2,
+            "resolved": 2
+          },
+          "path-security": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "retry-logic": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "shared-configuration": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "shared-normalization": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "shared-policy": {
+            "runs": 2,
+            "resolved": 2
+          },
+          "state-management": {
+            "runs": 2,
+            "resolved": 2
+          },
+          "text-normalization": {
+            "runs": 1,
+            "resolved": 1
+          },
+          "time-boundary": {
+            "runs": 2,
+            "resolved": 2
+          }
+        },
+        "difficulties": {
+          "easy": {
+            "runs": 12,
+            "resolved": 12
+          },
+          "hard": {
+            "runs": 6,
+            "resolved": 6
+          },
+          "medium": {
+            "runs": 7,
+            "resolved": 7
+          }
+        }
+      },
+      "raw_sha256": "51571e3923cf61172ea8960558049df6e63022ae1cc198d49abac5a6e298b2bb"
+    }
+  },
+  "base_external_report": "docs/17-外部历史Bug实测结果.md",
+  "base_relevant_action_runs": [
+    {
+      "id": 36677551664,
+      "commit": "ff9d52b6164b58c17d33a8dd3a17802765487965",
+      "url": "https://github.com/Astrea-296111/RepoPilot/actions/runs/36677551664",
+      "scope": "10 historical bugs x 3 repeats x 2 methods = 60 real model trials"
+    },
+    {
+      "id": 36688972457,
+      "commit": "bfbfa46089a489e6763f1405f45a4301ec5f6e87",
+      "url": "https://github.com/Astrea-296111/RepoPilot/actions/runs/36688972457",
+      "scope": "Windows deterministic CI"
+    }
+  ],
+  "historical_evidence_hashes_verified": true,
+  "historical_suite_sha256": "fc0eb01fc240b1147a93e465b9c96a0a1f96916b932c1c8ceedd4f0b30eb8987",
+  "environment_note": "No local Docker executable. A sandboxed FastAPI TestClient stalled; unchanged full suite passed in the normal escalated executor. No credentials were read.",
+  "known_failures": [
+    "boltons_research repeats reads and loop_detection in all 3 repeats",
+    "more_predicate_sentinel repeats passing tests and loop_detection in repeats 1 and 2",
+    "slugify_hex shared constant regression in repeat 1",
+    "slugify_truncation separator length regression in repeat 1"
+  ]
+}
