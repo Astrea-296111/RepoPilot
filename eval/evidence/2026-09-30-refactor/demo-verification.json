@@ -1,0 +1,21 @@
+{
+  "commands": [
+    "python eval/demo.py --runtime custom",
+    "python eval/demo.py --runtime langgraph",
+    "python eval/demo.py --runtime langgraph --trace"
+  ],
+  "result": "all completed; tests passed",
+  "span_count": 24,
+  "span_names": [
+    "agent.turn",
+    "llm.call",
+    "planning",
+    "repopilot.task",
+    "retrieval",
+    "tool.apply_patch",
+    "tool.git_diff",
+    "tool.read_file",
+    "tool.run_command",
+    "verification"
+  ]
+}
