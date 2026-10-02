@@ -54,11 +54,11 @@ def parse_action(content: str) -> ToolAction | FinalAction:
     return ACTION_ADAPTER.validate_json(content)
 
 
-def demo_responses() -> list[str]:
+def demo_responses(reflection: bool = False) -> list[str]:
     """Known sequence for the deliberately broken example; no benchmark claim."""
     def call(tool: str, args: dict, reason: str) -> str:
         return json.dumps({"type": "tool", "tool": tool, "arguments": args, "reason": reason}, ensure_ascii=False)
-    return [
+    responses = [
         json.dumps({"goal": "修复重复邮箱错误", "suspected_files": ["app/users.py", "tests/test_users.py"],
                     "steps": ["读取代码", "复现失败", "修复并复测"], "test_command": "python -m pytest -q"}, ensure_ascii=False),
         call("read_file", {"path": "app/users.py"}, "确认异常传播"),
@@ -70,6 +70,15 @@ def demo_responses() -> list[str]:
         json.dumps({"type": "final", "summary": "重复邮箱现抛出 DuplicateEmailError", "tests": "python -m pytest -q 已通过",
                     "changed_files": ["app/users.py"]}, ensure_ascii=False),
     ]
+    if reflection:
+        expanded = [responses[0]]
+        for response in responses[1:]:
+            expanded.append(response)
+            if json.loads(response)["type"] == "tool":
+                expanded.append(json.dumps({"success": False, "reason": "Scripted workflow reflection",
+                    "next_action": "Continue the known demo steps and independently verify tests", "needs_search": False}))
+        return expanded
+    return responses
 
 
 class RepoPilot:

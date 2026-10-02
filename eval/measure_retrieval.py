@@ -9,6 +9,8 @@ import argparse
 import json
 from pathlib import Path
 import statistics
+import tempfile
+import shutil
 
 from repopilot.context.repo_map import build_repo_map
 from repopilot.context.retrieval import retrieve, retrieve_with_imports
@@ -17,7 +19,7 @@ from repopilot.context.retrieval import retrieve, retrieve_with_imports
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def measure() -> dict:
+def measure(include_hybrid: bool = False) -> dict:
     tasks = json.loads((ROOT / "eval" / "benchmark_tasks.json").read_text(encoding="utf-8"))
     fixes = json.loads((ROOT / "eval" / "scripted_fixes.json").read_text(encoding="utf-8"))
     rows = []
@@ -29,8 +31,17 @@ def measure() -> dict:
             raise ValueError(f"invalid scripted fix paths: {task['id']}")
         row = {"task_id": task["id"], "difficulty": task["difficulty"],
                "reference_fix_paths": sorted(targets)}
-        for mode, ranking in (("retrieved", retrieve(repo, entries, task["task"], top_k=4)),
-                              ("graph", retrieve_with_imports(repo, entries, task["task"], top_k=4))):
+        rankings = [("retrieved", retrieve(repo, entries, task["task"], top_k=4)),
+                    ("graph", retrieve_with_imports(repo, entries, task["task"], top_k=4))]
+        if include_hybrid:
+            from repopilot.context.hybrid import HybridIndex
+            with tempfile.TemporaryDirectory(prefix="retrieval-") as directory:
+                copied = Path(directory) / "repo"
+                shutil.copytree(repo, copied, ignore=shutil.ignore_patterns(".repopilot", "__pycache__", ".pytest_cache"))
+                # Deliberately offline: this diagnostic compares BM25+AST only.
+                hits = HybridIndex(copied).search(task["task"], top_k=4)
+                rankings.append(("bm25_ast", [(hit.path, hit.score) for hit in hits]))
+        for mode, ranking in rankings:
             paths = [path for path, _ in ranking]
             row[mode] = {"paths": paths,
                          "reference_paths_found": sorted(targets.intersection(paths)),
@@ -39,7 +50,7 @@ def measure() -> dict:
                                              for path in paths)}
         rows.append(row)
     summary = {}
-    for mode in ("retrieved", "graph"):
+    for mode in ["retrieved", "graph"] + (["bm25_ast"] if include_hybrid else []):
         summary[mode] = {"tasks": len(rows),
                          "hit_all": sum(row[mode]["all_reference_paths_found"] for row in rows),
                          "mean_source_chars": round(statistics.mean(row[mode]["source_chars"] for row in rows), 1),
@@ -51,8 +62,9 @@ def measure() -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json-out", type=Path)
+    parser.add_argument("--hybrid", action="store_true", help="Include offline BM25+AST; requires rag extra")
     args = parser.parse_args()
-    result = measure()
+    result = measure(include_hybrid=args.hybrid)
     print(json.dumps(result["summary"], ensure_ascii=False, indent=2))
     if args.json_out:
         args.json_out.parent.mkdir(parents=True, exist_ok=True)

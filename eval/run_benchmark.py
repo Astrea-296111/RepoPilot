@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 from collections import Counter, defaultdict
 import json
+import hashlib
 from pathlib import Path
 import shutil
 import statistics
@@ -55,7 +56,7 @@ class ObservedLLM:
             self.calls.append(call)
 
 
-def scripted_responses(task: dict, fix: dict) -> list[str]:
+def scripted_responses(task: dict, fix: dict, reflection: bool = False) -> list[str]:
     patches = fix["patches"]
     responses = [json.dumps({
         "goal": task["task"],
@@ -68,6 +69,9 @@ def scripted_responses(task: dict, fix: dict) -> list[str]:
             "type": "tool", "tool": "apply_patch", "arguments": patch,
             "reason": "deterministic harness validation",
         }, ensure_ascii=False))
+        if reflection:
+            responses.append(json.dumps({"success": False, "reason": "Known harness patch applied",
+                "next_action": "Apply remaining known patches then independently verify", "needs_search": False}))
     responses.append(json.dumps({
         "type": "final", "summary": "scripted benchmark fix applied",
         "tests": "program-side final verification",
@@ -154,7 +158,8 @@ def classify_failure(record: dict) -> str | None:
     return "evaluation_failure"
 
 
-def run_one(task: dict, run_number: int, *, fake: bool, settings: Settings, fixes: dict, runtime: str = "custom") -> dict:
+def run_one(task: dict, run_number: int, *, fake: bool, settings: Settings, fixes: dict,
+            runtime: str = "custom", tool_backend: str = "python") -> dict:
     record = {"task_id": task["id"], "run": run_number, "category": task["category"], "difficulty": task["difficulty"], "resolved": False}
     try:
         with tempfile.TemporaryDirectory(prefix=f"repopilot-{task['id']}-") as temp:
@@ -165,12 +170,13 @@ def run_one(task: dict, run_number: int, *, fake: bool, settings: Settings, fixe
 
             retrying = None
             if fake:
-                inner = FakeLLM(scripted_responses(task, fixes[task["id"]]))
+                inner = FakeLLM(scripted_responses(task, fixes[task["id"]], reflection=settings.reflection_enabled))
             else:
                 retrying = RetryingLLM(OpenAICompatibleLLM(settings))
                 inner = retrying
             model = ObservedLLM(inner)
-            state = RepoPilot(repo, model, settings, executor="local", approval="auto", runtime=runtime).run(task["task"])
+            state = RepoPilot(repo, model, settings, executor="local", approval="auto", runtime=runtime,
+                              tool_backend=tool_backend).run(task["task"])
             changed = git_changed_files(repo)
             protected = protected_modified(changed, task.get("protected_paths", []))
             added, deleted = diff_stats(repo)
@@ -181,6 +187,8 @@ def run_one(task: dict, run_number: int, *, fake: bool, settings: Settings, fixe
                 "tool_calls": len(state.tool_history), "changed_files": changed,
                 "executed_tool_calls": sum(h.get("executed", True) for h in state.tool_history),
                 "runtime": runtime,
+                "tool_backend": tool_backend, "reflection_count": len(state.reflections),
+                "retrieval_backend": state.retrieval_backend, "embedding_tokens": state.embedding_tokens,
                 "retrieved_files": state.retrieved_files,
                 "token_usage": state.token_usage, "duration_seconds": state.duration_seconds,
             }
@@ -225,6 +233,11 @@ def summarize(records: list[dict], model_name: str) -> dict:
         "first_run_tasks": len(first_runs),
         "first_run_resolved_rate": round(sum(1 for item in first_runs if item["resolved"]) / len(first_runs), 4) if first_runs else 0,
         "median_steps": median([a["steps"] for a in agents]),
+        "average_steps": round(statistics.mean(a["steps"] for a in agents), 3) if agents else None,
+        "average_total_tokens": round(statistics.mean(a["token_usage"]["total_tokens"] for a in agents), 3) if agents else None,
+        "average_tool_calls": round(statistics.mean(a["tool_calls"] for a in agents), 3) if agents else None,
+        "average_executed_tool_calls": round(statistics.mean(a.get("executed_tool_calls", a["tool_calls"]) for a in agents), 3) if agents else None,
+        "measured_agent_runs": len(agents),
         "median_tool_calls": median([a["tool_calls"] for a in agents]),
         "median_total_tokens": median([a["token_usage"]["total_tokens"] for a in agents]),
         "median_duration_seconds": median([a["duration_seconds"] for a in agents if a["duration_seconds"] is not None]),
@@ -238,6 +251,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--fake", action="store_true")
     parser.add_argument("--runtime", choices=["custom", "langgraph"], default="custom")
+    parser.add_argument("--tool-backend", choices=["python", "mcp"], default="python")
+    parser.add_argument("--retrieval", choices=["legacy", "hybrid"], default="legacy")
+    parser.add_argument("--reflection", action="store_true")
+    parser.add_argument("--memory", action="store_true")
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--input-price-per-million", type=float)
+    parser.add_argument("--output-price-per-million", type=float)
     parser.add_argument("--runs", type=int, default=1)
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--task", action="append", default=[])
@@ -260,6 +280,10 @@ def main() -> int:
 
     fixes = json.loads(FIXES_PATH.read_text(encoding="utf-8"))
     settings = Settings.load()
+    settings = settings.model_copy(update={"reflection_enabled": args.reflection,
+        "retrieval_mode": args.retrieval, "memory_enabled": args.memory})
+    if any(value is not None and value < 0 for value in (args.input_price_per_million, args.output_price_per_million)):
+        parser.error("Token prices must be nonnegative")
     if not args.fake and (not settings.llm_api_key or not settings.llm_model):
         raise SystemExit("LLM_API_KEY and LLM_MODEL are required")
     model_name = "scripted FakeLLM" if args.fake else settings.llm_model
@@ -270,7 +294,8 @@ def main() -> int:
         for n in range(1, args.runs + 1):
             index += 1
             print(f"[agent] {index}/{total} start task={task['id']} run={n}", flush=True)
-            item = run_one(task, n, fake=args.fake, settings=settings, fixes=fixes, runtime=args.runtime)
+            item = run_one(task, n, fake=args.fake, settings=settings, fixes=fixes, runtime=args.runtime,
+                           tool_backend=args.tool_backend)
             records.append(item)
             details = item.get("agent") or {}
             tokens = (details.get("token_usage") or {}).get("total_tokens")
@@ -284,13 +309,26 @@ def main() -> int:
               "config": {"model": model_name, "base_url": settings.llm_base_url,
                          "reasoning_effort": settings.llm_reasoning_effort or "provider_default",
                          "stream": settings.llm_stream, "timeout_seconds": settings.llm_timeout_seconds,
-                         "runs_per_task": args.runs, "retrieval_mode": "graph", "runtime": args.runtime}}
+                         "runs_per_task": args.runs, "retrieval_mode": args.retrieval, "runtime": args.runtime,
+                         "tool_backend": args.tool_backend, "reflection": args.reflection,
+                         "memory": args.memory, "evidence_type": "scripted" if args.fake else "real_model",
+                         "input_price_per_million": args.input_price_per_million,
+                         "output_price_per_million": args.output_price_per_million}}
+    sources = sorted((ROOT / "repopilot").rglob("*.py")) + [Path(__file__).resolve(), ROOT / "eval/report.py"]
+    digest = hashlib.sha256()
+    for path in sources:
+        digest.update(path.relative_to(ROOT).as_posix().encode())
+        digest.update(path.read_bytes())
+    report["config"]["source_sha256"] = digest.hexdigest()
     suffix = "fake" if args.fake else "qwen"
     shard = f"-shard{args.shard_index}" if args.shard_count > 1 else ""
     runtime_suffix = "-langgraph" if args.runtime == "langgraph" else ""
-    output = ROOT / "eval" / "results" / f"agent{runtime_suffix}-{suffix}{shard}.json"
+    options_suffix = ("-platform" if args.reflection or args.memory or args.retrieval != "legacy" or args.tool_backend != "python" else "")
+    output = args.output or ROOT / "eval" / "results" / f"agent{runtime_suffix}{options_suffix}-{suffix}{shard}.json"
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    from report import write_report
+    write_report(report, output.with_suffix(".md"))
     print(json.dumps(report["summary"], ensure_ascii=False, indent=2))
     print(f"diagnostics={output}")
     infra = [item for item in records if item.get("runner_error") or item.get("failure_category") == "invalid_baseline"]

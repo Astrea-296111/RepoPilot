@@ -9,7 +9,7 @@ import logging
 import os
 from pathlib import Path
 import time
-from typing import Callable, Literal
+from typing import AsyncIterator, Callable, Literal
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
@@ -166,7 +166,7 @@ def create_app(*, database_url: str | None = None, redis_url: str | None = None,
             raise HTTPException(400, "Last-Event-ID must be a nonnegative integer") from exc
         database = service(request).database
 
-        async def events():
+        async def events() -> AsyncIterator[str]:
             nonlocal cursor
             heartbeat = time.monotonic()
             while not await request.is_disconnected():

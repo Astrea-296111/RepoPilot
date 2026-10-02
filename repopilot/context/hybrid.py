@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from collections import Counter
 import hashlib
 import json
 import logging
@@ -177,16 +178,37 @@ class HybridIndex:
                 files[chunk.path] = hit
         anchors = sorted(files.values(), key=lambda h: (-h.score, h.path))[:2]
         edges = _local_imports(self.entries)
+        centrality = Counter(target for source, targets in edges.items()
+                             if not source.startswith("tests/") for target in targets)
         for anchor in anchors:
-            for path in edges.get(anchor.path, set()):
+            related = {path: (1, anchor.path) for path in edges.get(anchor.path, set())}
+            for first in list(related):
+                for path in edges.get(first, set()):
+                    if path != anchor.path:
+                        related.setdefault(path, (2, first))
+            # A test may name a wrapper; the shared implementation can be one
+            # more edge away. Bound traversal to two hops and 32 candidates.
+            for path in sorted(related, key=lambda p: (-centrality[p], p))[:32]:
+                depth, importer = related[path]
                 if path not in files:
                     chunk = next((c for c in self.chunks if c.path == path), None)
                     if chunk:
                         files[path] = RetrievalHit(path, 0.012, [], chunk.start_line, chunk.end_line, {"ast": 0.0})
                 if path in files:
-                    files[path].score += 0.005
-                    files[path].scores["ast"] += 0.005
-                    files[path].reason.append("AST import from " + anchor.path)
+                    # Shared helpers often have no task vocabulary. Preserve the
+                    # original import graph's advantage over surface-level text.
+                    boost = 0.005 * (1 + min(centrality[path], 3)) / depth
+                    files[path].score += boost
+                    files[path].scores["ast"] += boost
+                    files[path].reason.append(f"AST import from {importer} (hops={depth})")
+                    files[path].reason.append(f"source importers={centrality[path]}")
+        if not files:
+            for path, count in centrality.most_common(top_k):
+                chunk = next((c for c in self.chunks if c.path == path), None)
+                if chunk:
+                    files[path] = RetrievalHit(path, 0.005 * count,
+                        [f"AST structural fallback: source importers={count}; no text/vector match"],
+                        chunk.start_line, chunk.end_line, {"ast": 0.005 * count})
         ranked = sorted(files.values(), key=lambda hit: (-hit.score, hit.path))[:top_k]
         for hit in ranked:
             hit.score = round(hit.score, 6)

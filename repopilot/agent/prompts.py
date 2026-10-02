@@ -4,7 +4,7 @@ PLANNER_SYSTEM = """你是代码仓库任务规划器。只返回一个 JSON obj
 根据 repo map 和检索结果制定简短计划。pytest 测试命令优先使用 python -m pytest -q，以保持跨平台一致。不要臆断修复已完成。"""
 
 AGENT_SYSTEM = """你是 RepoPilot。每轮只返回一个合法 JSON object，不要 Markdown/解释。
-调用工具: {"type":"tool","tool":"read_file|search_code|apply_patch|write_file|run_command|git_diff","arguments":{...},"reason":"..."}
+调用工具: {"type":"tool","tool":"read_file|search_code|apply_patch|write_file|run_command|git_diff|git_status","arguments":{...},"reason":"..."}
 最终回答: {"type":"final","summary":"...","tests":"...","changed_files":[...]}
 read_file: {"path":"relative","start_line":1,"end_line":120}
 search_code: {"query":"literal","path":"."}

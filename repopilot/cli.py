@@ -23,7 +23,7 @@ def configure_text_streams():
 
 
 def _llm(settings: Settings, fake_demo: bool):
-    return FakeLLM(demo_responses()) if fake_demo else OpenAICompatibleLLM(settings)
+    return FakeLLM(demo_responses(reflection=settings.reflection_enabled)) if fake_demo else OpenAICompatibleLLM(settings)
 
 
 def _approve(tool: str, args: dict) -> bool:
@@ -104,7 +104,7 @@ def mcp(repo: Path):
 
 
 @app.command()
-def retrieve(repo: Path, query: str, top_k: int = typer.Option(5, min=1, max=50)):
+def retrieve(repo: Path, query: str, top_k: int = typer.Option(5, min=1, max=50)) -> None:
     """Show hybrid retrieval scores, locations and reasons without running the Agent."""
     from dataclasses import asdict
     from repopilot.context.embeddings import OpenAIEmbeddings

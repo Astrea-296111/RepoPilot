@@ -109,3 +109,16 @@ def test_index_cache_cannot_escape_repository(runtime_repo, tmp_path):
     (runtime_repo / ".repopilot").symlink_to(tmp_path, target_is_directory=True)
     with pytest.raises(ValueError, match="escapes"):
         HybridIndex(runtime_repo)
+
+
+def test_shared_import_helper_survives_surface_keyword_matches(tmp_path):
+    (tmp_path / "internal").mkdir()
+    (tmp_path / "internal/core.py").write_text("def decide(value):\n    return value == 3\n")
+    for name in ("retry_client", "background", "upload"):
+        (tmp_path / f"{name}.py").write_text("from internal.core import decide\ndef retry_request(value):\n    return decide(value)\n")
+    (tmp_path / "retry_notes.py").write_text("# retry request notes request retry\n")
+    index = HybridIndex(tmp_path)
+    hits = index.search("retry request", top_k=4)
+    helper = next(hit for hit in hits if hit.path == "internal/core.py")
+    assert "source importers=3" in helper.reason
+    assert index.search("unmatchedxyz")[0].path == "internal/core.py"

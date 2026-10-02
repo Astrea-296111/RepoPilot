@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import logging
 from typing import Any
 from uuid import uuid4
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Plan(BaseModel):
@@ -16,6 +16,7 @@ class Plan(BaseModel):
 
 class Reflection(BaseModel):
     """Model advice; success is never executable evidence of a passing test."""
+    model_config = ConfigDict(extra="forbid", strict=True)
     success: bool
     reason: str = Field(max_length=2000)
     next_action: str = Field(max_length=1000)

@@ -128,6 +128,9 @@ jobs:
       - name: Same 25 scripted tasks with LangGraph orchestration
         if: matrix.extras == 'dev,full'
         run: python eval/run_benchmark.py --fake --runtime langgraph --runs 1 --require-all
+      - name: Platform composition with MCP, hybrid retrieval, reflection and memory
+        if: matrix.extras == 'dev,full'
+        run: python eval/run_benchmark.py --fake --runtime langgraph --tool-backend mcp --retrieval hybrid --reflection --memory --require-all --output eval/results/platform.json
       - name: Documented custom CLI demo
         run: python eval/demo.py --runtime custom
       - name: Documented LangGraph console trace demo
@@ -144,6 +147,7 @@ jobs:
           name: deterministic-${{ matrix.python }}
           path: |
             eval/results/*.json
+            eval/results/*.md
             eval/results/pytest.xml
             dist/*.whl
           retention-days: 30
