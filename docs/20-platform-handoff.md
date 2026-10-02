@@ -157,5 +157,6 @@ python eval/demo.py --runtime langgraph --tool-backend mcp --retrieval hybrid --
 | tests/ | test_reflection.py、test_mcp_backend.py、test_hybrid_retrieval.py、test_database_memory.py、test_api_tasks.py、test_service_integration.py、test_platform_evaluation.py、test_sse_live.py |
 | .github/workflows/ | platform-services.yml |
 | docs/ | 19-platform-upgrade-plan.md、20-platform-handoff.md、21-platform-validation.md |
+| eval/evidence/2026-10-02-platform/ | README.md、platform-custom.json、platform-custom.md、platform-langgraph-mcp.json、platform-langgraph-mcp.md、platform-retrieval.json、platform-ci.json、platform-ci.md |
 
 `mcp_server.py` 迁入包的 `__init__.py`，旧导入与 `python -m repopilot.mcp_server` 兼容。主要修改文件包括 agent/state/prompts、config、cli、context/manager、session/store、api/server、tools/git、三个评测入口、Dockerfile、Compose、依赖、README 和已有 CI。精确清单可查看 PR Files changed。

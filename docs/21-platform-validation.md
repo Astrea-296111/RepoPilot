@@ -30,7 +30,23 @@
 - 上述工作流的 Docker job：真实 DockerExecutor、受保护挂载、资源限制、禁网、超时、双 Runtime Demo，以及不变的外部历史 Bug 参考修复验证通过。
 - 付费模型 jobs 未触发。外部历史 Bug 的参考修复通过不等于新 Agent 自主修复通过。
 
-后续提交增加报告、实时 SSE 及检索修正，不能直接沿用旧 SHA 的绿色状态；最新提交的 CI 结果会追加到本节。
+最终运行代码提交：`bdc1dc5580adcd9607c1a57c4e2b43dc22b69e19`。后续交付提交只更新文档与归档报告，不修改程序、测试或工作流。
+
+| 最终验证 | 实际结果 | 证据 |
+| --- | --- | --- |
+| Linux Python 3.12，完整依赖 | 124 passed / 7 skipped，134.87 秒 | [完整 CI](https://github.com/Astrea-296111/RepoPilot/actions/runs/37014558592) |
+| Windows Python 3.12，基础依赖 | 76 passed / 23 skipped | 同上 |
+| Linux Python 3.11，基础依赖 | 76 passed / 23 skipped | 同上 |
+| 25 任务全功能组合 | LangGraph + MCP + hybrid + Reflection + Memory，25/25 | 同上，deterministic-3.12 artifact |
+| 兼容模式评测 | 原 custom/python、LangGraph/python、one-shot 各 25/25 | 同上 |
+| Redis/PostgreSQL 真实服务 | 7 passed，包含队列、API 组合、持久查询与 SSE 终态 | [服务 CI](https://github.com/Astrea-296111/RepoPilot/actions/runs/37014562903) |
+| Docker Compose | 构建、配置解析、三服务启动与健康检查通过 | 同上 |
+| DockerExecutor | 5 passed；双 Runtime、保护挂载、资源/网络限制及超时 | 完整 CI 的 Docker job |
+| 历史外部 Bug 参考验证 | 10 个失败基线及其参考修复均通过验证 | 同上；不是新 Agent 的自主修复成绩 |
+
+最终 CI 报告已原样归档为 `eval/evidence/2026-10-02-platform/platform-ci.json` 和 `.md`。来源为上述完整 CI 的 artifact `11230121252`，报告源码摘要为 `dd9f571505bfe64efcb46aac0448cb21a67115a21a6280dd29606df307e576d1`。
+
+CI 曾发现新增测试用 Windows 默认编码读取中文 Markdown 的问题；已显式指定 UTF-8，并在最终提交复验通过。完整依赖测试的耗时来自真实子进程与服务集成，已增加测试栈诊断及外层有界超时。基础依赖的额外跳过是可选模块未安装；完整依赖中的 7 项分别依赖 Docker（5）和 Redis/PostgreSQL（2），均已在独立 job 执行通过。真实 HTTP SSE 的实时性验证位于 `test_sse_live.py`，包含在 124 项完整依赖测试中；服务 job 中的 API 测试使用 TestClient。
 
 ## 25 任务组合评测
 
@@ -40,6 +56,8 @@
 | --- | --- | --- | --- | --- | --- |
 | custom / python | 25 / 25 | 2 | 3 | 0 | 不适用 |
 | langgraph / mcp | 25 / 25 | 2 | 3 | 0 | 不适用 |
+
+最终 CI 的同一全功能配置再次得到 25/25、平均 2 步、3 次工具调用，与本地快照一致；最终证据请优先查看 `platform-ci.md`。
 
 每个任务使用已知补丁的 FakeLLM，2 步通常是 patch + final；程序执行补丁、独立测试及 Git diff 共 3 次工具调用。结果证明工程组合可工作，**不是模型修复能力**。无实际模型请求，Token=0 不能用于宣传成本下降。
 
