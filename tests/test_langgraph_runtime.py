@@ -3,6 +3,7 @@ import json
 import shutil
 import subprocess
 import sys
+import time
 
 import pytest
 
@@ -116,4 +117,8 @@ def test_graph_api_selector(runtime_repo, monkeypatch):
                                                   "executor": "local", "approval": "auto", "runtime": "langgraph"})
         assert response.status_code == 202, response.text
         saved = client.get("/api/tasks/" + response.json()["id"]).json()
+        deadline = time.monotonic() + 30
+        while saved["status"] not in {"completed", "failed"} and time.monotonic() < deadline:
+            time.sleep(0.1)
+            saved = client.get("/api/tasks/" + response.json()["id"]).json()
     assert saved["status"] == "completed" and saved["runtime"] == "langgraph"

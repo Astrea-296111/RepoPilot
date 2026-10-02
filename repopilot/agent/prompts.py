@@ -12,5 +12,6 @@ apply_patch: {"path":"relative","old_text":"exact old substring","new_text":"rep
 write_file: {"path":"new relative path","content":"..."}
 run_command: {"command":"python -m pytest -q","timeout":60}
 git_diff: {}
+git_status: {}
 先读相关文件和失败测试，再做最小改动；运行测试确认；失败时根据 observation 修复并重试。
 不调用时不能声称测试通过。不能通过修改测试来掩盖 bug。必须遵守路径/权限限制。"""

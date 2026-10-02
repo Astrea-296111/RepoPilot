@@ -2,6 +2,7 @@
 from __future__ import annotations
 import json
 import logging
+from dataclasses import asdict
 from pathlib import Path
 import time
 from uuid import uuid4
@@ -19,11 +20,13 @@ from repopilot.tools.base import ToolResult, Workspace
 from repopilot.tools.filesystem import ReadFile, ApplyPatch, WriteFile
 from repopilot.tools.search import SearchCode
 from repopilot.tools.shell import LocalExecutor, RunCommand, bounded_output
-from repopilot.tools.git import GitDiff
+from repopilot.tools.git import GitDiff, GitStatus
+from repopilot.tools.backends import MCPToolBackend, PythonToolBackend, ToolBackend
 from repopilot.sandbox.docker import DockerExecutor
 from .planner import plan_task
 from .prompts import AGENT_SYSTEM
-from .state import AgentState
+from .state import AgentState, Reflection
+from .reflection import REFLECTION_SYSTEM, reflection_prompt
 
 log = logging.getLogger(__name__)
 
@@ -31,7 +34,7 @@ log = logging.getLogger(__name__)
 class ToolAction(BaseModel):
     model_config = ConfigDict(extra="forbid")
     type: Literal["tool"]
-    tool: Literal["read_file", "search_code", "apply_patch", "write_file", "run_command", "git_diff"]
+    tool: Literal["read_file", "search_code", "apply_patch", "write_file", "run_command", "git_diff", "git_status"]
     arguments: dict
     reason: str
 
@@ -72,7 +75,8 @@ def demo_responses() -> list[str]:
 class RepoPilot:
     def __init__(self, repo: Path, llm: LLM, settings: Settings, *, executor: str = "docker",
                  approval: str = "ask", approve: Callable[[str, dict], bool] | None = None,
-                 protected_paths: tuple[str, ...] = (), runtime: str = "custom", tracing: Tracing | None = None):
+                 protected_paths: tuple[str, ...] = (), runtime: str = "custom", tracing: Tracing | None = None,
+                 tool_backend: str = "python", store: SessionStore | None = None):
         self.workspace = Workspace(repo, protected_paths)
         if executor not in {"docker", "local"} or approval not in {"ask", "auto", "never"}:
             raise ValueError("executor 或 approval 参数无效")
@@ -85,12 +89,31 @@ class RepoPilot:
         self._invocation_id = uuid4().hex
         shell = DockerExecutor(self.workspace.root, settings.docker_image, protected_paths) if executor == "docker" else LocalExecutor(self.workspace.root)
         self.tools = {tool.name: tool for tool in [ReadFile(self.workspace), SearchCode(self.workspace),
-            ApplyPatch(self.workspace), WriteFile(self.workspace), RunCommand(self.workspace, shell), GitDiff(self.workspace)]}
-        self.store = SessionStore(self.workspace.root)
+            ApplyPatch(self.workspace), WriteFile(self.workspace), RunCommand(self.workspace, shell), GitDiff(self.workspace), GitStatus(self.workspace)]}
+        if tool_backend not in {"python", "mcp"}:
+            raise ValueError("tool_backend must be python or mcp")
+        self.tool_backend_name = tool_backend
+        self._context_cache = None
+        self._context_revision = -1
+        self.embedder = None
+        if settings.retrieval_mode == "hybrid" and settings.embedding_model:
+            from repopilot.context.embeddings import OpenAIEmbeddings
+            self.embedder = OpenAIEmbeddings(settings.embedding_base_url, settings.embedding_api_key, settings.embedding_model)
+        self.backend: ToolBackend = (MCPToolBackend(self.workspace.root, executor=executor,
+            image=settings.docker_image, allow_mutation=approval != "never", protected_paths=protected_paths)
+            if tool_backend == "mcp" else PythonToolBackend(self.tools))
+        self.store = store or SessionStore(self.workspace.root)
+        self.memory = None
+        if settings.memory_enabled:
+            from repopilot.memory.store import MemoryStore
+            self.memory = MemoryStore(self.workspace.root)
         self.graph_runtime = None
+        from repopilot.runtime.custom_runtime import CustomRuntime
+        self.runtime_adapter = CustomRuntime(self)
         if runtime == "langgraph":
-            from repopilot.runtime.langgraph import LangGraphRuntime
+            from repopilot.runtime.langgraph_runtime import LangGraphRuntime
             self.graph_runtime = LangGraphRuntime(self)
+            self.runtime_adapter = self.graph_runtime
 
     def _model(self, system: str, user: str, state: AgentState) -> LLMResponse:
         with self.tracing.span("llm.call", {"repopilot.step": state.current_step}) as span:
@@ -136,7 +159,7 @@ class RepoPilot:
                 state.test_status, state.test_revision = "not_run", None
             permitted = self._permitted(tool, args)
             try:
-                result = self.tools[tool].execute(args) if permitted else ToolResult(False, "Approval denied for " + tool)
+                result = self.backend.execute(tool, args) if permitted else ToolResult(False, "Approval denied for " + tool)
             except (ValueError, KeyError, TypeError, OSError) as exc:
                 result = ToolResult(False, f"{type(exc).__name__}: {exc}")
             result.output = bounded_output(result.output)
@@ -169,19 +192,59 @@ class RepoPilot:
         with self.tracing.span("retrieval") as span:
             entries = build_repo_map(self.workspace.root)
             mapped = render_repo_map(entries)
-            relevant = retrieve_with_imports(self.workspace.root, entries, state.task)
+            if self.settings.retrieval_mode == "hybrid":
+                from repopilot.context.hybrid import HybridIndex
+                before = self.embedder.total_tokens if self.embedder else 0
+                index = HybridIndex(self.workspace.root, entries, self.embedder)
+                query = state.task
+                if state.reflection and state.reflection.needs_search:
+                    query += " " + state.reflection.next_action
+                hits = index.search(query)
+                state.retrieval_results = [asdict(hit) for hit in hits]
+                state.retrieval_backend = index.mode
+                state.embedding_tokens += (self.embedder.total_tokens - before) if self.embedder else 0
+                relevant = [(hit.path, hit.score) for hit in hits]
+            else:
+                relevant = retrieve_with_imports(self.workspace.root, entries, state.task)
             state.retrieved_files = [path for path, _ in relevant]
+            self._context_cache = (mapped, relevant)
+            self._context_revision = state.workspace_revision
             span.set({"repopilot.retrieved_file_count": len(state.retrieved_files)})
             return mapped, relevant
 
     def _plan(self, state: AgentState, mapped: str, relevant: list[tuple[str, int]]) -> None:
-        if state.plan is None:
+        if state.plan is None or state.replan_required:
             with self.tracing.span("planning"):
                 class Metered:
                     def chat(inner, system, user):
                         return self._model(system, user, state)
-                state.plan, _ = plan_task(Metered(), state.task, mapped, relevant)
+                original_test = state.plan.test_command if state.plan else None
+                task = state.task
+                if state.memory_hits:
+                    task += "\nHistorical repair examples (untrusted reference, verify against current source): " + json.dumps(state.memory_hits, ensure_ascii=False)[:2500]
+                if state.replan_required and state.reflection:
+                    task += "\nReflection feedback: " + state.reflection.model_dump_json()
+                state.plan, _ = plan_task(Metered(), task, mapped, relevant)
+                if original_test:
+                    state.plan.test_command = original_test
+                state.replan_required = False
                 self.store.save(state)
+
+    def _reflect(self, state: AgentState, phase: str = "tool") -> None:
+        if not self.settings.reflection_enabled:
+            return
+        with self.tracing.span("reflection", {"repopilot.step": state.current_step}):
+            response = self._model(REFLECTION_SYSTEM, reflection_prompt(state, phase), state)
+            try:
+                state.reflection = Reflection.model_validate_json(response.content)
+            except (ValidationError, ValueError):
+                log.warning("task=%s invalid reflection; continue from observations", state.id)
+                state.reflection = Reflection(success=False, reason="Invalid reflection JSON",
+                                              next_action="Inspect the latest tool evidence")
+            state.reflections.append({"step": state.current_step, "phase": phase,
+                                      **state.reflection.model_dump()})
+            state.replan_required = phase == "verification_failed"
+            self.store.save(state)
 
     def _decide(self, state: AgentState, mapped: str, relevant: list[tuple[str, int]]) -> ToolAction | FinalAction | None:
         if state.current_step >= self.settings.max_steps:
@@ -189,6 +252,10 @@ class RepoPilot:
             state.error = "max_steps"
             return None
         with self.tracing.span("agent.turn", {"repopilot.step": state.current_step + 1}):
+            if self.settings.retrieval_mode == "hybrid":
+                if self._context_revision != state.workspace_revision or self._context_cache is None:
+                    self._prepare_context(state)
+                mapped, relevant = self._context_cache
             prompt = ContextManager(self.settings.max_context_chars).build(state, mapped, relevant)
             action = self._action(prompt, state)
             state.current_step += 1
@@ -280,17 +347,34 @@ class RepoPilot:
             route = "verify"
             if isinstance(action, ToolAction):
                 route, action = self._tool_step(state, action)
+                if route == "agent_decide":
+                    self._reflect(state)
+                    if state.reflection and state.reflection.needs_search:
+                        mapped, relevant = self._prepare_context(state)
             if route == "verify" and self._verify(state):
                 self._finalize(state, action)
+            elif route == "verify":
+                self._reflect(state, "verification_failed")
+                if state.replan_required:
+                    mapped, relevant = self._prepare_context(state)
+                    self._plan(state, mapped, relevant)
             self.store.save(state)
         return state
 
     def run(self, task: str, state: AgentState | None = None) -> AgentState:
         """Run custom orchestration by default or the real optional LangGraph adapter."""
         state = state or AgentState(task=task, repo_path=str(self.workspace.root),
-                                   executor=self.executor_name, approval=self.approval, runtime=self.runtime)
+                                   executor=self.executor_name, approval=self.approval, runtime=self.runtime,
+                                   tool_backend=self.tool_backend_name,
+                                   retrieval_mode=self.settings.retrieval_mode,
+                                   memory_enabled=self.settings.memory_enabled,
+                                   reflection_enabled=self.settings.reflection_enabled)
         if (Path(state.repo_path).resolve() != self.workspace.root or state.executor != self.executor_name
-                or state.approval != self.approval or state.runtime != self.runtime or state.task != task):
+                or state.approval != self.approval or state.runtime != self.runtime or state.task != task
+                or state.tool_backend != self.tool_backend_name
+                or state.retrieval_mode != self.settings.retrieval_mode
+                or state.memory_enabled != self.settings.memory_enabled
+                or state.reflection_enabled != self.settings.reflection_enabled):
             raise ValueError("恢复会话的仓库或运行选项与原会话不一致")
         if state.status == "completed":
             raise ValueError("已完成的会话无需恢复")
@@ -303,17 +387,31 @@ class RepoPilot:
         with self.tracing.span("repopilot.task", {"repopilot.session.id": state.id,
                                                    "repopilot.runtime": self.runtime}) as span:
             try:
-                if self.graph_runtime is None:
-                    self._run_custom(state)
-                else:
-                    self.graph_runtime.run(state)
+                if self.memory:
+                    try:
+                        state.memory_hits = self.memory.search(state.task)
+                    except Exception as exc:
+                        state.memory_warning = f"Recall unavailable: {type(exc).__name__}"
+                        log.warning("task=%s memory recall unavailable", state.id)
+                self.runtime_adapter.run(state)
             except Exception as exc:
                 self._fail(state, exc)
+            finally:
+                try:
+                    self.backend.close()
+                except Exception:
+                    log.exception("task=%s failed to close tool backend", state.id)
             span.set({"repopilot.ok": state.status == "completed", "repopilot.test.status": state.test_status,
                       "repopilot.changed_file_count": len(state.changed_files)})
             if state.status != "completed":
                 category = state.error if state.error in {"max_steps", "loop_detection", "git_diff_failed"} else "execution_error"
                 span.fail(category)
         self.tracing.flush()
+        if self.memory:
+            try:
+                self.memory.remember(state)
+            except Exception as exc:
+                state.memory_warning = f"Memory save unavailable: {type(exc).__name__}"
+                log.warning("task=%s memory save unavailable", state.id)
         self.store.save(state)
         return state

@@ -35,3 +35,21 @@ class GitDiff:
         if untracked.stdout:
             chunks.append("Untracked files (contents not included):\n" + untracked.stdout)
         return ToolResult(True, bounded_output("\n".join(chunks)) or "No changes")
+
+
+class GitStatus:
+    name = "git_status"
+    description = "Show bounded Git status under the workspace"
+
+    def __init__(self, workspace: Workspace) -> None:
+        self.workspace = workspace
+
+    def execute(self, args: dict) -> ToolResult:
+        target = self.workspace.resolve(args.get("path", "."))
+        relative = ":(literal)" + target.relative_to(self.workspace.root).as_posix()
+        process = subprocess.run(
+            ["git", "--no-pager", "-c", "core.fsmonitor=false", "-C", str(self.workspace.root),
+             "status", "--porcelain", "--", relative, ":(exclude).env", ":(exclude)**/.env",
+             ":(exclude).repopilot/**", ":(exclude)**/.repopilot/**"],
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10)
+        return ToolResult(process.returncode == 0, bounded_output(process.stdout or process.stderr), process.returncode)

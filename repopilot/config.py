@@ -1,6 +1,7 @@
 """Configuration loaded from environment and an optional .env file."""
 from pathlib import Path
 import os
+from typing import Literal
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
@@ -15,6 +16,12 @@ class Settings(BaseModel):
     docker_image: str = "repopilot-sandbox:dev"
     max_steps: int = Field(default=15, ge=1, le=100)
     max_context_chars: int = Field(default=30000, ge=2000)
+    reflection_enabled: bool = False
+    retrieval_mode: Literal["legacy", "hybrid"] = "legacy"
+    embedding_base_url: str = "https://api.openai.com/v1"
+    embedding_model: str = ""
+    embedding_api_key: str = ""
+    memory_enabled: bool = False
     otel_enabled: bool = False
     otel_exporter: str = "console"
     otel_endpoint: str = ""
@@ -32,6 +39,12 @@ class Settings(BaseModel):
             docker_image=os.getenv("REPOPILOT_DOCKER_IMAGE", "repopilot-sandbox:dev"),
             max_steps=int(os.getenv("REPOPILOT_MAX_STEPS", "15")),
             max_context_chars=int(os.getenv("REPOPILOT_MAX_CONTEXT_CHARS", "30000")),
+            reflection_enabled=os.getenv("REPOPILOT_REFLECTION", "0").lower() in {"1", "true", "yes"},
+            retrieval_mode=os.getenv("REPOPILOT_RETRIEVAL", "legacy"),
+            embedding_base_url=os.getenv("EMBEDDING_BASE_URL") or os.getenv("LLM_BASE_URL") or "https://api.openai.com/v1",
+            embedding_model=os.getenv("EMBEDDING_MODEL", ""),
+            embedding_api_key=os.getenv("EMBEDDING_API_KEY") or os.getenv("LLM_API_KEY", ""),
+            memory_enabled=os.getenv("REPOPILOT_MEMORY", "0").lower() in {"1", "true", "yes"},
             otel_enabled=os.getenv("REPOPILOT_OTEL_ENABLED", "0").lower() in {"1", "true", "yes"},
             otel_exporter=os.getenv("REPOPILOT_OTEL_EXPORTER", "console"),
             otel_endpoint=os.getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT") or os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", ""),

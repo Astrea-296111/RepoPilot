@@ -1,5 +1,17 @@
 # RepoPilot
 
+> 2026-10 平台增量升级：设计及基线见 [升级方案](docs/19-platform-upgrade-plan.md)。保留自研循环；`--runtime custom|langgraph` 选择编排，`--reflection` 开启逐轮结构化反思和测试失败后的重规划。Reflection 的 success 仅是模型意见，不能跳过最终独立测试；重规划保留原测试命令。不开启时保持既有模型调用协议与 FakeLLM 脚本兼容。
+
+`--tool-backend mcp` 使用官方 MCP SDK v2 客户端和三个 stdio 子进程服务器（filesystem / git / shell）；默认 `python` 直接调用。两者共用审批、路径限制、Docker/local executor 和 ToolResult。原 `repopilot mcp REPO` 保持只读；独立分组服务器默认禁止写入/执行，必须显式传 `--allow-write` / `--allow-shell`。Agent 子进程随单次运行关闭，协议错误不自动重放写操作。
+
+安装 `pip install -e '.[rag]'` 后，用 `repopilot retrieve REPO "修复用户注册重复邮箱"` 查看文件、score、原因和代码行；`run --retrieval hybrid` 将结果接入 Planner 和 Agent 上下文。配置 `EMBEDDING_MODEL`、`EMBEDDING_BASE_URL`、`EMBEDDING_API_KEY` 启用真实 embedding + FAISS；未配置模型明确采用 BM25+AST。BM25/向量独立召回，RRF 融合，再按 AST 符号和 import 关系重排。索引写到目标仓库 `.repopilot/repo_index/<内容摘要>/`，含 `ast_index.json`、`bm25_index.json`、`chunks.json` 和向量模式的 `faiss.index`；源代码/模型变化产生新一代索引，可删除整个目录重建。开启外部 embedding 会将代码块发送给所配置的模型服务。
+
+会话现在默认保存到 `.repopilot/repopilot.db`（SQLAlchemy / SQLite），包含 Task、Session、Step、ToolCall、TokenUsage 和 SSE 事件；`show` 仍输出 JSON。旧 `.repopilot/sessions/*.json` 在查询时自动导入，数据库已有状态优先。`--memory` 启用 `.repopilot/memory.db` 的 FTS5 历史经验召回，限定当前仓库且只召回测试通过的修复；历史经验会进入 Planner/Context，当前任务仍必须独立复验。失败经验留存供审计。配置 `REPOPILOT_DATABASE_URL` 可连接 PostgreSQL；当前使用初始建表，后续修改已有 schema 需提供迁移。
+
+API 使用持久任务队列：`POST /api/tasks` 返回 `task_id`（保留旧 `id` 字段），`GET /api/tasks/{id}` 返回 status/steps/logs，`GET /api/tasks/{id}/stream` 提供 SSE（支持 `Last-Event-ID` 或 `?after=N` 续读）。请求可选择 `runtime`、`tool_backend`、`retrieval`、`reflection`、`memory`。默认本地有界 asyncio 队列；配置 `REPOPILOT_REDIS_URL` 后使用 Redis，数据库 pending 记录负责断电后重新投递。运行中断标记 `interrupted`，不会重放未知结果的 shell/patch。服务只允许一个 API coordinator（SQLite 文件锁 / PostgreSQL advisory lock），内部默认 2 个 worker、最多 100 个活跃任务；同一仓库并发提交返回 409，容量耗尽返回 429。请使用一个 Uvicorn worker。
+
+`docker compose up -d --build --wait` 启动 api / redis / postgres，数据使用持久卷，只有 API 端口绑定宿主 127.0.0.1。API 容器按原设计使用 container-local executor，不挂 Docker socket；CLI 的 DockerExecutor 保持独立。Compose 仅用于可信私有环境；无多租户认证，shell 与 API 共享容器，不是逐任务隔离。正常停止等待当前 Agent 收尾，强制终止后请检查工作区再手动恢复。
+
 一个能读 Python 仓库、修改代码、实际运行测试并复验结果的 Coding Agent。模型只决定下一步，程序负责校验 JSON、审批、工具执行、预算和最终验证。支持 CLI、FastAPI、JSON 会话，以及共享同一业务逻辑的 **Custom / LangGraph 两种 runtime**。
 
 ## 先运行，再看架构

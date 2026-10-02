@@ -1,38 +1,59 @@
-"""One atomic JSON file per task; no credentials or model API keys persisted."""
+"""Database-backed sessions with read-once import of legacy JSON transcripts."""
 from __future__ import annotations
-import json
+
+import logging
 import os
 from pathlib import Path
-import tempfile
+
 from repopilot.agent.state import AgentState
+from repopilot.database.store import Database, sqlite_url
+
+log = logging.getLogger(__name__)
 
 
 class SessionStore:
-    def __init__(self, repo: Path):
-        root = repo.resolve()
-        self.directory = root / ".repopilot" / "sessions"
-        if not self.directory.resolve().is_relative_to(root):
+    def __init__(self, repo: Path, database: Database | None = None) -> None:
+        self.root = repo.resolve()
+        self.directory = self.root / ".repopilot" / "sessions"
+        db_path = self.root / ".repopilot" / "repopilot.db"
+        if not self.directory.resolve().is_relative_to(self.root) or not db_path.resolve().is_relative_to(self.root):
             raise ValueError("会话目录指向仓库外部，已拒绝写入")
         self.directory.mkdir(parents=True, exist_ok=True)
+        self.database = database or Database(os.getenv("REPOPILOT_DATABASE_URL") or sqlite_url(db_path))
 
     def path(self, session_id: str) -> Path:
-        if not session_id or any(c not in "0123456789abcdef" for c in session_id) or len(session_id) != 32:
+        """Legacy path only. New saves go into the database."""
+        if len(session_id) != 32 or any(c not in "0123456789abcdef" for c in session_id):
             raise ValueError("无效 session ID")
-        return self.directory / (session_id + ".json")
+        path = self.directory / (session_id + ".json")
+        if not path.resolve().is_relative_to(self.root):
+            raise ValueError("会话文件指向仓库外部")
+        return path
 
     def save(self, state: AgentState) -> None:
-        target = self.path(state.id)
-        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=self.directory, delete=False) as handle:
-            json.dump(state.model_dump(), handle, ensure_ascii=False, indent=2)
-            temporary = handle.name
-        os.replace(temporary, target)
+        self.path(state.id)
+        if Path(state.repo_path).resolve() != self.root:
+            raise ValueError("会话仓库不一致")
+        self.database.save(state)
 
     def load(self, session_id: str) -> AgentState:
-        return AgentState.model_validate_json(self.path(session_id).read_text(encoding="utf-8"))
+        legacy = self.path(session_id)
+        try:
+            state = self.database.load(session_id)
+        except FileNotFoundError:
+            state = AgentState.model_validate_json(legacy.read_text(encoding="utf-8"))
+            if state.id != session_id:
+                raise ValueError("JSON 会话 ID 与文件名不一致")
+            self.save(state)
+            log.info("imported legacy session=%s", session_id)
+        if Path(state.repo_path).resolve() != self.root:
+            raise ValueError("会话仓库不一致")
+        return state
 
     def list(self) -> list[AgentState]:
-        results = []
-        for path in sorted(self.directory.glob("*.json"), reverse=True):
-            try: results.append(AgentState.model_validate_json(path.read_text(encoding="utf-8")))
-            except (ValueError, OSError): continue
-        return results
+        for path in self.directory.glob("*.json"):
+            try:
+                self.load(path.stem)
+            except (ValueError, OSError):
+                log.warning("skipping invalid legacy session: %s", path.name)
+        return self.database.list(repo=str(self.root))
