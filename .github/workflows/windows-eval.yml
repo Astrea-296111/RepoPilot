@@ -58,8 +58,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: repopilot-eval-${{ github.repository }}
-  cancel-in-progress: false
+  group: repopilot-eval-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   checks:
@@ -76,7 +76,7 @@ jobs:
       - name: Install
         run: python -m pip install -e ".[dev]"
       - name: Project tests
-        run: python -m pytest -q
+        run: python -m pytest -q -o faulthandler_timeout=60
       - name: Key-free CLI demo in a fresh temporary repository
         run: python eval/demo.py --runtime custom
       - name: Scripted Agent benchmark
@@ -122,7 +122,7 @@ jobs:
         run: python -m pip install -e ".[${EXTRAS}]"
       - run: python -m pip check
       - name: Unit, graph, MCP stdio and OTel integration tests
-        run: python -m pytest -q --junitxml=eval/results/pytest.xml
+        run: timeout 240s python -m pytest -q -o faulthandler_timeout=60 --junitxml=eval/results/pytest.xml
       - run: python eval/run_benchmark.py --fake --runs 1 --require-all
       - run: python eval/run_one_shot.py --fake --runs 1 --require-all
       - name: Same 25 scripted tasks with LangGraph orchestration

@@ -6,6 +6,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: repopilot-platform-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 jobs:
   services:
     runs-on: ubuntu-latest

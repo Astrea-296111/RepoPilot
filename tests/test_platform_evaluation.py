@@ -38,11 +38,11 @@ def test_report_does_not_invent_monetary_cost(tmp_path):
         "records": [{"task_id": "broken", "run": 1, "resolved": False, "failure_category": "environment_failure"}]}
     output = tmp_path / "report.md"
     module.write_report(report, output)
-    content = output.read_text()
+    content = output.read_text(encoding="utf-8")
     assert "脚本化工程验证" in content and "未测 / 不适用" in content
     assert "environment_failure" in content and "缺失" in content
     report["config"] = {"evidence_type": "real_model", "input_price_per_million": 2.0, "output_price_per_million": 4.0}
     report["summary"]["model"] = "test-model"
     report["records"][0]["agent"] = {"token_usage": {"prompt_tokens": 1000, "completion_tokens": 500, "total_tokens": 1500}}
     module.write_report(report, output)
-    assert "0.004000" in output.read_text()
+    assert "0.004000" in output.read_text(encoding="utf-8")
