@@ -6,6 +6,38 @@ import pytest
 from repopilot.agent.agent import RepoPilot, demo_responses
 from repopilot.config import Settings
 from repopilot.llm.base import FakeLLM
+from repopilot.agent.reflection import reflection_prompt
+from repopilot.agent.state import AgentState, Plan
+
+
+def test_reflection_preserves_earlier_read_evidence_and_later_patch():
+    state = AgentState(task="repair shared policy", repo_path=".", current_step=4)
+    state.tool_history = [
+        {"step": 1, "tool": "read_file", "arguments": {"path": "app/orders.py"},
+         "ok": True, "output": "return money(value)"},
+        {"step": 2, "tool": "read_file", "arguments": {"path": "app/refunds.py"},
+         "ok": True, "output": "return money(value)"},
+        {"step": 3, "tool": "apply_patch", "arguments": {"path": "app/money.py"},
+         "ok": True, "output": "patch applied"},
+        {"step": 4, "tool": "read_file", "arguments": {"path": "app/money.py"},
+         "ok": True, "output": "ROUND_HALF_UP"},
+    ]
+    payload = json.loads(reflection_prompt(state, "tool"))
+    assert payload["earlier_observations"][0]["output"] == "return money(value)"
+    assert payload["earlier_observations"][1]["target"] == "app/refunds.py"
+    assert payload["observations"][0]["tool"] == "apply_patch"
+    assert payload["observations"][1]["output"] == "ROUND_HALF_UP"
+
+
+def test_reflection_large_outputs_remain_bounded_valid_json():
+    state = AgentState(task="\x00" * 10000, repo_path=".")
+    state.plan = Plan(goal="fix", suspected_files=[], steps=[], test_command="x" * 20000)
+    state.tool_history = [{"step": i, "tool": "read_file", "ok": True,
+                           "arguments": {"path": "x" * 1000}, "output": "\x00" * 20000}
+                          for i in range(30)]
+    prompt = reflection_prompt(state, "tool")
+    assert len(prompt) <= 12000
+    assert json.loads(prompt)["test_status"] == state.test_status
 
 
 @pytest.fixture(params=["custom", "langgraph"])
