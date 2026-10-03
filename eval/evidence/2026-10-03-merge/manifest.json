@@ -1,0 +1,146 @@
+{
+  "code_commit": "1e21e2a88d7899651eaa3ec464fbeb4b4ae2607e",
+  "runs": {
+    "before": 37098761785,
+    "after": 37099252399,
+    "engineering": 37099257387,
+    "services": 37099257390
+  },
+  "artifacts": [
+    {
+      "id": 11265347298,
+      "name": "real-custom-shared_rounding_policy",
+      "digest": "sha256:912dca5ff6eb788026b930897766b240638ce02412c5c9c30484b28ab85f0a91",
+      "run": 37098761785
+    },
+    {
+      "id": 11265292588,
+      "name": "real-custom-relative_config_paths",
+      "digest": "sha256:ff5f9ab28d64b7a4290546afdab5ae8443123676f2914b3accda1bcc1831bcec",
+      "run": 37098761785
+    },
+    {
+      "id": 11265247723,
+      "name": "real-langgraph-relative_config_paths",
+      "digest": "sha256:be008cd512da119dfe3a43091e1dd85d7bd5d221bb9dd8b88d6ce2ee50a5cd0f",
+      "run": 37098761785
+    },
+    {
+      "id": 11265087604,
+      "name": "real-langgraph-duplicate_email",
+      "digest": "sha256:cee4689fdbfd882dbc4350acafa4905f77a7ee5800f1d72f032e8425d31ace55",
+      "run": 37098761785
+    },
+    {
+      "id": 11264888795,
+      "name": "real-custom-duplicate_email",
+      "digest": "sha256:52ce0760f5dce9fad58b82984e7fccf3f72bff75c05ff801f17706504a2855a6",
+      "run": 37098761785
+    },
+    {
+      "id": 11264699329,
+      "name": "real-langgraph-shared_rounding_policy",
+      "digest": "sha256:5ffe7d4950a8834b6e1482738d78076e6afc2ca32fcf511e88be556dfb8d1c7e",
+      "run": 37098761785
+    },
+    {
+      "id": 11265752493,
+      "name": "real-langgraph-shared_rounding_policy",
+      "digest": "sha256:196d7e38f22017e6913e697f503ffc8d0c8042436fc7410fc7368366d2909826",
+      "run": 37099252399
+    },
+    {
+      "id": 11265707512,
+      "name": "real-custom-shared_rounding_policy",
+      "digest": "sha256:6943678beafd2b2923fd011c018508edbd1ffb395ba4aa38cb5412d3a073380c",
+      "run": 37099252399
+    },
+    {
+      "id": 11265702126,
+      "name": "real-custom-duplicate_email",
+      "digest": "sha256:3e48ba50d2821c207291f46b3592874941318a9a3861b2e617a1272f5a413c3a",
+      "run": 37099252399
+    },
+    {
+      "id": 11265208752,
+      "name": "real-langgraph-relative_config_paths",
+      "digest": "sha256:4fe90edf1c7a923dec898c21b9d2157d5d8f78ce0bbc11c658aaef9c4aff8d7d",
+      "run": 37099252399
+    },
+    {
+      "id": 11265122532,
+      "name": "real-custom-relative_config_paths",
+      "digest": "sha256:af10a23f21aa5b0e487e845c24ddc48791506e2c0d96b45d5dc72c3128e5f644",
+      "run": 37099252399
+    },
+    {
+      "id": 11264524972,
+      "name": "real-langgraph-duplicate_email",
+      "digest": "sha256:b776078b5e3f3b33c599a147f2e7dd7617412e2b05cf91969a96c06b9dd9c5fa",
+      "run": 37099252399
+    },
+    {
+      "id": 11265467721,
+      "name": "deterministic-3.11",
+      "digest": "sha256:535b80d89e4dfc5f5b8b17a27480397f37110b92a74eb1d62e8b0bd7eeb35701",
+      "run": 37099257387
+    },
+    {
+      "id": 11265119015,
+      "name": "docker-integration",
+      "digest": "sha256:006e0d808a982f839e167ae6690d9a685c9d3f8c4ae5d8540aaea7d452c5242b",
+      "run": 37099257387
+    },
+    {
+      "id": 11264999591,
+      "name": "deterministic-3.12",
+      "digest": "sha256:562bd956c255892804b5f0ca41d46a7a02ba66c7d6fd6ae670cee0a31970a34d",
+      "run": 37099257387
+    },
+    {
+      "id": 11264989188,
+      "name": "benchmark-scripted",
+      "digest": "sha256:bbc034b2bd8ae0d6a7a6924b8fe081094826f176b97aaa54f42c237dc83a210e",
+      "run": 37099257387
+    },
+    {
+      "id": 11265572552,
+      "name": "platform-services-tests",
+      "digest": "sha256:b882d8050d12e4fe4438557d1ff235c39ed4cb73843545c090e5202fc7deccb1",
+      "run": 37099257390
+    }
+  ],
+  "files": {
+    "README.md": "f259c393908eae581957147d4d1af97159f09a8484585d2bf2e9f5ca231646cc",
+    "after-reflection-fix/real-custom-duplicate_email.json": "3fcb78ff515460554e7a2c4b1db8e149d7f45975575a2d119e7d953906130faf",
+    "after-reflection-fix/real-custom-duplicate_email.md": "dbaf98dc10f195b99ec59b5459eb3a4fa9c79fea1d64f7c0bc3d811b1d4a5ed3",
+    "after-reflection-fix/real-custom-relative_config_paths.json": "409546d0bc97be83b119414ed5ed1b7df35dcc54ed96b754f8586c569bfb0141",
+    "after-reflection-fix/real-custom-relative_config_paths.md": "3700075b3617cdd1a7db24a381432ca364cdf1dcaa2e4319103bf29cf6578da5",
+    "after-reflection-fix/real-custom-shared_rounding_policy.json": "91e7b59d07e7c0ea2a77037d2d302f5ab53aa3bfe3a3c9646513c8e78d7aced2",
+    "after-reflection-fix/real-custom-shared_rounding_policy.md": "f6e8fad81849ec47dbc132946feb0f334d39afbec2603999ea7b283949b93331",
+    "after-reflection-fix/real-langgraph-duplicate_email.json": "0f27c047de2c04154934ff26e18535dd1d08c18fff8369c821915d360139300d",
+    "after-reflection-fix/real-langgraph-duplicate_email.md": "fa369168a2bef003bcc0974d588cc7598556540d5152747d0aeb5c82bf5fc6da",
+    "after-reflection-fix/real-langgraph-relative_config_paths.json": "3dd7d005a86a6a34028c43fb18e6aae50ac56d1c30271fa3e3d6afda003970c6",
+    "after-reflection-fix/real-langgraph-relative_config_paths.md": "64b7058c725c13644fc82e6efb83cc63d5d7f34ac41e6b08c8a9b36cca43d38b",
+    "after-reflection-fix/real-langgraph-shared_rounding_policy.json": "c88d7f7ecc2346532c3b91ae1558b7c823bfe6915d5af7dfdd6720d78255408b",
+    "after-reflection-fix/real-langgraph-shared_rounding_policy.md": "9c0bbd76b7eaf9c52bfd3d0afcb39e68a0f80255cb30f8d909ec399e20a90c23",
+    "before-reflection-fix/real-custom-duplicate_email.json": "d29af168b2227ca148f45c97c51c4c32b092deb0a6b5d8c30637a44512f17ccd",
+    "before-reflection-fix/real-custom-duplicate_email.md": "9e89ad19789a5dcaa3ef2c8918af35622317677941cf01a37eafab2fe8028282",
+    "before-reflection-fix/real-custom-relative_config_paths.json": "7450beb499601feb1337d5c1981e2fc7329f81e312f641c2c2db2e60f35cba06",
+    "before-reflection-fix/real-custom-relative_config_paths.md": "266521aec750e7418b6f4ab7cc1a214110cc448d2380d57b8e7d554e69ae6af6",
+    "before-reflection-fix/real-custom-shared_rounding_policy.json": "e9d03cf2294f79dec2f2d0959fb30f56da874521545deb79edd2f027dc467a11",
+    "before-reflection-fix/real-custom-shared_rounding_policy.md": "5a130a4165924ea147323fae37746b9e25e79261d0de152cb591cfa9a702705d",
+    "before-reflection-fix/real-langgraph-duplicate_email.json": "d7a1ba0b31b8820420e3bd1932e4497b3e878fc539cbb1d8195d471aab5b3ace",
+    "before-reflection-fix/real-langgraph-duplicate_email.md": "f3fe2fec5bcd7fc5f5c3f7de3f9e1bdfc01e43cd9864345051a61e9d86aa5e31",
+    "before-reflection-fix/real-langgraph-relative_config_paths.json": "e61dcf3fc510d4c9f068742ed4c9d46f4cecb815475ab3625c68cfbd2156d1b2",
+    "before-reflection-fix/real-langgraph-relative_config_paths.md": "89c76bff82e3060faa9351427c0a5769adc75ab1a09cfcd017534f6d5cdb7ba6",
+    "before-reflection-fix/real-langgraph-shared_rounding_policy.json": "83984f4909c844cd5659a0082cf07e4f3628952d8f704ba3f3df248360c4cfcc",
+    "before-reflection-fix/real-langgraph-shared_rounding_policy.md": "c3fd6dbef4eae8b9189ab13c48ade77a4fcf0c417dd655ae8c8dafb8d33916ce",
+    "ci-docker.xml": "fe96697bfdfabec575c57a8d5c73eb24c40068811b07b93212fd97ed5bb69bd3",
+    "ci-external-reference.json": "97f5fd4ffe3e2d544150701c69cf4a9f9d33b541d357de3e66473dc20dcbc911",
+    "ci-platform.json": "bf0037ed6da128eb11c6718393836e0d76dab9c5a63f652921546eac60e0fbfe",
+    "ci-platform.md": "1c3c3ee6f570abfe1fdd3576d4fe6f47b8915ca53bc455b60460445aa7045443",
+    "ci-pytest.xml": "1082d21b10171f97b56c1b0b5fba2863dc4816b2cc4f595e4d9da1ddf22ffb02",
+    "ci-services.xml": "359745d9a7ade679bd0aa88b2f2485f069d502a462f4cc6f50cc9bb2f8d34ae5"
+  }
+}

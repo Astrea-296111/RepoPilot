@@ -6,6 +6,8 @@
 
 完整交付说明：[架构、文件清单、执行流程和面试讲解](docs/20-platform-handoff.md)。升级前分析：[设计与基线](docs/19-platform-upgrade-plan.md)。逐阶段结果：[验证记录](docs/21-platform-validation.md)。历史评测证据保留在 `eval/evidence/`，不能当作本次配置的模型成绩。
 
+最新验收：[合并前故障修复、真实模型评测与验证边界](docs/22-merge-readiness.md)。原始记录：[2026-10-03 合并验收](eval/evidence/2026-10-03-merge/README.md)。
+
 ## 能力与边界
 
 | 能力 | 实际实现 | 为什么引入 |
