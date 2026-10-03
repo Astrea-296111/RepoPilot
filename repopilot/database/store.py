@@ -124,11 +124,19 @@ class Database:
             return dict(task.request)
 
     def claim(self, task_id: str) -> bool:
-        """Atomic pending→running claim deduplicates repeated queue deliveries."""
+        """Claim and publish the running snapshot/event in the same transaction."""
         with ORMSession(self.engine) as db, db.begin():
             result = db.execute(update(Task).where(Task.id == task_id, Task.status == "pending")
                                 .values(status="running", updated_at=time.time()))
-            return result.rowcount == 1
+            if result.rowcount != 1:
+                return False
+            record = db.get(Session, task_id)
+            if record is None:
+                raise FileNotFoundError("Claimed task has no session snapshot")
+            state = AgentState.model_validate(record.snapshot)
+            state.status = "running"
+            self._save(db, state)
+            return True
 
     def events(self, task_id: str, after: int = 0, limit: int = 100) -> list[dict]:
         with ORMSession(self.engine) as db:

@@ -66,21 +66,27 @@ class RedisTaskQueue:
         log.info("redis task transport ready")
 
     async def enqueue(self, task_id: str) -> bool:
+        """Offer a SQL-pending ID, including recovery of a lost receive response.
+
+        A stale outbox read may redeliver an already claimed ID. The SQL claim
+        is the execution gate; queue deduplication alone is never authorization.
+        """
         script = """
-        if redis.call('SISMEMBER', KEYS[2], ARGV[1]) == 1 then return 1 end
+        if redis.call('LPOS', KEYS[1], ARGV[1]) then return 1 end
         if redis.call('LLEN', KEYS[1]) >= tonumber(ARGV[2]) then return 0 end
+        redis.call('LREM', KEYS[3], 0, ARGV[1])
         redis.call('SADD', KEYS[2], ARGV[1])
         redis.call('LPUSH', KEYS[1], ARGV[1])
         return 1
         """
-        return bool(await self.redis.eval(script, 2, self.ready, self.known, task_id, self.capacity))
+        return bool(await self.redis.eval(script, 3, self.ready, self.known, self.processing, task_id, self.capacity))
 
     async def receive(self) -> str | None:
         return await self.redis.brpoplpush(self.ready, self.processing, timeout=1)
 
     async def ack(self, task_id: str) -> None:
         async with self.redis.pipeline(transaction=True) as pipe:
-            pipe.lrem(self.processing, 1, task_id)
+            pipe.lrem(self.processing, 0, task_id)
             pipe.srem(self.known, task_id)
             await pipe.execute()
 

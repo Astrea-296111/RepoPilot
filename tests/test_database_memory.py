@@ -66,8 +66,9 @@ def test_database_repository_lease_claim_and_release(runtime_repo, tmp_path):
     database.create_task(second, {})
     assert database.request(first.id) == {"runtime": "custom"}
     events = database.events(first.id)
-    assert [event["id"] for event in events] == [1, 2]
-    assert database.events(first.id, after=1)[0]["data"]["status"] == "failed"
+    assert [event["id"] for event in events] == [1, 2, 3]
+    assert [event["data"]["status"] for event in events] == ["pending", "running", "failed"]
+    assert database.events(first.id, after=2)[0]["data"]["status"] == "failed"
 
 
 def experience(repo, *, success=True):

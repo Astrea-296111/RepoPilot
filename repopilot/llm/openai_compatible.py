@@ -26,6 +26,8 @@ class OpenAICompatibleLLM:
         }
         if self.settings.llm_reasoning_effort:
             request["reasoning_effort"] = self.settings.llm_reasoning_effort
+        if self.settings.llm_max_output_tokens is not None:
+            request["max_tokens"] = self.settings.llm_max_output_tokens
         if self.settings.llm_stream:
             request.update(stream=True, stream_options={"include_usage": True})
         try:

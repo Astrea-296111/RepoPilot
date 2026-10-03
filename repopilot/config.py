@@ -11,6 +11,7 @@ class Settings(BaseModel):
     llm_api_key: str = ""
     llm_model: str = ""
     llm_timeout_seconds: float = Field(default=90.0, ge=5, le=600)
+    llm_max_output_tokens: int | None = Field(default=None, ge=128, le=32768)
     llm_reasoning_effort: str = ""
     llm_stream: bool = False
     docker_image: str = "repopilot-sandbox:dev"
@@ -34,6 +35,7 @@ class Settings(BaseModel):
             llm_api_key=os.getenv("LLM_API_KEY", ""),
             llm_model=os.getenv("LLM_MODEL", ""),
             llm_timeout_seconds=float(os.getenv("LLM_TIMEOUT_SECONDS", "90")),
+            llm_max_output_tokens=int(os.environ["LLM_MAX_OUTPUT_TOKENS"]) if os.getenv("LLM_MAX_OUTPUT_TOKENS") else None,
             llm_reasoning_effort=os.getenv("LLM_REASONING_EFFORT", ""),
             llm_stream=os.getenv("LLM_STREAM", "false").lower() in {"1", "true", "yes"},
             docker_image=os.getenv("REPOPILOT_DOCKER_IMAGE", "repopilot-sandbox:dev"),

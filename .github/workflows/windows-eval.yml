@@ -58,7 +58,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: repopilot-eval-${{ github.head_ref || github.ref }}
+  group: repopilot-eval-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:

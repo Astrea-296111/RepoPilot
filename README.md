@@ -37,6 +37,8 @@ repopilot --help
 
 真实模型配置 `LLM_BASE_URL`（包含 `/v1`）、`LLM_API_KEY`、`LLM_MODEL`。Reflection 多出模型调用；Memory 和新检索默认关闭，便于与原配置比较。
 
+可设置 `LLM_MAX_OUTPUT_TOKENS` 限制每次模型响应的输出 Token。CLI 的 `--reflection/--no-reflection`、`--memory/--no-memory` 显式覆盖环境配置；省略开关时才继承环境变量。
+
 ## 无密钥演示
 
 演示脚本复制原始 Bug 仓库并初始化 Git，不会修掉仓库中保留的失败基线：
@@ -128,6 +130,8 @@ POST 返回 HTTP 202 和 task_id（保留 id）；GET 返回 status/steps/logs�
 
 服务重启会重新投递 pending；已领取的任务标为 interrupted，要求检查工作区后手动恢复。正常关闭等待当前任务结束；无法安全强杀正在修改仓库的 Python 线程。SSE 当前轮询数据库事件，不是分布式推送平台。
 
+领取事务同时更新任务、快照和事件。领取前读取失败由 outbox 重投；领取结果不确定时持久化 interrupted；执行后的结果保存与 ACK 可重试，但不重跑 Agent。Redis 接收响应丢失时，pending outbox 会原子恢复滞留消息；可能出现的重复投递仍受数据库条件领取约束。数据库持续不可用期间保留任务所有权，停止时留下未确认任务供重启检查。
+
 ## Docker Compose
 
 ```bash
@@ -159,6 +163,8 @@ python eval/measure_retrieval.py --hybrid --json-out eval/results/retrieval.json
 真实模型去掉 `--fake`。金额只有显式提供 `--input-price-per-million` 和 `--output-price-per-million` 才估算；价格单位由调用者指定，embedding Token 单列。初始化失败仍计入成功率分母，缺失的步骤和 Token 不伪造为 0。
 
 GitHub Actions 覆盖 Windows、Linux 基础/完整依赖、DockerExecutor、外部参考补丁，以及真实 PostgreSQL+Redis API、Compose。自动流程不调用付费模型，真实模型评测须显式触发。
+
+Actions 的 **Bounded real-model platform evaluation** 可手动勾选 `run_real_model`，使用 `DASHSCOPE_API_KEY` Secret 跑 3 个固定任务 × 2 种组合；每次最多 10 步、单次输出上限 4096 Token。维护者也可在 push 提交说明中加入 `[platform-real-eval]` 显式触发。普通 PR、push 和 merge 不触发这组付费请求。结果保存在每个任务的 JSON/Markdown artifact；这是小样本真实流程验证，不能替代完整基准或多次运行统计。
 
 ## 源码入口
 

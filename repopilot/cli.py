@@ -37,16 +37,18 @@ def run(repo: Path, task: str, executor: str = typer.Option("docker", help="dock
         runtime: str = typer.Option("custom", help="custom / langgraph"),
         tool_backend: str = typer.Option("python", help="python / mcp"),
         retrieval: str | None = typer.Option(None, help="legacy / hybrid"),
-        reflection: bool = typer.Option(False, help="Enable a model reflection after each tool round"),
-        memory: bool = typer.Option(False, help="Recall and store repository repair experiences"),
+        reflection: bool | None = typer.Option(None, "--reflection/--no-reflection", help="Override reflection; omitted uses environment"),
+        memory: bool | None = typer.Option(None, "--memory/--no-memory", help="Override repair memory; omitted uses environment"),
         fake_demo: bool = typer.Option(False, help="Key-free scripted run for examples/demo_repo only")):
     """Plan and execute one coding task; Docker and interactive approval are defaults."""
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
     if fake_demo and not (repo / "app" / "users.py").exists():
         raise typer.BadParameter("--fake-demo 仅适用于提供的 demo_repo")
     settings = Settings.load()
-    settings.reflection_enabled = reflection or settings.reflection_enabled
-    settings.memory_enabled = memory or settings.memory_enabled
+    if reflection is not None:
+        settings.reflection_enabled = reflection
+    if memory is not None:
+        settings.memory_enabled = memory
     if retrieval is not None:
         settings = Settings.model_validate({**settings.model_dump(), "retrieval_mode": retrieval})
     try:

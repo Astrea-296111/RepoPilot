@@ -7,7 +7,7 @@ import logging
 
 from repopilot.agent.state import AgentState
 from repopilot.database.coordinator import CoordinatorLock
-from repopilot.database.store import Database
+from repopilot.database.store import Database, TERMINAL
 from .queue import TaskQueue
 
 log = logging.getLogger(__name__)
@@ -23,6 +23,7 @@ class TaskService:
         self._workers: list[asyncio.Task] = []
         self._dispatcher: asyncio.Task | None = None
         self._submission_lock = asyncio.Lock()
+        self._inflight: set[str] = set()
 
     async def start(self) -> None:
         await asyncio.to_thread(self.lock.acquire)
@@ -65,30 +66,76 @@ class TaskService:
     async def _worker(self) -> None:
         while not self.stopping:
             task_id = None
+            state: AgentState | None = None
+            owned = claim_attempted = acknowledge = False
             try:
                 task_id = await self.queue.receive()
                 if task_id is None:
                     continue
-                if not await asyncio.to_thread(self.database.claim, task_id):
+                if task_id in self._inflight:
+                    acknowledge = True
                     continue
+                self._inflight.add(task_id)
+                owned = True
+                # Read before claiming: a transient read error leaves SQL pending
+                # and the outbox can safely redeliver without losing a running job.
                 state = await asyncio.to_thread(self.database.load, task_id)
                 request = await asyncio.to_thread(self.database.request, task_id)
+                claim_attempted = True
+                if not await asyncio.to_thread(self.database.claim, task_id):
+                    acknowledge = True
+                    continue
+                state.status = "running"
                 try:
                     await asyncio.to_thread(self.runner, request, state)
                 except Exception as exc:
                     state.error = f"{type(exc).__name__}: {exc}"
                     state.finish("failed", "Task execution failed")
-                    await asyncio.to_thread(self.database.save, state)
                     log.exception("task=%s execution failed", task_id)
+                if state.status not in TERMINAL:
+                    state.error = "runner_returned_without_terminal_state"
+                    state.finish("failed", "Task runner returned without a terminal result")
+                acknowledge = await self._persist_terminal(state)
             except Exception:
-                log.exception("task queue worker failed; will retry transport")
+                log.exception("task=%s queue worker failed", task_id)
+                if claim_attempted and state is not None:
+                    # A commit may have succeeded even when its response was lost.
+                    # This worker owns the ID locally; never repeat its execution.
+                    state.error = "claim_outcome_uncertain"
+                    state.finish("interrupted", "Claim outcome uncertain; inspect before resuming")
+                    acknowledge = await self._persist_terminal(state)
+                elif task_id:
+                    acknowledge = True  # No claim or side effect; SQL outbox retries.
                 await asyncio.sleep(1)
             finally:
-                if task_id:
-                    try:
-                        await self.queue.ack(task_id)
-                    except Exception:
-                        log.exception("task=%s queue acknowledgement failed", task_id)
+                if task_id and acknowledge:
+                    await self._acknowledge(task_id)
+                if owned:
+                    self._inflight.discard(task_id)
+
+    async def _persist_terminal(self, state: AgentState) -> bool:
+        """Retry persistence, never the runner; leave unacked work on shutdown."""
+        while True:
+            try:
+                await asyncio.to_thread(self.database.save, state)
+                return True
+            except Exception:
+                log.exception("task=%s terminal save failed; retaining ownership", state.id)
+                if self.stopping:
+                    return False
+                await asyncio.sleep(1)
+
+    async def _acknowledge(self, task_id: str) -> None:
+        """Redis acknowledgement is idempotent, including lost commit replies."""
+        while True:
+            try:
+                await self.queue.ack(task_id)
+                return
+            except Exception:
+                log.exception("task=%s acknowledgement failed; retrying", task_id)
+                if self.stopping:
+                    return
+                await asyncio.sleep(1)
 
     async def close(self) -> None:
         self.stopping = True

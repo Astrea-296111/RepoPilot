@@ -1,0 +1,68 @@
+name: Bounded real-model platform evaluation
+
+on:
+  push:
+    branches: [main, 'work/**']
+  workflow_dispatch:
+    inputs:
+      run_real_model:
+        description: 'Run 3 fixed tasks in 2 platform configurations (paid tokens)'
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repopilot-real-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  platform:
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_real_model) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[platform-real-eval]')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        task: [duplicate_email, shared_rounding_policy, relative_config_paths]
+        mode: [custom, langgraph]
+    env:
+      LLM_MODEL: qwen3.8-max
+      LLM_BASE_URL: https://dashscope.aliyuncs.com/compatible-mode/v1
+      LLM_REASONING_EFFORT: medium
+      LLM_STREAM: 'true'
+      LLM_TIMEOUT_SECONDS: '90'
+      LLM_MAX_OUTPUT_TOKENS: '4096'
+      REPOPILOT_MAX_STEPS: '10'
+      REPOPILOT_MAX_CONTEXT_CHARS: '16000'
+      EVAL_TASK: ${{ matrix.task }}
+      EVAL_MODE: ${{ matrix.mode }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e '.[dev,full]'
+      - name: Run the fixed real-model task
+        env:
+          LLM_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+        run: |
+          python -c "import os; assert os.getenv('LLM_API_KEY'), 'DASHSCOPE_API_KEY secret is required'"
+          backend=python
+          if [ "$EVAL_MODE" = langgraph ]; then backend=mcp; fi
+          timeout 900s python eval/run_benchmark.py --task "$EVAL_TASK" --runs 1 \
+            --runtime "$EVAL_MODE" --tool-backend "$backend" \
+            --retrieval hybrid --reflection --memory \
+            --output "eval/results/real-$EVAL_MODE-$EVAL_TASK.json"
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: real-${{ matrix.mode }}-${{ matrix.task }}
+          path: eval/results/real-*
+          if-no-files-found: warn
+          retention-days: 90

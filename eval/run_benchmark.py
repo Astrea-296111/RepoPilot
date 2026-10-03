@@ -309,6 +309,8 @@ def main() -> int:
               "config": {"model": model_name, "base_url": settings.llm_base_url,
                          "reasoning_effort": settings.llm_reasoning_effort or "provider_default",
                          "stream": settings.llm_stream, "timeout_seconds": settings.llm_timeout_seconds,
+                         "max_output_tokens": settings.llm_max_output_tokens,
+                         "max_steps": settings.max_steps, "max_context_chars": settings.max_context_chars,
                          "runs_per_task": args.runs, "retrieval_mode": args.retrieval, "runtime": args.runtime,
                          "tool_backend": args.tool_backend, "reflection": args.reflection,
                          "memory": args.memory, "evidence_type": "scripted" if args.fake else "real_model",

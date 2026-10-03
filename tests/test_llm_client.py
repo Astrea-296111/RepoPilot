@@ -24,11 +24,12 @@ def test_streaming_chat_reassembles_text_and_usage(monkeypatch):
 
     client_type = httpx.Client
     monkeypatch.setattr(openai_compatible.httpx, "Client", lambda **kwargs: client_type(transport=httpx.MockTransport(respond)))
-    llm = openai_compatible.OpenAICompatibleLLM(Settings(llm_api_key="example", llm_model="qwen3.8-max", llm_stream=True, llm_reasoning_effort="medium"))
+    llm = openai_compatible.OpenAICompatibleLLM(Settings(llm_api_key="example", llm_model="qwen3.8-max", llm_stream=True, llm_reasoning_effort="medium", llm_max_output_tokens=4096))
     result = llm.chat("system", "user")
     assert result.content == '{"patches":[]}'
     assert (result.prompt_tokens, result.completion_tokens) == (12, 7)
     assert captured["reasoning_effort"] == "medium"
+    assert captured["max_tokens"] == 4096
     assert captured["stream_options"] == {"include_usage": True}
     assert captured["messages"][1]["content"] == "user"
 
