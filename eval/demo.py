@@ -16,6 +16,10 @@ def main() -> int:
     parser.add_argument("--runtime", choices=("custom", "langgraph"), default="custom")
     parser.add_argument("--executor", choices=("local", "docker"), default="local")
     parser.add_argument("--trace", action="store_true", help="Export metadata-only console spans to stderr")
+    parser.add_argument("--tool-backend", choices=("python", "mcp"), default="python")
+    parser.add_argument("--retrieval", choices=("legacy", "hybrid"), default="legacy")
+    parser.add_argument("--reflection", action="store_true")
+    parser.add_argument("--memory", action="store_true")
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     env = {**os.environ, "PATH": str(Path(sys.executable).parent) + os.pathsep + os.environ.get("PATH", ""),
@@ -31,7 +35,9 @@ def main() -> int:
             subprocess.run(command, cwd=repo, check=True, timeout=15)
         result = subprocess.run(
             [sys.executable, "-m", "repopilot.cli", "run", str(repo), "fix duplicate email",
-             "--fake-demo", "--runtime", args.runtime, "--executor", args.executor, "--approval", "auto"],
+             "--fake-demo", "--runtime", args.runtime, "--executor", args.executor, "--approval", "auto",
+             "--tool-backend", args.tool_backend, "--retrieval", args.retrieval,
+             *(["--reflection"] if args.reflection else []), *(["--memory"] if args.memory else [])],
             cwd=root, env=env, timeout=120)
         return result.returncode
 

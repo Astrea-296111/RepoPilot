@@ -1,0 +1,1040 @@
+{
+  "reference": "scripted_fixes.json paths (one known solution per task)",
+  "top_k": 4,
+  "summary": {
+    "retrieved": {
+      "tasks": 25,
+      "hit_all": 20,
+      "mean_source_chars": 409.7,
+      "mean_selected_files": 2.16
+    },
+    "graph": {
+      "tasks": 25,
+      "hit_all": 25,
+      "mean_source_chars": 440.2,
+      "mean_selected_files": 2.36
+    },
+    "bm25_ast": {
+      "tasks": 25,
+      "hit_all": 25,
+      "mean_source_chars": 450.1,
+      "mean_selected_files": 2.48
+    }
+  },
+  "tasks": [
+    {
+      "task_id": "duplicate_email",
+      "difficulty": "easy",
+      "reference_fix_paths": [
+        "app/users.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/users.py",
+          "tests/test_users.py"
+        ],
+        "reference_paths_found": [
+          "app/users.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 625
+      },
+      "graph": {
+        "paths": [
+          "app/users.py",
+          "tests/test_users.py"
+        ],
+        "reference_paths_found": [
+          "app/users.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 625
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/users.py",
+          "tests/test_users.py"
+        ],
+        "reference_paths_found": [
+          "app/users.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 625
+      }
+    },
+    {
+      "task_id": "pagination_off_by_one",
+      "difficulty": "easy",
+      "reference_fix_paths": [
+        "app/pagination.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/pagination.py",
+          "tests/test_pagination.py"
+        ],
+        "reference_paths_found": [
+          "app/pagination.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 349
+      },
+      "graph": {
+        "paths": [
+          "app/pagination.py",
+          "tests/test_pagination.py"
+        ],
+        "reference_paths_found": [
+          "app/pagination.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 349
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/pagination.py",
+          "tests/test_pagination.py"
+        ],
+        "reference_paths_found": [
+          "app/pagination.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 349
+      }
+    },
+    {
+      "task_id": "config_precedence",
+      "difficulty": "easy",
+      "reference_fix_paths": [
+        "app/config.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/config.py",
+          "tests/test_config.py"
+        ],
+        "reference_paths_found": [
+          "app/config.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 417
+      },
+      "graph": {
+        "paths": [
+          "app/config.py",
+          "tests/test_config.py"
+        ],
+        "reference_paths_found": [
+          "app/config.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 417
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/config.py",
+          "tests/test_config.py"
+        ],
+        "reference_paths_found": [
+          "app/config.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 417
+      }
+    },
+    {
+      "task_id": "safe_path_traversal",
+      "difficulty": "medium",
+      "reference_fix_paths": [
+        "app/paths.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/paths.py",
+          "tests/test_paths.py"
+        ],
+        "reference_paths_found": [
+          "app/paths.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 376
+      },
+      "graph": {
+        "paths": [
+          "app/paths.py",
+          "tests/test_paths.py"
+        ],
+        "reference_paths_found": [
+          "app/paths.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 376
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/paths.py",
+          "tests/test_paths.py"
+        ],
+        "reference_paths_found": [
+          "app/paths.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 376
+      }
+    },
+    {
+      "task_id": "inventory_atomic_reserve",
+      "difficulty": "medium",
+      "reference_fix_paths": [
+        "app/service.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/service.py",
+          "tests/test_inventory.py"
+        ],
+        "reference_paths_found": [
+          "app/service.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 849
+      },
+      "graph": {
+        "paths": [
+          "app/service.py",
+          "tests/test_inventory.py",
+          "app/store.py"
+        ],
+        "reference_paths_found": [
+          "app/service.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 1121
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/store.py",
+          "app/service.py",
+          "tests/test_inventory.py"
+        ],
+        "reference_paths_found": [
+          "app/service.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 1121
+      }
+    },
+    {
+      "task_id": "normalize_username",
+      "difficulty": "easy",
+      "reference_fix_paths": [
+        "app/users.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/users.py",
+          "tests/test_users.py"
+        ],
+        "reference_paths_found": [
+          "app/users.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 303
+      },
+      "graph": {
+        "paths": [
+          "app/users.py",
+          "tests/test_users.py"
+        ],
+        "reference_paths_found": [
+          "app/users.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 303
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/users.py",
+          "tests/test_users.py"
+        ],
+        "reference_paths_found": [
+          "app/users.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 303
+      }
+    },
+    {
+      "task_id": "ttl_expiry_boundary",
+      "difficulty": "easy",
+      "reference_fix_paths": [
+        "app/cache.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/cache.py",
+          "tests/test_cache.py"
+        ],
+        "reference_paths_found": [
+          "app/cache.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 314
+      },
+      "graph": {
+        "paths": [
+          "app/cache.py",
+          "tests/test_cache.py"
+        ],
+        "reference_paths_found": [
+          "app/cache.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 314
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/cache.py",
+          "tests/test_cache.py"
+        ],
+        "reference_paths_found": [
+          "app/cache.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 314
+      }
+    },
+    {
+      "task_id": "retry_backoff",
+      "difficulty": "easy",
+      "reference_fix_paths": [
+        "app/retry.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/retry.py",
+          "tests/test_retry.py"
+        ],
+        "reference_paths_found": [
+          "app/retry.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 344
+      },
+      "graph": {
+        "paths": [
+          "app/retry.py",
+          "tests/test_retry.py"
+        ],
+        "reference_paths_found": [
+          "app/retry.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 344
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/retry.py",
+          "tests/test_retry.py"
+        ],
+        "reference_paths_found": [
+          "app/retry.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 344
+      }
+    },
+    {
+      "task_id": "slugify_text",
+      "difficulty": "medium",
+      "reference_fix_paths": [
+        "app/text.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/text.py",
+          "tests/test_text.py"
+        ],
+        "reference_paths_found": [
+          "app/text.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 237
+      },
+      "graph": {
+        "paths": [
+          "app/text.py",
+          "tests/test_text.py"
+        ],
+        "reference_paths_found": [
+          "app/text.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 237
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/text.py",
+          "tests/test_text.py"
+        ],
+        "reference_paths_found": [
+          "app/text.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 237
+      }
+    },
+    {
+      "task_id": "authorization_owner",
+      "difficulty": "easy",
+      "reference_fix_paths": [
+        "app/auth.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/auth.py",
+          "tests/test_auth.py"
+        ],
+        "reference_paths_found": [
+          "app/auth.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 251
+      },
+      "graph": {
+        "paths": [
+          "app/auth.py",
+          "tests/test_auth.py"
+        ],
+        "reference_paths_found": [
+          "app/auth.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 251
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/auth.py",
+          "tests/test_auth.py"
+        ],
+        "reference_paths_found": [
+          "app/auth.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 251
+      }
+    },
+    {
+      "task_id": "discount_order",
+      "difficulty": "medium",
+      "reference_fix_paths": [
+        "app/pricing.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/pricing.py",
+          "tests/test_pricing.py"
+        ],
+        "reference_paths_found": [
+          "app/pricing.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 299
+      },
+      "graph": {
+        "paths": [
+          "app/pricing.py",
+          "tests/test_pricing.py"
+        ],
+        "reference_paths_found": [
+          "app/pricing.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 299
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/pricing.py",
+          "tests/test_pricing.py"
+        ],
+        "reference_paths_found": [
+          "app/pricing.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 299
+      }
+    },
+    {
+      "task_id": "csv_header_mapping",
+      "difficulty": "easy",
+      "reference_fix_paths": [
+        "app/parser.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/parser.py",
+          "tests/test_parser.py"
+        ],
+        "reference_paths_found": [
+          "app/parser.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 375
+      },
+      "graph": {
+        "paths": [
+          "app/parser.py",
+          "tests/test_parser.py"
+        ],
+        "reference_paths_found": [
+          "app/parser.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 375
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/parser.py",
+          "tests/test_parser.py"
+        ],
+        "reference_paths_found": [
+          "app/parser.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 375
+      }
+    },
+    {
+      "task_id": "deep_merge_nested",
+      "difficulty": "hard",
+      "reference_fix_paths": [
+        "app/merge.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/merge.py",
+          "tests/test_merge.py"
+        ],
+        "reference_paths_found": [
+          "app/merge.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 403
+      },
+      "graph": {
+        "paths": [
+          "app/merge.py",
+          "tests/test_merge.py"
+        ],
+        "reference_paths_found": [
+          "app/merge.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 403
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/merge.py",
+          "tests/test_merge.py"
+        ],
+        "reference_paths_found": [
+          "app/merge.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 403
+      }
+    },
+    {
+      "task_id": "inclusive_date_span",
+      "difficulty": "easy",
+      "reference_fix_paths": [
+        "app/dates.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/dates.py",
+          "tests/test_dates.py"
+        ],
+        "reference_paths_found": [
+          "app/dates.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 341
+      },
+      "graph": {
+        "paths": [
+          "app/dates.py",
+          "tests/test_dates.py"
+        ],
+        "reference_paths_found": [
+          "app/dates.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 341
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/dates.py",
+          "tests/test_dates.py"
+        ],
+        "reference_paths_found": [
+          "app/dates.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 341
+      }
+    },
+    {
+      "task_id": "parse_bool_env",
+      "difficulty": "medium",
+      "reference_fix_paths": [
+        "app/env.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "tests/test_env.py",
+          "app/env.py"
+        ],
+        "reference_paths_found": [
+          "app/env.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 166
+      },
+      "graph": {
+        "paths": [
+          "tests/test_env.py",
+          "app/env.py"
+        ],
+        "reference_paths_found": [
+          "app/env.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 166
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/env.py",
+          "tests/test_env.py"
+        ],
+        "reference_paths_found": [
+          "app/env.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 166
+      }
+    },
+    {
+      "task_id": "account_transfer_atomic",
+      "difficulty": "medium",
+      "reference_fix_paths": [
+        "app/service.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/service.py",
+          "app/accounts.py",
+          "tests/test_transfer.py"
+        ],
+        "reference_paths_found": [
+          "app/service.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 1137
+      },
+      "graph": {
+        "paths": [
+          "app/service.py",
+          "app/accounts.py",
+          "tests/test_transfer.py"
+        ],
+        "reference_paths_found": [
+          "app/service.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 1137
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/accounts.py",
+          "app/service.py",
+          "tests/test_transfer.py"
+        ],
+        "reference_paths_found": [
+          "app/service.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 1137
+      }
+    },
+    {
+      "task_id": "rate_limit_boundary",
+      "difficulty": "medium",
+      "reference_fix_paths": [
+        "app/limits.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/limits.py",
+          "tests/test_limits.py"
+        ],
+        "reference_paths_found": [
+          "app/limits.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 408
+      },
+      "graph": {
+        "paths": [
+          "app/limits.py",
+          "tests/test_limits.py"
+        ],
+        "reference_paths_found": [
+          "app/limits.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 408
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/limits.py",
+          "tests/test_limits.py"
+        ],
+        "reference_paths_found": [
+          "app/limits.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 408
+      }
+    },
+    {
+      "task_id": "extension_filter",
+      "difficulty": "easy",
+      "reference_fix_paths": [
+        "app/files.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/files.py",
+          "tests/test_files.py"
+        ],
+        "reference_paths_found": [
+          "app/files.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 292
+      },
+      "graph": {
+        "paths": [
+          "app/files.py",
+          "tests/test_files.py"
+        ],
+        "reference_paths_found": [
+          "app/files.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 292
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/files.py",
+          "tests/test_files.py"
+        ],
+        "reference_paths_found": [
+          "app/files.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 292
+      }
+    },
+    {
+      "task_id": "average_empty",
+      "difficulty": "easy",
+      "reference_fix_paths": [
+        "app/stats.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "tests/test_stats.py",
+          "app/stats.py"
+        ],
+        "reference_paths_found": [
+          "app/stats.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 177
+      },
+      "graph": {
+        "paths": [
+          "tests/test_stats.py",
+          "app/stats.py"
+        ],
+        "reference_paths_found": [
+          "app/stats.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 177
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/stats.py",
+          "tests/test_stats.py"
+        ],
+        "reference_paths_found": [
+          "app/stats.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 177
+      }
+    },
+    {
+      "task_id": "dedupe_preserve_order",
+      "difficulty": "easy",
+      "reference_fix_paths": [
+        "app/collections.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/collections.py",
+          "tests/test_collections.py"
+        ],
+        "reference_paths_found": [
+          "app/collections.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 222
+      },
+      "graph": {
+        "paths": [
+          "app/collections.py",
+          "tests/test_collections.py"
+        ],
+        "reference_paths_found": [
+          "app/collections.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 222
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/collections.py",
+          "tests/test_collections.py"
+        ],
+        "reference_paths_found": [
+          "app/collections.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 222
+      }
+    },
+    {
+      "task_id": "shared_rounding_policy",
+      "difficulty": "hard",
+      "reference_fix_paths": [
+        "app/internal/number_ops.py"
+      ],
+      "retrieved": {
+        "paths": [],
+        "reference_paths_found": [],
+        "all_reference_paths_found": false,
+        "source_chars": 0
+      },
+      "graph": {
+        "paths": [
+          "app/internal/number_ops.py"
+        ],
+        "reference_paths_found": [
+          "app/internal/number_ops.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 91
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/internal/number_ops.py",
+          "tests/test_money.py",
+          "app/orders.py",
+          "app/refunds.py"
+        ],
+        "reference_paths_found": [
+          "app/internal/number_ops.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 509
+      }
+    },
+    {
+      "task_id": "shared_identifier_normalization",
+      "difficulty": "hard",
+      "reference_fix_paths": [
+        "app/internal/value_ops.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/api_keys.py",
+          "app/owner_names.py",
+          "tests/test_identifiers.py"
+        ],
+        "reference_paths_found": [],
+        "all_reference_paths_found": false,
+        "source_chars": 410
+      },
+      "graph": {
+        "paths": [
+          "app/api_keys.py",
+          "app/owner_names.py",
+          "app/internal/value_ops.py",
+          "tests/test_identifiers.py"
+        ],
+        "reference_paths_found": [
+          "app/internal/value_ops.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 469
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/internal/value_ops.py",
+          "app/api_keys.py",
+          "app/owner_names.py",
+          "tests/test_identifiers.py"
+        ],
+        "reference_paths_found": [
+          "app/internal/value_ops.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 469
+      }
+    },
+    {
+      "task_id": "shared_retry_policy",
+      "difficulty": "hard",
+      "reference_fix_paths": [
+        "app/internal/policy.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/http_status.py",
+          "app/http_client.py",
+          "tests/test_retry.py"
+        ],
+        "reference_paths_found": [],
+        "all_reference_paths_found": false,
+        "source_chars": 439
+      },
+      "graph": {
+        "paths": [
+          "app/http_status.py",
+          "app/http_client.py",
+          "app/internal/policy.py",
+          "tests/test_retry.py"
+        ],
+        "reference_paths_found": [
+          "app/internal/policy.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 500
+      },
+      "bm25_ast": {
+        "paths": [
+          "tests/test_retry.py",
+          "app/internal/policy.py",
+          "app/http_client.py",
+          "app/http_status.py"
+        ],
+        "reference_paths_found": [
+          "app/internal/policy.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 500
+      }
+    },
+    {
+      "task_id": "relative_config_paths",
+      "difficulty": "hard",
+      "reference_fix_paths": [
+        "app/internal/path_ops.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/cli.py",
+          "app/worker.py",
+          "tests/test_paths.py"
+        ],
+        "reference_paths_found": [],
+        "all_reference_paths_found": false,
+        "source_chars": 846
+      },
+      "graph": {
+        "paths": [
+          "app/cli.py",
+          "app/worker.py",
+          "app/internal/path_ops.py",
+          "tests/test_paths.py"
+        ],
+        "reference_paths_found": [
+          "app/internal/path_ops.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 976
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/internal/path_ops.py",
+          "app/cli.py",
+          "app/worker.py",
+          "tests/test_paths.py"
+        ],
+        "reference_paths_found": [
+          "app/internal/path_ops.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 976
+      }
+    },
+    {
+      "task_id": "shared_feature_flag_precedence",
+      "difficulty": "hard",
+      "reference_fix_paths": [
+        "app/internal/select.py"
+      ],
+      "retrieved": {
+        "paths": [
+          "app/cli.py",
+          "app/feature_docs.py",
+          "tests/test_flags.py",
+          "app/config_flags.py"
+        ],
+        "reference_paths_found": [],
+        "all_reference_paths_found": false,
+        "source_chars": 662
+      },
+      "graph": {
+        "paths": [
+          "app/cli.py",
+          "app/feature_docs.py",
+          "app/internal/select.py",
+          "tests/test_flags.py"
+        ],
+        "reference_paths_found": [
+          "app/internal/select.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 812
+      },
+      "bm25_ast": {
+        "paths": [
+          "app/internal/select.py",
+          "app/cli.py",
+          "app/config_flags.py",
+          "app/web.py"
+        ],
+        "reference_paths_found": [
+          "app/internal/select.py"
+        ],
+        "all_reference_paths_found": true,
+        "source_chars": 642
+      }
+    }
+  ]
+}

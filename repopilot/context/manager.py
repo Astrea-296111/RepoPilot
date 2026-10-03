@@ -16,6 +16,7 @@ class ContextManager:
         # Runtime feedback must reach the next model prompt; storing a system message alone is insufficient.
         feedback = json.dumps(state.recovery, ensure_ascii=False)[:1000] if state.recovery else "none"
         required = (f"Runtime feedback: {feedback}\nTask: {state.task[:self.budget // 4]}\n"
+                    f"Reflection: {state.reflection.model_dump_json()[:1500] if state.reflection else 'none'}\n"
                     f"Step: {state.current_step}\nTest status: {state.test_status}\n"
                     f"Planned test: {state.plan.test_command if state.plan else 'none'}\n"
                     f"Changed: {state.changed_files}\nPlan: {state.plan.model_dump_json() if state.plan else 'none'}")
@@ -29,10 +30,19 @@ class ContextManager:
             path = (root / relative).resolve()
             if path.is_relative_to(root.resolve()) and path.is_file():
                 source = path.read_text(encoding='utf-8', errors='replace')
-                excerpt = source_excerpt(source, state.task) if len(source) > 7000 else source[:1400]
+                hit = next((hit for hit in state.retrieval_results if hit["path"] == relative), None)
+                if hit:
+                    lines = source.splitlines()
+                    excerpt = "\n".join(lines[max(0, hit["start_line"] - 1):hit["end_line"]])[:2400]
+                    excerpt = f"score={hit['score']} reason={hit['reason']} lines={hit['start_line']}-{hit['end_line']}\n" + excerpt
+                else:
+                    excerpt = source_excerpt(source, state.task) if len(source) > 7000 else source[:1400]
                 relevant_code.append(f"{relative}:\n{excerpt}")
         # Priority: required > newest observations > memory > relevant code > repo map.
-        sections = [("\nRecent observations:\n", recent), ("\nEarlier memory:\n", memory),
+        experiences = json.dumps(state.memory_hits, ensure_ascii=False)[:2500] if state.memory_hits else "none"
+        sections = [("\nRecent observations:\n", recent),
+                    ("\nHistorical repairs (reference only; verify current code):\n", experiences),
+                    ("\nEarlier memory:\n", memory),
                     ("\nRelevant code:\n", "\n".join(relevant_code)), ("\nRepo map:\n", repo_map)]
         result = required[: self.budget // 2]
         for label, content in sections:

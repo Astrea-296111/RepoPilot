@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import logging
 from typing import Any
 from uuid import uuid4
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Plan(BaseModel):
@@ -14,6 +14,15 @@ class Plan(BaseModel):
     test_command: str = "pytest -q"
 
 
+class Reflection(BaseModel):
+    """Model advice; success is never executable evidence of a passing test."""
+    model_config = ConfigDict(extra="forbid", strict=True)
+    success: bool
+    reason: str = Field(max_length=2000)
+    next_action: str = Field(max_length=1000)
+    needs_search: bool = False
+
+
 class AgentState(BaseModel):
     id: str = Field(default_factory=lambda: uuid4().hex)
     task: str
@@ -21,12 +30,24 @@ class AgentState(BaseModel):
     executor: str = "docker"
     approval: str = "ask"
     runtime: str = "custom"
+    tool_backend: str = "python"
+    reflection_enabled: bool = False
+    reflection: Reflection | None = None
+    reflections: list[dict[str, Any]] = Field(default_factory=list)
+    replan_required: bool = False
     plan: Plan | None = None
     current_step: int = 0
     messages: list[dict[str, Any]] = Field(default_factory=list)
     tool_history: list[dict[str, Any]] = Field(default_factory=list)
     changed_files: list[str] = Field(default_factory=list)
     retrieved_files: list[str] = Field(default_factory=list)
+    retrieval_mode: str = "legacy"
+    retrieval_results: list[dict[str, Any]] = Field(default_factory=list)
+    retrieval_backend: str = "legacy"
+    embedding_tokens: int = 0
+    memory_enabled: bool = False
+    memory_hits: list[dict[str, Any]] = Field(default_factory=list)
+    memory_warning: str = ""
     test_status: str = "not_run"
     workspace_revision: int = 0
     test_revision: int | None = None

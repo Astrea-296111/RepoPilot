@@ -1,3 +1,7 @@
+# 2026-10-02 平台升级
+
+最新交付见 [平台交付说明](docs/20-platform-handoff.md) 与 [分阶段验证记录](docs/21-platform-validation.md)。下方内容保留为历史构建记录；不得将旧版本指标归到本次新配置。
+
 # RepoPilot 构建记录
 
 > 本文保留 2026-09-28 初始构建时的检查与限制。它不是当前能力清单；最新测试、Docker/真实模型、LangGraph/MCP/OTel 和未验证项以 [本轮验证报告](docs/18-runtime-mcp-observability-refactor.md) 为准。

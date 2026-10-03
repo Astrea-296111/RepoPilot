@@ -1,0 +1,2459 @@
+{
+  "summary": {
+    "suite": "RepoPilot Mini Benchmark v3",
+    "runner": "agent",
+    "model": "scripted FakeLLM",
+    "task_count": 25,
+    "runs": 25,
+    "resolved_runs": 25,
+    "resolved_without_protected_edits": 25,
+    "protected_edit_runs": 0,
+    "run_resolved_rate": 1.0,
+    "first_run_resolved": 25,
+    "first_run_tasks": 25,
+    "first_run_resolved_rate": 1.0,
+    "median_steps": 2.0,
+    "average_steps": 2,
+    "average_total_tokens": 0,
+    "average_tool_calls": 3,
+    "average_executed_tool_calls": 3,
+    "measured_agent_runs": 25,
+    "median_tool_calls": 3.0,
+    "median_total_tokens": 0.0,
+    "median_duration_seconds": 0.63,
+    "failure_categories": {},
+    "categories": {
+      "authorization": {
+        "runs": 1,
+        "resolved": 1
+      },
+      "boundary-condition": {
+        "runs": 1,
+        "resolved": 1
+      },
+      "business-rule": {
+        "runs": 1,
+        "resolved": 1
+      },
+      "collection-order": {
+        "runs": 1,
+        "resolved": 1
+      },
+      "configuration": {
+        "runs": 1,
+        "resolved": 1
+      },
+      "cross-module-paths": {
+        "runs": 1,
+        "resolved": 1
+      },
+      "date-boundary": {
+        "runs": 1,
+        "resolved": 1
+      },
+      "empty-input": {
+        "runs": 1,
+        "resolved": 1
+      },
+      "exception-handling": {
+        "runs": 1,
+        "resolved": 1
+      },
+      "file-filtering": {
+        "runs": 1,
+        "resolved": 1
+      },
+      "input-normalization": {
+        "runs": 1,
+        "resolved": 1
+      },
+      "merge-logic": {
+        "runs": 1,
+        "resolved": 1
+      },
+      "parsing": {
+        "runs": 2,
+        "resolved": 2
+      },
+      "path-security": {
+        "runs": 1,
+        "resolved": 1
+      },
+      "retry-logic": {
+        "runs": 1,
+        "resolved": 1
+      },
+      "shared-configuration": {
+        "runs": 1,
+        "resolved": 1
+      },
+      "shared-normalization": {
+        "runs": 1,
+        "resolved": 1
+      },
+      "shared-policy": {
+        "runs": 2,
+        "resolved": 2
+      },
+      "state-management": {
+        "runs": 2,
+        "resolved": 2
+      },
+      "text-normalization": {
+        "runs": 1,
+        "resolved": 1
+      },
+      "time-boundary": {
+        "runs": 2,
+        "resolved": 2
+      }
+    },
+    "difficulties": {
+      "easy": {
+        "runs": 12,
+        "resolved": 12
+      },
+      "hard": {
+        "runs": 6,
+        "resolved": 6
+      },
+      "medium": {
+        "runs": 7,
+        "resolved": 7
+      }
+    }
+  },
+  "records": [
+    {
+      "task_id": "duplicate_email",
+      "run": 1,
+      "category": "exception-handling",
+      "difficulty": "easy",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________ test_duplicate_email_uses_domain_exception __________________\n\n    def test_duplicate_email_uses_domain_exception():\n        service = UserService()\n        service.register(\"a@example.com\", \"pw\")\n        with pytest.raises(DuplicateEmailError):\n>           service.register(\"a@example.com\", \"pw2\")\n\ntests/test_users.py:9: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <app.users.UserService object at 0x7f06de921160>, email = 'a@example.com'\npassword = 'pw2'\n\n    def register(self, email: str, password: str) -> str:\n        if email in self._emails:\n>           raise ValueError('UNIQUE constraint failed: users.email')\nE           ValueError: UNIQUE constraint failed: users.email\n\napp/users.py:11: ValueError\n=========================== short test summary info ============================\nFAILED tests/test_users.py::test_duplicate_email_uses_domain_exception - Valu...\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复重复邮箱注册：重复注册必须抛出 DuplicateEmailError，同时保持正常注册行为不变。",
+          "suspected_files": [
+            "app/users.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/users.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/users.py",
+          "tests/test_users.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.81
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复重复邮箱注册：重复注册必须抛出 DuplicateEmailError，同时保持正常注册行为不变。\", \"suspected_files\": [\"app/users.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/users.py\", \"old_text\": \"raise ValueError('UNIQUE constraint failed: users.email')\", \"new_text\": \"raise DuplicateEmailError(email)\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/users.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 1,
+        "deleted_lines": 1
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "..                                                                       [100%]\n2 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "pagination_off_by_one",
+      "run": 1,
+      "category": "boundary-condition",
+      "difficulty": "easy",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_____________________ test_first_page_starts_at_first_item _____________________\n\n    def test_first_page_starts_at_first_item():\n>       assert paginate([1, 2, 3, 4], 1, 2) == [1, 2]\nE       assert [3, 4] == [1, 2]\nE         \nE         At index 0 diff: 3 != 1\nE         Use -v to get more diff\n\ntests/test_pagination.py:5: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_pagination.py::test_first_page_starts_at_first_item - asser...\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 paginate 分页逻辑：page 从 1 开始计数，第一页必须返回最前面的 page_size 个元素，并保持参数校验正确。",
+          "suspected_files": [
+            "app/pagination.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/pagination.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/pagination.py",
+          "tests/test_pagination.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.748
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 paginate 分页逻辑：page 从 1 开始计数，第一页必须返回最前面的 page_size 个元素，并保持参数校验正确。\", \"suspected_files\": [\"app/pagination.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/pagination.py\", \"old_text\": \"start = page * page_size\", \"new_text\": \"start = (page - 1) * page_size\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/pagination.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 1,
+        "deleted_lines": 1
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "...                                                                      [100%]\n3 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "config_precedence",
+      "run": 1,
+      "category": "configuration",
+      "difficulty": "easy",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________ test_environment_timeout_overrides_config ___________________\n\n    def test_environment_timeout_overrides_config():\n>       assert resolve_timeout(30, {\"timeout\": 20}, {\"APP_TIMEOUT\": \"10\"}) == 10\nE       AssertionError: assert 20 == 10\nE        +  where 20 = resolve_timeout(30, {'timeout': 20}, {'APP_TIMEOUT': '10'})\n\ntests/test_config.py:5: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_config.py::test_environment_timeout_overrides_config - Asse...\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 resolve_timeout 配置优先级：环境变量 APP_TIMEOUT 应覆盖配置文件 timeout，配置文件再覆盖默认值。",
+          "suspected_files": [
+            "app/config.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/config.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/config.py",
+          "tests/test_config.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.577
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 resolve_timeout 配置优先级：环境变量 APP_TIMEOUT 应覆盖配置文件 timeout，配置文件再覆盖默认值。\", \"suspected_files\": [\"app/config.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/config.py\", \"old_text\": \"    if env.get(\\\"APP_TIMEOUT\\\"):\\n        timeout = int(env[\\\"APP_TIMEOUT\\\"])\\n    if \\\"timeout\\\" in config:\\n        timeout = int(config[\\\"timeout\\\"])\", \"new_text\": \"    if \\\"timeout\\\" in config:\\n        timeout = int(config[\\\"timeout\\\"])\\n    if env.get(\\\"APP_TIMEOUT\\\"):\\n        timeout = int(env[\\\"APP_TIMEOUT\\\"])\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/config.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 2,
+        "deleted_lines": 2
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "...                                                                      [100%]\n3 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "safe_path_traversal",
+      "run": 1,
+      "category": "path-security",
+      "difficulty": "medium",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n______________________ test_parent_traversal_is_rejected _______________________\n\ntmp_path = PosixPath('/tmp/pytest-of-root/pytest-22/test_parent_traversal_is_rejec0')\n\n    def test_parent_traversal_is_rejected(tmp_path):\n        root = tmp_path / \"root\"\n        root.mkdir()\n>       with pytest.raises(ValueError):\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\nE       Failed: DID NOT RAISE ValueError\n\ntests/test_paths.py:8: Failed\n=========================== short test summary info ============================\nFAILED tests/test_paths.py::test_parent_traversal_is_rejected - Failed: DID N...\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 safe_join 的路径边界问题：返回路径必须位于 root 内部，拒绝 ../ 穿越和绝对路径逃逸，同时保留合法子路径。",
+          "suspected_files": [
+            "app/paths.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/paths.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/paths.py",
+          "tests/test_paths.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.702
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 safe_join 的路径边界问题：返回路径必须位于 root 内部，拒绝 ../ 穿越和绝对路径逃逸，同时保留合法子路径。\", \"suspected_files\": [\"app/paths.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/paths.py\", \"old_text\": \"    return (root / user_path).resolve()\", \"new_text\": \"    candidate = (root / user_path).resolve()\\n    if not candidate.is_relative_to(root):\\n        raise ValueError(\\\"path escapes root\\\")\\n    return candidate\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/paths.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 4,
+        "deleted_lines": 1
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "...                                                                      [100%]\n3 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "inventory_atomic_reserve",
+      "run": 1,
+      "category": "state-management",
+      "difficulty": "medium",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n______________ test_insufficient_stock_does_not_change_inventory _______________\n\n    def test_insufficient_stock_does_not_change_inventory():\n        inventory = Inventory({\"sku\": 2})\n        service = InventoryService(inventory)\n        with pytest.raises(OutOfStockError):\n            service.reserve(\"sku\", 3)\n>       assert inventory.get(\"sku\") == 2\nE       AssertionError: assert -1 == 2\nE        +  where -1 = get('sku')\nE        +    where get = <app.store.Inventory object at 0x7f8ec3f2f620>.get\n\ntests/test_inventory.py:11: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_inventory.py::test_insufficient_stock_does_not_change_inventory\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 InventoryService.reserve 库存预留：数量非法或库存不足时不能修改库存；库存足够时才扣减并返回剩余数量。",
+          "suspected_files": [
+            "app/service.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/service.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/store.py",
+          "app/service.py",
+          "tests/test_inventory.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.594
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 InventoryService.reserve 库存预留：数量非法或库存不足时不能修改库存；库存足够时才扣减并返回剩余数量。\", \"suspected_files\": [\"app/service.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/service.py\", \"old_text\": \"        available = self.inventory.get(sku)\\n        self.inventory.decrement(sku, qty)\\n        if qty <= 0:\\n            raise ValueError(\\\"qty must be positive\\\")\\n        if available < qty:\\n            raise OutOfStockError(sku)\\n        return available - qty\", \"new_text\": \"        available = self.inventory.get(sku)\\n        if qty <= 0:\\n            raise ValueError(\\\"qty must be positive\\\")\\n        if available < qty:\\n            raise OutOfStockError(sku)\\n        self.inventory.decrement(sku, qty)\\n        return available - qty\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/service.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 1,
+        "deleted_lines": 1
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "....                                                                     [100%]\n4 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "normalize_username",
+      "run": 1,
+      "category": "input-normalization",
+      "difficulty": "easy",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n______________________ test_trims_and_lowercases_username ______________________\n\n    def test_trims_and_lowercases_username():\n>       assert normalize_username(\"  Alice \") == \"alice\"\nE       AssertionError: assert '  alice ' == 'alice'\nE         \nE         - alice\nE         +   alice \nE         ? ++     +\n\ntests/test_users.py:5: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_users.py::test_trims_and_lowercases_username - AssertionErr...\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 normalize_username：去掉用户名首尾空白并转为小写；去空白后为空必须抛出 ValueError。",
+          "suspected_files": [
+            "app/users.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/users.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/users.py",
+          "tests/test_users.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.733
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 normalize_username：去掉用户名首尾空白并转为小写；去空白后为空必须抛出 ValueError。\", \"suspected_files\": [\"app/users.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/users.py\", \"old_text\": \"    normalized = value.lower()\", \"new_text\": \"    normalized = value.strip().lower()\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/users.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 1,
+        "deleted_lines": 1
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "...                                                                      [100%]\n3 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "ttl_expiry_boundary",
+      "run": 1,
+      "category": "time-boundary",
+      "difficulty": "easy",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________________ test_exact_ttl_is_expired ___________________________\n\n    def test_exact_ttl_is_expired():\n>       assert is_expired(100, 110, 10) is True\nE       assert False is True\nE        +  where False = is_expired(100, 110, 10)\n\ntests/test_cache.py:5: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_cache.py::test_exact_ttl_is_expired - assert False is True\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 is_expired 的 TTL 边界：age 等于 ttl_seconds 时就应视为过期；负 TTL 仍应拒绝。",
+          "suspected_files": [
+            "app/cache.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/cache.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/cache.py",
+          "tests/test_cache.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.696
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 is_expired 的 TTL 边界：age 等于 ttl_seconds 时就应视为过期；负 TTL 仍应拒绝。\", \"suspected_files\": [\"app/cache.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/cache.py\", \"old_text\": \"    return age > ttl_seconds\", \"new_text\": \"    return age >= ttl_seconds\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/cache.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 1,
+        "deleted_lines": 1
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "...                                                                      [100%]\n3 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "retry_backoff",
+      "run": 1,
+      "category": "retry-logic",
+      "difficulty": "easy",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n______________________ test_first_attempt_uses_base_delay ______________________\n\n    def test_first_attempt_uses_base_delay():\n>       assert backoff_seconds(1, base=2, cap=30) == 2\nE       assert 4 == 2\nE        +  where 4 = backoff_seconds(1, base=2, cap=30)\n\ntests/test_retry.py:5: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_retry.py::test_first_attempt_uses_base_delay - assert 4 == 2\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 backoff_seconds：attempt 从 1 开始，第一次等待 base 秒，之后指数翻倍且不超过 cap。",
+          "suspected_files": [
+            "app/retry.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/retry.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/retry.py",
+          "tests/test_retry.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.646
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 backoff_seconds：attempt 从 1 开始，第一次等待 base 秒，之后指数翻倍且不超过 cap。\", \"suspected_files\": [\"app/retry.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/retry.py\", \"old_text\": \"    return min(cap, base * (2 ** attempt))\", \"new_text\": \"    return min(cap, base * (2 ** (attempt - 1)))\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/retry.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 1,
+        "deleted_lines": 1
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "..                                                                       [100%]\n2 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "slugify_text",
+      "run": 1,
+      "category": "text-normalization",
+      "difficulty": "medium",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n________________________ test_collapses_multiple_spaces ________________________\n\n    def test_collapses_multiple_spaces():\n>       assert slugify(\"Hello   World\") == \"hello-world\"\nE       AssertionError: assert 'hello---world' == 'hello-world'\nE         \nE         - hello-world\nE         + hello---world\nE         ?       ++\n\ntests/test_text.py:5: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_text.py::test_collapses_multiple_spaces - AssertionError: a...\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 slugify：转小写，将连续非字母数字字符折叠成单个 '-'，并去掉首尾 '-'。",
+          "suspected_files": [
+            "app/text.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/text.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/text.py",
+          "tests/test_text.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.624
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 slugify：转小写，将连续非字母数字字符折叠成单个 '-'，并去掉首尾 '-'。\", \"suspected_files\": [\"app/text.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/text.py\", \"old_text\": \"    cleaned = text.strip().lower().replace(\\\" \\\", \\\"-\\\")\\n    return cleaned\", \"new_text\": \"    return re.sub(r\\\"[^a-z0-9]+\\\", \\\"-\\\", text.lower()).strip(\\\"-\\\")\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/text.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 1,
+        "deleted_lines": 2
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "..                                                                       [100%]\n2 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "authorization_owner",
+      "run": 1,
+      "category": "authorization",
+      "difficulty": "easy",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n___________________ test_admin_can_edit_other_users_resource ___________________\n\n    def test_admin_can_edit_other_users_resource():\n>       assert can_edit(\"admin-1\", \"user-1\", \"admin\") is True\nE       AssertionError: assert False is True\nE        +  where False = can_edit('admin-1', 'user-1', 'admin')\n\ntests/test_auth.py:5: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_auth.py::test_admin_can_edit_other_users_resource - Asserti...\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 can_edit 权限判断：管理员或资源 owner 任一条件满足即可编辑，其他用户不可编辑。",
+          "suspected_files": [
+            "app/auth.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/auth.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/auth.py",
+          "tests/test_auth.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.63
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 can_edit 权限判断：管理员或资源 owner 任一条件满足即可编辑，其他用户不可编辑。\", \"suspected_files\": [\"app/auth.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/auth.py\", \"old_text\": \"    return role == \\\"admin\\\" and user_id == owner_id\", \"new_text\": \"    return role == \\\"admin\\\" or user_id == owner_id\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/auth.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 1,
+        "deleted_lines": 1
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "...                                                                      [100%]\n3 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "discount_order",
+      "run": 1,
+      "category": "business-rule",
+      "difficulty": "medium",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n___________________ test_percentage_is_applied_before_coupon ___________________\n\n    def test_percentage_is_applied_before_coupon():\n>       assert final_price(100, 10, 20) == 70.0\nE       assert 72.0 == 70.0\nE        +  where 72.0 = final_price(100, 10, 20)\n\ntests/test_pricing.py:5: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_pricing.py::test_percentage_is_applied_before_coupon - asse...\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 final_price：先应用百分比折扣，再减固定 coupon，最终价格不能低于 0。",
+          "suspected_files": [
+            "app/pricing.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/pricing.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/pricing.py",
+          "tests/test_pricing.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.632
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 final_price：先应用百分比折扣，再减固定 coupon，最终价格不能低于 0。\", \"suspected_files\": [\"app/pricing.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/pricing.py\", \"old_text\": \"    discounted = (price - coupon) * (1 - percent / 100)\\n    return max(0.0, round(discounted, 2))\", \"new_text\": \"    discounted = price * (1 - percent / 100) - coupon\\n    return max(0.0, round(discounted, 2))\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/pricing.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 1,
+        "deleted_lines": 1
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "...                                                                      [100%]\n3 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "csv_header_mapping",
+      "run": 1,
+      "category": "parsing",
+      "difficulty": "easy",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_____________________ test_preserves_declared_header_order _____________________\n\n    def test_preserves_declared_header_order():\n>       assert parse_record(\"name,email\", \"Ada,ada@example.com\") == {\"name\": \"Ada\", \"email\": \"ada@example.com\"}\nE       AssertionError: assert {'email': 'Ad...@example.com'} == {'name': 'Ada...@example.com'}\nE         \nE         Differing items:\nE         {'name': 'ada@example.com'} != {'name': 'Ada'}\nE         {'email': 'Ada'} != {'email': 'ada@example.com'}\nE         Use -v to get more diff\n\ntests/test_parser.py:5: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_parser.py::test_preserves_declared_header_order - Assertion...\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 parse_record：CSV 值必须按 header_line 中声明的原始列顺序映射，不能重排列名。",
+          "suspected_files": [
+            "app/parser.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/parser.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/parser.py",
+          "tests/test_parser.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.657
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 parse_record：CSV 值必须按 header_line 中声明的原始列顺序映射，不能重排列名。\", \"suspected_files\": [\"app/parser.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/parser.py\", \"old_text\": \"    return dict(zip(sorted(headers), values))\", \"new_text\": \"    return dict(zip(headers, values))\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/parser.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 1,
+        "deleted_lines": 1
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "..                                                                       [100%]\n2 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "deep_merge_nested",
+      "run": 1,
+      "category": "merge-logic",
+      "difficulty": "hard",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_________________________ test_nested_dicts_are_merged _________________________\n\n    def test_nested_dicts_are_merged():\n        base = {\"db\": {\"host\": \"localhost\", \"port\": 5432}, \"debug\": False}\n        override = {\"db\": {\"port\": 6432}}\n>       assert deep_merge(base, override) == {\"db\": {\"host\": \"localhost\", \"port\": 6432}, \"debug\": False}\nE       AssertionError: assert {'db': {'port...debug': False} == {'db': {'host...debug': False}\nE         \nE         Omitting 1 identical items, use -vv to show\nE         Differing items:\nE         {'db': {'port': 6432}} != {'db': {'host': 'localhost', 'port': 6432}}\nE         Use -v to get more diff\n\ntests/test_merge.py:7: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_merge.py::test_nested_dicts_are_merged - AssertionError: as...\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 deep_merge：当 base 和 override 的同名值都是 dict 时递归合并；否则 override 替换 base，且不要修改输入对象。",
+          "suspected_files": [
+            "app/merge.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/merge.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/merge.py",
+          "tests/test_merge.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.567
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 deep_merge：当 base 和 override 的同名值都是 dict 时递归合并；否则 override 替换 base，且不要修改输入对象。\", \"suspected_files\": [\"app/merge.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/merge.py\", \"old_text\": \"def deep_merge(base: dict, override: dict) -> dict:\\n    result = dict(base)\\n    result.update(override)\\n    return result\", \"new_text\": \"def deep_merge(base: dict, override: dict) -> dict:\\n    result = dict(base)\\n    for key, value in override.items():\\n        current = result.get(key)\\n        if isinstance(current, dict) and isinstance(value, dict):\\n            result[key] = deep_merge(current, value)\\n        else:\\n            result[key] = value\\n    return result\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/merge.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 6,
+        "deleted_lines": 1
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "...                                                                      [100%]\n3 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "inclusive_date_span",
+      "run": 1,
+      "category": "date-boundary",
+      "difficulty": "easy",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_________________________ test_same_day_counts_as_one __________________________\n\n    def test_same_day_counts_as_one():\n>       assert date_span_days(date(2026, 1, 1), date(2026, 1, 1)) == 1\nE       assert 0 == 1\nE        +  where 0 = date_span_days(datetime.date(2026, 1, 1), datetime.date(2026, 1, 1))\nE        +    where datetime.date(2026, 1, 1) = date(2026, 1, 1)\nE        +    and   datetime.date(2026, 1, 1) = date(2026, 1, 1)\n\ntests/test_dates.py:6: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_dates.py::test_same_day_counts_as_one - assert 0 == 1\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 date_span_days：日期范围按首尾都包含计算；end 早于 start 时继续抛出 ValueError。",
+          "suspected_files": [
+            "app/dates.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/dates.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/dates.py",
+          "tests/test_dates.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.604
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 date_span_days：日期范围按首尾都包含计算；end 早于 start 时继续抛出 ValueError。\", \"suspected_files\": [\"app/dates.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/dates.py\", \"old_text\": \"    return (end - start).days\", \"new_text\": \"    return (end - start).days + 1\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/dates.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 1,
+        "deleted_lines": 1
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "...                                                                      [100%]\n3 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "parse_bool_env",
+      "run": 1,
+      "category": "parsing",
+      "difficulty": "medium",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________________ test_false_string_is_false __________________________\n\n    def test_false_string_is_false():\n>       assert parse_bool(\"false\") is False\nE       AssertionError: assert True is False\nE        +  where True = parse_bool('false')\n\ntests/test_env.py:5: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_env.py::test_false_string_is_false - AssertionError: assert...\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 parse_bool：忽略首尾空白和大小写，1/true/yes/on 为 True，0/false/no/off 为 False，其他值抛出 ValueError。",
+          "suspected_files": [
+            "app/env.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/env.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/env.py",
+          "tests/test_env.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.724
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 parse_bool：忽略首尾空白和大小写，1/true/yes/on 为 True，0/false/no/off 为 False，其他值抛出 ValueError。\", \"suspected_files\": [\"app/env.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/env.py\", \"old_text\": \"def parse_bool(value: str) -> bool:\\n    return bool(value)\", \"new_text\": \"def parse_bool(value: str) -> bool:\\n    normalized = value.strip().lower()\\n    if normalized in {\\\"1\\\", \\\"true\\\", \\\"yes\\\", \\\"on\\\"}:\\n        return True\\n    if normalized in {\\\"0\\\", \\\"false\\\", \\\"no\\\", \\\"off\\\"}:\\n        return False\\n    raise ValueError(f\\\"invalid boolean: {value}\\\")\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/env.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 6,
+        "deleted_lines": 1
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "...                                                                      [100%]\n3 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "account_transfer_atomic",
+      "run": 1,
+      "category": "state-management",
+      "difficulty": "medium",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n________________ test_insufficient_funds_do_not_mutate_accounts ________________\n\n    def test_insufficient_funds_do_not_mutate_accounts():\n        accounts = Accounts({\"a\": 5, \"b\": 1})\n        with pytest.raises(InsufficientFunds):\n            transfer(accounts, \"a\", \"b\", 10)\n>       assert accounts.balances == {\"a\": 5, \"b\": 1}\nE       AssertionError: assert {'a': -5, 'b': 1} == {'a': 5, 'b': 1}\nE         \nE         Omitting 1 identical items, use -vv to show\nE         Differing items:\nE         {'a': -5} != {'a': 5}\nE         Use -v to get more diff\n\ntests/test_transfer.py:10: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_transfer.py::test_insufficient_funds_do_not_mutate_accounts\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 transfer：amount 非正或 source 余额不足时不能修改任何账户；余额足够时才原子地扣 source、加 target。",
+          "suspected_files": [
+            "app/service.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/service.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/accounts.py",
+          "app/service.py",
+          "tests/test_transfer.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.61
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 transfer：amount 非正或 source 余额不足时不能修改任何账户；余额足够时才原子地扣 source、加 target。\", \"suspected_files\": [\"app/service.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/service.py\", \"old_text\": \"def transfer(accounts: Accounts, source: str, target: str, amount: int) -> None:\\n    accounts.debit(source, amount)\\n    if amount <= 0:\\n        raise ValueError(\\\"amount must be positive\\\")\\n    if accounts.get(source) < 0:\\n        raise InsufficientFunds(source)\\n    accounts.credit(target, amount)\", \"new_text\": \"def transfer(accounts: Accounts, source: str, target: str, amount: int) -> None:\\n    if amount <= 0:\\n        raise ValueError(\\\"amount must be positive\\\")\\n    if accounts.get(source) < amount:\\n        raise InsufficientFunds(source)\\n    accounts.debit(source, amount)\\n    accounts.credit(target, amount)\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/service.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 2,
+        "deleted_lines": 2
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "...                                                                      [100%]\n3 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "rate_limit_boundary",
+      "run": 1,
+      "category": "time-boundary",
+      "difficulty": "medium",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n______________________ test_exact_window_boundary_resets _______________________\n\n    def test_exact_window_boundary_resets():\n>       assert check_limit(110, 100, 5, 5, 10) == (True, 110, 1)\nE       assert (False, 100, 5) == (True, 110, 1)\nE         \nE         At index 0 diff: False != True\nE         Use -v to get more diff\n\ntests/test_limits.py:5: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_limits.py::test_exact_window_boundary_resets - assert (Fals...\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 check_limit：当 elapsed 等于 window_seconds 时应开启新窗口并允许请求；窗口内仍按 limit 限制。",
+          "suspected_files": [
+            "app/limits.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/limits.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/limits.py",
+          "tests/test_limits.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.574
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 check_limit：当 elapsed 等于 window_seconds 时应开启新窗口并允许请求；窗口内仍按 limit 限制。\", \"suspected_files\": [\"app/limits.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/limits.py\", \"old_text\": \"    if now - window_start > window_seconds:\", \"new_text\": \"    if now - window_start >= window_seconds:\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/limits.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 1,
+        "deleted_lines": 1
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "..                                                                       [100%]\n2 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "extension_filter",
+      "run": 1,
+      "category": "file-filtering",
+      "difficulty": "easy",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n___________________ test_extension_match_is_case_insensitive ___________________\n\n    def test_extension_match_is_case_insensitive():\n>       assert filter_files([\"a.py\", \"b.PY\", \"c.txt\"], \".py\") == [\"a.py\", \"b.PY\"]\nE       AssertionError: assert ['a.py'] == ['a.py', 'b.PY']\nE         \nE         Right contains one more item: 'b.PY'\nE         Use -v to get more diff\n\ntests/test_files.py:5: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_files.py::test_extension_match_is_case_insensitive - Assert...\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 filter_files：扩展名匹配应忽略大小写，并同时接受 'py' 与 '.py' 两种 extension 输入。",
+          "suspected_files": [
+            "app/files.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/files.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/files.py",
+          "tests/test_files.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.566
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 filter_files：扩展名匹配应忽略大小写，并同时接受 'py' 与 '.py' 两种 extension 输入。\", \"suspected_files\": [\"app/files.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/files.py\", \"old_text\": \"def filter_files(names: list[str], extension: str) -> list[str]:\\n    return [name for name in names if name.endswith(extension)]\", \"new_text\": \"def filter_files(names: list[str], extension: str) -> list[str]:\\n    normalized = extension.lower()\\n    if not normalized.startswith(\\\".\\\"):\\n        normalized = \\\".\\\" + normalized\\n    return [name for name in names if name.lower().endswith(normalized)]\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/files.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 4,
+        "deleted_lines": 1
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "..                                                                       [100%]\n2 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "average_empty",
+      "run": 1,
+      "category": "empty-input",
+      "difficulty": "easy",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________________ test_empty_average_is_none __________________________\n\n    def test_empty_average_is_none():\n>       assert average([]) is None\n               ^^^^^^^^^^^\n\ntests/test_stats.py:5: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nvalues = []\n\n    def average(values: list[float]) -> float:\n>       return sum(values) / len(values)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^\nE       ZeroDivisionError: division by zero\n\napp/stats.py:2: ZeroDivisionError\n=========================== short test summary info ============================\nFAILED tests/test_stats.py::test_empty_average_is_none - ZeroDivisionError: d...\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 average：空序列返回 None，非空序列继续返回算术平均值。",
+          "suspected_files": [
+            "app/stats.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/stats.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/stats.py",
+          "tests/test_stats.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.644
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 average：空序列返回 None，非空序列继续返回算术平均值。\", \"suspected_files\": [\"app/stats.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/stats.py\", \"old_text\": \"def average(values: list[float]) -> float:\\n    return sum(values) / len(values)\", \"new_text\": \"def average(values: list[float]) -> float | None:\\n    if not values:\\n        return None\\n    return sum(values) / len(values)\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/stats.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 3,
+        "deleted_lines": 1
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "..                                                                       [100%]\n2 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "dedupe_preserve_order",
+      "run": 1,
+      "category": "collection-order",
+      "difficulty": "easy",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n___________________ test_first_occurrence_order_is_preserved ___________________\n\n    def test_first_occurrence_order_is_preserved():\n>       assert dedupe([\"b\", \"a\", \"b\", \"c\", \"a\"]) == [\"b\", \"a\", \"c\"]\nE       AssertionError: assert ['a', 'b', 'c'] == ['b', 'a', 'c']\nE         \nE         At index 0 diff: 'a' != 'b'\nE         Use -v to get more diff\n\ntests/test_collections.py:5: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_collections.py::test_first_occurrence_order_is_preserved - ...\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 dedupe：去重时保留每个字符串第一次出现的顺序，不能排序重排。",
+          "suspected_files": [
+            "app/collections.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/collections.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/collections.py",
+          "tests/test_collections.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.592
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 dedupe：去重时保留每个字符串第一次出现的顺序，不能排序重排。\", \"suspected_files\": [\"app/collections.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/collections.py\", \"old_text\": \"    return sorted(set(items))\", \"new_text\": \"    return list(dict.fromkeys(items))\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/collections.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 1,
+        "deleted_lines": 1
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "..                                                                       [100%]\n2 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "shared_rounding_policy",
+      "run": 1,
+      "category": "shared-policy",
+      "difficulty": "hard",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________ test_half_up_rounding_for_order_and_refund __________________\n\n    def test_half_up_rounding_for_order_and_refund():\n        assert order_total(10.005) == 10.01\n>       assert refund_total(2.675) == 2.68\nE       assert 2.67 == 2.68\nE        +  where 2.67 = refund_total(2.675)\n\ntests/test_money.py:7: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_money.py::test_half_up_rounding_for_order_and_refund - asse...\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复金额四舍五入规则：订单、退款和报表三个入口都必须使用同一套 ROUND_HALF_UP 两位小数规则，不能只修某一个入口。",
+          "suspected_files": [
+            "app/internal/number_ops.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/internal/number_ops.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/internal/number_ops.py",
+          "tests/test_money.py",
+          "app/orders.py",
+          "app/refunds.py",
+          "app/order_rounding.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.609
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复金额四舍五入规则：订单、退款和报表三个入口都必须使用同一套 ROUND_HALF_UP 两位小数规则，不能只修某一个入口。\", \"suspected_files\": [\"app/internal/number_ops.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/internal/number_ops.py\", \"old_text\": \"from decimal import Decimal\\n\\n\\ndef money(value: float) -> float:\\n    return round(value, 2)\", \"new_text\": \"from decimal import Decimal, ROUND_HALF_UP\\n\\n\\ndef money(value: float) -> float:\\n    return float(Decimal(str(value)).quantize(Decimal(\\\"0.01\\\"), rounding=ROUND_HALF_UP))\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/internal/number_ops.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 2,
+        "deleted_lines": 2
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "..                                                                       [100%]\n2 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "shared_identifier_normalization",
+      "run": 1,
+      "category": "shared-normalization",
+      "difficulty": "hard",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_________________ test_login_and_owner_ignore_spaces_and_case __________________\n\n    def test_login_and_owner_ignore_spaces_and_case():\n>       assert same_login(\"Alice\", \" alice \")\nE       AssertionError: assert False\nE        +  where False = same_login('Alice', ' alice ')\n\ntests/test_identifiers.py:6: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_identifiers.py::test_login_and_owner_ignore_spaces_and_case\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复用户标识规范化：登录、API Key owner 查询和审计查询都必须统一去首尾空白并使用 casefold 后比较，避免各入口行为不一致。",
+          "suspected_files": [
+            "app/internal/value_ops.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/internal/value_ops.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/internal/value_ops.py",
+          "app/api_keys.py",
+          "app/owner_names.py",
+          "tests/test_identifiers.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.65
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复用户标识规范化：登录、API Key owner 查询和审计查询都必须统一去首尾空白并使用 casefold 后比较，避免各入口行为不一致。\", \"suspected_files\": [\"app/internal/value_ops.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/internal/value_ops.py\", \"old_text\": \"def normalize(value: str) -> str:\\n    return value.lower()\", \"new_text\": \"def normalize(value: str) -> str:\\n    return value.strip().casefold()\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/internal/value_ops.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 1,
+        "deleted_lines": 1
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "..                                                                       [100%]\n2 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "shared_retry_policy",
+      "run": 1,
+      "category": "shared-policy",
+      "difficulty": "hard",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n___________________ test_429_and_5xx_retry_but_400_does_not ____________________\n\n    def test_429_and_5xx_retry_but_400_does_not():\n>       assert should_retry_request(429)\nE       assert False\nE        +  where False = should_retry_request(429)\n\ntests/test_retry.py:6: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_retry.py::test_429_and_5xx_retry_but_400_does_not - assert ...\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 HTTP 重试规则：所有客户端入口对 429 和 5xx 都应该重试，对其他 4xx 不重试；应修复共享策略而不是只在单个客户端绕过。",
+          "suspected_files": [
+            "app/internal/policy.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/internal/policy.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/internal/policy.py",
+          "tests/test_retry.py",
+          "app/http_client.py",
+          "app/http_status.py",
+          "app/uploader.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.627
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 HTTP 重试规则：所有客户端入口对 429 和 5xx 都应该重试，对其他 4xx 不重试；应修复共享策略而不是只在单个客户端绕过。\", \"suspected_files\": [\"app/internal/policy.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/internal/policy.py\", \"old_text\": \"def retryable(status: int) -> bool:\\n    return status >= 500\", \"new_text\": \"def retryable(status: int) -> bool:\\n    return status == 429 or status >= 500\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/internal/policy.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 1,
+        "deleted_lines": 1
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "..                                                                       [100%]\n2 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "relative_config_paths",
+      "run": 1,
+      "category": "cross-module-paths",
+      "difficulty": "hard",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n______________ test_relative_paths_are_based_on_config_directory _______________\n\ntmp_path = PosixPath('/tmp/pytest-of-root/pytest-25/test_relative_paths_are_based_0')\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f0dfd59fe90>\n\n    def test_relative_paths_are_based_on_config_directory(tmp_path, monkeypatch):\n        config_dir = tmp_path / \"configs\"\n        config_dir.mkdir()\n        config_file = config_dir / \"app.toml\"\n        elsewhere = tmp_path / \"cwd\"\n        elsewhere.mkdir()\n        monkeypatch.chdir(elsewhere)\n>       assert output_path(str(config_file), \"out/data.db\") == (config_dir / \"out/data.db\").resolve()\nE       AssertionError: assert PosixPath('/tmp/pytest-of-root/pytest-25/test_relative_paths_are_based_0/cwd/out/data.db') == PosixPath('/tmp/pytest-of-root/pytest-25/test_relative_paths_are_based_0/configs/out/data.db')\nE        +  where PosixPath('/tmp/pytest-of-root/pytest-25/test_relative_paths_are_based_0/cwd/out/data.db') = output_path('/tmp/pytest-of-root/pytest-25/test_relative_paths_are_based_0/configs/app.toml', 'out/data.db')\nE        +    where '/tmp/pytest-of-root/pytest-25/test_relative_paths_are_based_0/configs/app.toml' = str(PosixPath('/tmp/pytest-of-root/pytest-25/test_relative_paths_are_based_0/configs/app.toml'))\nE        +  and   PosixPath('/tmp/pytest-of-root/pytest-25/test_relative_paths_are_based_0/configs/out/data.db') = resolve()\nE        +    where resolve = (PosixPath('/tmp/pytest-of-root/pytest-25/test_relative_paths_are_based_0/configs') / 'out/data.db').resolve\n\n/tmp/repopilot-relative_config_paths-8jzx2vk3/repo/tests/test_paths.py:13: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_paths.py::test_relative_paths_are_based_on_config_directory\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复配置中的相对路径解析：CLI、worker 和导出任务读取配置时，相对路径都必须以配置文件所在目录为基准；绝对路径保持不变。",
+          "suspected_files": [
+            "app/internal/path_ops.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/internal/path_ops.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/internal/path_ops.py",
+          "app/cli.py",
+          "app/worker.py",
+          "tests/test_paths.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.608
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复配置中的相对路径解析：CLI、worker 和导出任务读取配置时，相对路径都必须以配置文件所在目录为基准；绝对路径保持不变。\", \"suspected_files\": [\"app/internal/path_ops.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/internal/path_ops.py\", \"old_text\": \"def resolve_config_path(config_file: str | Path, value: str) -> Path:\\n    return Path(value).resolve()\", \"new_text\": \"def resolve_config_path(config_file: str | Path, value: str) -> Path:\\n    path = Path(value)\\n    if path.is_absolute():\\n        return path.resolve()\\n    return (Path(config_file).resolve().parent / path).resolve()\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/internal/path_ops.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 4,
+        "deleted_lines": 1
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "..                                                                       [100%]\n2 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    },
+    {
+      "task_id": "shared_feature_flag_precedence",
+      "run": 1,
+      "category": "shared-configuration",
+      "difficulty": "hard",
+      "resolved": true,
+      "baseline_test": {
+        "exit_code": 1,
+        "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n______________ test_environment_overrides_config_for_web_and_jobs ______________\n\n    def test_environment_overrides_config_for_web_and_jobs():\n        config = {\"NEW_UI\": False}\n        env = {\"NEW_UI\": \" true \"}\n>       assert feature_enabled(False, config, env, \"NEW_UI\")\nE       AssertionError: assert False\nE        +  where False = feature_enabled(False, {'NEW_UI': False}, {'NEW_UI': ' true '}, 'NEW_UI')\n\ntests/test_flags.py:8: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_flags.py::test_environment_overrides_config_for_web_and_jobs\n1 failed in 0.03s\n",
+        "stderr": ""
+      },
+      "agent": {
+        "status": "completed",
+        "summary": "scripted benchmark fix applied",
+        "error": "",
+        "plan": {
+          "goal": "修复 feature flag 优先级：环境变量覆盖配置文件，配置文件覆盖默认值；Web、后台任务和 CLI 三个入口必须保持一致。",
+          "suspected_files": [
+            "app/internal/select.py"
+          ],
+          "steps": [
+            "apply known harness patch",
+            "verify tests"
+          ],
+          "test_command": "python -m pytest -q"
+        },
+        "steps": 2,
+        "test_status": "passed",
+        "tool_calls": 3,
+        "changed_files": [
+          "app/internal/select.py"
+        ],
+        "executed_tool_calls": 3,
+        "runtime": "custom",
+        "tool_backend": "python",
+        "reflection_count": 1,
+        "retrieval_backend": "bm25+ast",
+        "embedding_tokens": 0,
+        "retrieved_files": [
+          "app/internal/select.py",
+          "app/cli.py",
+          "app/config_flags.py",
+          "app/web.py",
+          "tests/test_flags.py"
+        ],
+        "token_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "duration_seconds": 0.673
+      },
+      "model_calls": [
+        {
+          "number": 1,
+          "response": "{\"goal\": \"修复 feature flag 优先级：环境变量覆盖配置文件，配置文件覆盖默认值；Web、后台任务和 CLI 三个入口必须保持一致。\", \"suspected_files\": [\"app/internal/select.py\"], \"steps\": [\"apply known harness patch\", \"verify tests\"], \"test_command\": \"python -m pytest -q\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 2,
+          "response": "{\"type\": \"tool\", \"tool\": \"apply_patch\", \"arguments\": {\"path\": \"app/internal/select.py\", \"old_text\": \"def choose(default: bool, config: dict, env: dict, name: str) -> bool:\\n    value = default\\n    if name in env:\\n        value = env[name].lower() == \\\"true\\\"\\n    if name in config:\\n        value = bool(config[name])\\n    return value\", \"new_text\": \"def choose(default: bool, config: dict, env: dict, name: str) -> bool:\\n    value = default\\n    if name in config:\\n        value = bool(config[name])\\n    if name in env:\\n        value = env[name].strip().lower() == \\\"true\\\"\\n    return value\"}, \"reason\": \"deterministic harness validation\"}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 3,
+          "response": "{\"success\": false, \"reason\": \"Known harness patch applied\", \"next_action\": \"Apply remaining known patches then independently verify\", \"needs_search\": false}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        },
+        {
+          "number": 4,
+          "response": "{\"type\": \"final\", \"summary\": \"scripted benchmark fix applied\", \"tests\": \"program-side final verification\", \"changed_files\": [\"app/internal/select.py\"]}",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "duration_seconds": 0.0
+        }
+      ],
+      "llm_transport_retries": 0,
+      "protected_modified": [],
+      "diff_stats": {
+        "added_lines": 2,
+        "deleted_lines": 2
+      },
+      "hidden_test": {
+        "exit_code": 0,
+        "stdout": "..                                                                       [100%]\n2 passed in 0.01s\n",
+        "stderr": ""
+      },
+      "failure_category": null
+    }
+  ],
+  "config": {
+    "model": "scripted FakeLLM",
+    "base_url": "https://api.openai.com/v1",
+    "reasoning_effort": "provider_default",
+    "stream": false,
+    "timeout_seconds": 90.0,
+    "runs_per_task": 1,
+    "retrieval_mode": "hybrid",
+    "runtime": "custom",
+    "tool_backend": "python",
+    "reflection": true,
+    "memory": true,
+    "evidence_type": "scripted",
+    "input_price_per_million": null,
+    "output_price_per_million": null
+  }
+}

@@ -1,137 +1,175 @@
 # RepoPilot
 
-一个能读 Python 仓库、修改代码、实际运行测试并复验结果的 Coding Agent。模型只决定下一步，程序负责校验 JSON、审批、工具执行、预算和最终验证。支持 CLI、FastAPI、JSON 会话，以及共享同一业务逻辑的 **Custom / LangGraph 两种 runtime**。
+**一个能理解仓库、修改代码、运行测试并根据失败继续修复的轻量 Coding Agent。**
 
-## 先运行，再看架构
+保留自研 Agent Loop，同时支持 **LangGraph Workflow、MCP 工具后端、Hybrid RAG、Reflection、SQLite 修复记忆、SQLAlchemy 持久化和异步任务 API**。适合学习、工程验证和可信仓库上的辅助开发；目前不是可直接开放给多租户的生产服务。
 
-需要 Python 3.11+、Git；下面的演示无需模型密钥，并在临时 Git 副本里操作，保留原始 Bug。
+完整交付说明：[架构、文件清单、执行流程和面试讲解](docs/20-platform-handoff.md)。升级前分析：[设计与基线](docs/19-platform-upgrade-plan.md)。逐阶段结果：[验证记录](docs/21-platform-validation.md)。历史评测证据保留在 `eval/evidence/`，不能当作本次配置的模型成绩。
+
+最新验收：[合并前故障修复、真实模型评测与验证边界](docs/22-merge-readiness.md)。原始记录：[2026-10-03 合并验收](eval/evidence/2026-10-03-merge/README.md)。
+
+## 能力与边界
+
+| 能力 | 实际实现 | 为什么引入 |
+| --- | --- | --- |
+| Custom Runtime | 自研结构化决策、审批、工具观察、循环检测、独立测试复验 | 清楚控制执行语义，保留可比较的基线 |
+| LangGraph | prepare / plan / decide / tool / reflection / verify / finalize 节点与条件边 | 显式表达失败分支，支持进程内节点检查点 |
+| Reflection | 每个工具轮后反思；最终测试失败进入 Reflection → Planner | 把失败原因、搜索需求、下一步保存为状态和上下文 |
+| MCP | 官方 Python SDK v2 Client，通过 stdio 连接 filesystem/git/shell server | 工具逻辑与 Agent 编排分离，支持协议复用 |
+| Hybrid RAG | AST 分块、BM25、真实 embedding、FAISS、RRF 和 import 重排 | 结合标识符精确检索与语义检索，展示召回理由 |
+| Memory | SQLite FTS5，记录 task/repo/solution/error/fix | 召回当前仓库已验证的类似修复，减少重复调查 |
+| Database | SQLAlchemy Task/Session/Step/ToolCall/TokenUsage/Event | 跨进程查询、恢复、审计和事件续读 |
+| API/Queue | FastAPI、asyncio worker、本地队列或 Redis、SSE | 提交立即返回，长任务后台执行，进度可实时读取 |
+| Evaluation | 25 个小型 Bug 仓库、隐藏复测、JSON+Markdown、配置对照 | 分开验证工程流程和真实模型能力 |
+| Docker | 独立 DockerExecutor；api/redis/postgres Compose | 限制命令执行资源，提供可复现服务部署 |
+
+## 安装
+
+Python 3.11+、Git；运行 DockerExecutor 还需要 Docker。
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate                 # PowerShell: .venv\Scripts\Activate.ps1
 python -m pip install -e '.[dev,full]'
-python eval/demo.py --runtime custom
-python eval/demo.py --runtime langgraph
-python eval/demo.py --runtime langgraph --trace
-```
-
-Windows PowerShell 将激活命令换成 `.venv\Scripts\Activate.ps1`。两个 runtime 均输出 `Status: completed`、`Tests: passed`；trace 演示向 stderr 导出 24 个实际 span。FakeLLM 使用预写动作，只证明执行链路，不能算真实模型修复能力。
-
-仅需要基础 Custom Runtime 时安装 `.[dev]`。其他功能独立可选：
-
-```bash
-python -m pip install -e '.[langgraph]'
-python -m pip install -e '.[mcp]'
-python -m pip install -e '.[observability]'
+cp .env.example .env                     # PowerShell: Copy-Item .env.example .env
 repopilot --help
 ```
 
-缺少 extra 时，相关入口给出安装提示；默认运行不导入 MCP、LangGraph 或 OTel SDK。
+基础安装 `pip install -e '.[dev]'` 支持 custom/python/legacy 检索和数据库。可选 extras：`langgraph`、`mcp`、`rag`、`server`、`observability`；`full` 安装全部。
 
-## 为什么要有多轮执行
+真实模型配置 `LLM_BASE_URL`（包含 `/v1`）、`LLM_API_KEY`、`LLM_MODEL`。Reflection 多出模型调用；Memory 和新检索默认关闭，便于与原配置比较。
 
-一次模型调用可以生成补丁，但无法利用后续测试失败继续定位。RepoPilot 先用 AST Repo Map、词法 Top-K 和 Python import graph 提供初始上下文，再规划并执行工具；每次观察进入下一轮，最终由程序重新执行计划测试。多轮交互也会增加 token、耗时与循环风险，是否值得必须与同模型 one-shot 比较。
+可设置 `LLM_MAX_OUTPUT_TOKENS` 限制每次模型响应的输出 Token。CLI 的 `--reflection/--no-reflection`、`--memory/--no-memory` 显式覆盖环境配置；省略开关时才继承环境变量。
 
-```mermaid
-flowchart TD
-    P[prepare_repo_context] --> L[plan]
-    L --> D[agent_decide]
-    D --> T[tool_execute]
-    T --> D
-    D --> V[verify]
-    T --> V
-    V -->|失败观察| D
-    V -->|通过| F[finalize]
-    D -->|预算或协议失败| F
-    F --> E[END]
-```
+## 无密钥演示
 
-图对应实际 LangGraph 节点与条件边；Custom Runtime 按同样的共享 transition 手动路由。异常路径也会保存会话并结束。
-
-| Custom Runtime | LangGraph Runtime | 共享能力与边界 |
-|---|---|---|
-| `_run_custom` 有界 while + route | `StateGraph` 六节点 + conditional edges | 同一决策步数上限、工具结果与失败转向 |
-| Pydantic `AgentState` | JSON-compatible graph state 内的 AgentState snapshot | 同一动作校验、token 与工具记录 |
-| `_tool_step` 手动调度 | `tool_execute` 节点 | 同一 Workspace、审批、Local / Docker executor |
-| `_verify` | `verify` 节点 | 实际独立执行测试，失败返回决策 |
-| 每步原子 JSON `SessionStore` | 同一 SessionStore + `InMemorySaver` | 内存 checkpoint 可在进程内恢复；跨进程 JSON 从下一次决策继续 |
-
-LangGraph 节点分别执行一个 transition，没有把旧 `run()` 循环包进单一节点。两套 orchestration 复用 [agent.py](repopilot/agent/agent.py) 的业务逻辑。内存 checkpoint 不承诺进程重启持久化，JSON 恢复也不提供工具 exactly-once 语义。
-
-## 从失败轨迹改进 runtime
-
-历史实测出现重复读取，以及补丁已经正确、测试通过后仍重复测试直至 `loop_detection`。
-
-- 同一工具与参数第二次连续出现时，向实际下一轮 prompt 写入结构化 Runtime feedback；成功只读观察在本次 invocation、同一工作区 revision 内复用。
-- 第三次要求改变策略，避免第三次执行相同写入或命令；第四次硬停止。总 `max_steps` 仍为 15。
-- 当前 revision 的计划测试真实通过后，再次请求同一测试会进入独立 `verify`；修改文件、其他 shell 命令或跨进程恢复都会使旧测试证据失效。
-- 最终验证始终真实执行。验证失败后，错误观察返回模型，不能凭模型口头宣称完成。
-
-相邻行区间、轮换工具等不同参数仍可能绕过连续重复检测；运行期间的外部并发修改尚未建立完整版本检测。共享常量兼容性也仍需测试和模型判断，当前没有证据支持新增通用 symbol 算法。
-
-## 只读 MCP
-
-使用官方 MCP Python SDK v2，仅暴露 `repo_map`、`search_code`、`read_file`、`git_diff`：
+演示脚本复制原始 Bug 仓库并初始化 Git，不会修掉仓库中保留的失败基线：
 
 ```bash
-repopilot mcp examples/demo_repo
-# 或通过官方 client 做完整 stdio 连接、调用与关闭验证
-python -m pytest tests/test_mcp_integration.py -q
+python eval/demo.py --runtime custom
+python eval/demo.py --runtime langgraph --tool-backend mcp --retrieval hybrid --reflection --memory
 ```
 
-启动命令等待 stdio client 连接，无需密钥。复用 Workspace 的 traversal / symlink / 私有路径限制；读文件最多 512 KB、300 行，工具输出最多 12000 字符。Git diff 禁止外部 diff/textconv，排除 `.env` 和会话内容；非 Git 目录返回明确 tool error。未暴露 shell 或写入工具；已验证官方 client，不声称已连接 Cursor 或 Claude Code。
+这里的 FakeLLM 执行预先写好的动作，只能证明组件接通、补丁和测试流程正确；不能据此宣称真实模型修复率或 Token 节省。未配置 embedding 模型时，`hybrid` 明确报告 `bm25+ast`。
 
-## 可选 OpenTelemetry
-
-默认 tracing disabled。启用 console 时记录 `repopilot.task`、`retrieval`、`planning`、`agent.turn`、`llm.call`、`tool.*`、`verification` 的实际 span；metadata 包含 runtime、step、token、duration、结果与失败类别。源码、完整 prompt、密钥、hidden tests 与异常正文不写入 span attribute。
-
-```bash
-python eval/demo.py --runtime langgraph --trace
-python -m pytest tests/test_observability.py -q
-```
-
-OTLP/HTTP 也已通过本地真实 collector 的 protobuf 接收验证。配置 `REPOPILOT_OTEL_ENABLED=1`、`REPOPILOT_OTEL_EXPORTER=otlp`、`OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` 为完整 traces URL，例如 `http://127.0.0.1:4318/v1/traces`；该 URL 是部署配置示例，实际 SaaS/Collector 部署需另行验证。`OTEL_EXPORTER_OTLP_ENDPOINT` 作为后备值时也需完整 URL。使用独立 provider；export/flush 失败不改变任务结果。没有已验证的 Langfuse 集成。
-
-## 真实模型、Docker 与 API
-
-真实模型使用 `.env.example` 中的 OpenAI-compatible 配置，默认 Docker executor 与交互审批：
+## 运行真实任务
 
 ```bash
 docker build -f Dockerfile.sandbox -t repopilot-sandbox:dev .
-python eval/demo.py --runtime custom --executor docker
-python eval/demo.py --runtime langgraph --executor docker
+repopilot run /path/to/git-repo "修复重复邮箱注册错误" --runtime custom --executor docker --approval ask
+repopilot run /path/to/git-repo "修复重复邮箱注册错误" --runtime langgraph --tool-backend mcp --retrieval hybrid --reflection --memory --executor docker --approval ask
 ```
 
-对自己的 Git 仓库，入口是 `repopilot run REPO TASK --runtime custom` 或 `--runtime langgraph`，真实模型时去掉演示脚本的 FakeLLM。`repopilot serve --host 127.0.0.1 --port 8765` 提供本机 API；`POST /api/tasks` 的 `runtime` 字段接受 `custom|langgraph`，默认 custom。CLI/API selector 均有 integration test。
+两种 Runtime 共用工具、审批、循环限制、测试证据失效和最终独立复验。Reflection 的 `success` 只代表模型意见；完成状态仍要求程序实际执行测试并成功生成 Git diff。失败重规划保留最初的测试命令。默认最多 15 个决策步骤，重复行动有有界反馈和停止机制。
 
-Docker 实测覆盖禁网、512 MiB 内存、1 CPU、128 PID、只读容器根目录、无宿主模型 Key、受保护测试只读挂载和超时移除。文件工具检查根目录与符号链接；`ask/auto/never` 审批作用于两个 runtime。`auto` 与 local 仅用于可信副本。Docker 仍共享宿主内核和可写仓库，不构成绝对安全证明。
+`--approval never` 禁止写入和命令，`auto` 自动允许；`--executor local` 仅用于可信仓库副本。命令超时为 1–120 秒，输出有长度限制。
 
-API 无认证；默认审批 `never`，local 需服务端显式允许，仓库限于 `REPOPILOT_API_ROOT`。任务索引在内存中，重启后用 JSON 会话与 CLI 查历史。Compose 容器内 local 的隔离粒度与 DockerExecutor 不同；本轮未验证 Compose 的真实模型后台任务。
+## 看懂检索结果
 
-## 评测：能力与执行正确性分开
+```bash
+repopilot retrieve /path/to/repo "修复用户注册重复邮箱" --top-k 5
+```
+
+输出包含 mode、cache_hit，以及每个文件的 score、BM25/向量/AST 分项、命中行号和原因。Agent 真正使用命中的代码片段构造上下文。
+
+- 配置 `EMBEDDING_BASE_URL`、`EMBEDDING_MODEL`、`EMBEDDING_API_KEY` 后，代码块发送到该服务生成真实 embedding；FAISS 使用归一化向量的内积检索。
+- 未配置 embedding 模型时采用 BM25+AST。请求失败时明确报错，不用伪向量冒充语义能力。
+- 两路检索独立召回、RRF 融合，再结合符号匹配和本地 import 关系重排。分数是排序信号，不是正确概率。
+- 缓存位于目标仓库 `.repopilot/repo_index/<内容与模型摘要>/`，包含 `ast_index.json`、`bm25_index.json`、`chunks.json`、`manifest.json`，向量模式还包含 `faiss.index`。
+- 源码或模型标识变化会重建一代完整索引。当前不是逐块增量索引；旧代可直接删除，成本优化留待大仓库验证。
+
+## MCP 工具
+
+`--tool-backend python` 为默认；`mcp` 使用官方 SDK 客户端和真实 stdio 子进程，复用同一组 Python 工具与执行器。
+
+| Server | Tools |
+| --- | --- |
+| filesystem | read_file、search_code、write_file、apply_patch |
+| git | git_diff、git_status |
+| shell | run_command |
+
+原命令 `repopilot mcp REPO` 仍只提供 repo_map/read_file/search_code/git_diff。分组服务器可独立运行：
+
+```bash
+python -m repopilot.mcp_server.filesystem_server /path/to/repo
+python -m repopilot.mcp_server.filesystem_server /path/to/repo --allow-write
+python -m repopilot.mcp_server.shell_server /path/to/repo --allow-shell --executor docker
+```
+
+Agent 客户端先检查审批，服务器再次检查写权限、路径和保护文件。协议异常不自动重放写入；Agent 需要重新观察当前仓库。子进程在单次运行结束时关闭。当前内置后端连接受控的三个本地服务器；任意第三方远程 MCP 注册、OAuth 和工具发现路由尚未实现。
+
+## 会话、数据库和 Memory
+
+```bash
+repopilot sessions /path/to/repo
+repopilot show SESSION_ID --repo /path/to/repo
+repopilot resume SESSION_ID --repo /path/to/repo --executor docker --approval ask
+```
+
+CLI 默认 SQLAlchemy + `.repopilot/repopilot.db`；设置 `REPOPILOT_DATABASE_URL` 可使用 PostgreSQL（安装 `server` extra）。Task 保存状态与仓库互斥键，Session 保存可恢复快照，Step/ToolCall/TokenUsage 支持审计，Event 支持 SSE 续读。
+
+旧 `.repopilot/sessions/*.json` 在读取时导入；已有数据库状态优先。`show` 继续输出 JSON。恢复时复用原 runtime/backend/retrieval/reflection/memory，executor/approval 必须与原任务一致；跨进程恢复从下一次决策开始，不能保证崩溃瞬间工具的 exactly-once 语义。LangGraph InMemorySaver 仅在当前进程有效。
+
+`--memory` 启用 `.repopilot/memory.db`。短期记忆来自当前会话近期观察和早期摘要；长期记忆记录历史修复，通过 FTS5 召回。只召回同仓库中测试通过的经验；失败经验可审计。历史补丁是参考，不自动套用，当前任务必须重新验证。暂不跨仓库共享、不做向量记忆。
+
+数据库当前为初始建表，不能自动迁移任意未来 schema。后续改表需要新增迁移脚本。
+
+## 异步 API 与 SSE
+
+```bash
+export REPOPILOT_API_ROOT=/path/to/repos
+repopilot serve
+curl -X POST http://127.0.0.1:8000/api/tasks -H 'Content-Type: application/json' \
+  -d '{"repo_path":"/path/to/repos/demo","task":"修复重复邮箱","executor":"docker","approval":"auto","runtime":"langgraph","tool_backend":"mcp","retrieval":"hybrid","reflection":true,"memory":true}'
+curl http://127.0.0.1:8000/api/tasks/TASK_ID
+curl -N http://127.0.0.1:8000/api/tasks/TASK_ID/stream
+curl -N -H 'Last-Event-ID: 3' http://127.0.0.1:8000/api/tasks/TASK_ID/stream
+```
+
+POST 返回 HTTP 202 和 task_id（保留 id）；GET 返回 status/steps/logs；SSE 发送持久事件，终态发出 end，支持 Last-Event-ID 或 after 参数。API 默认 approval=never，不能交互询问。允许 local 还需 `REPOPILOT_API_ALLOW_LOCAL=1`。
+
+默认使用本地有界 asyncio 队列；设置 `REPOPILOT_REDIS_URL` 启用 Redis。数据库 pending 行作为待投递记录，Redis 只负责交接；数据库条件更新去重领取，避免重复排队直接重复执行。每个数据库只允许一个 API coordinator，内部默认 2 个 worker；请勿开多个 Uvicorn workers。最多 100 个活跃任务，超额返回 429，同仓库并发返回 409。
+
+服务重启会重新投递 pending；已领取的任务标为 interrupted，要求检查工作区后手动恢复。正常关闭等待当前任务结束；无法安全强杀正在修改仓库的 Python 线程。SSE 当前轮询数据库事件，不是分布式推送平台。
+
+领取事务同时更新任务、快照和事件。领取前读取失败由 outbox 重投；领取结果不确定时持久化 interrupted；执行后的结果保存与 ACK 可重试，但不重跑 Agent。Redis 接收响应丢失时，pending outbox 会原子恢复滞留消息；可能出现的重复投递仍受数据库条件领取约束。数据库持续不可用期间保留任务所有权，停止时留下未确认任务供重启检查。
+
+## Docker Compose
+
+```bash
+# 将可信仓库副本放入 workspaces，并初始化 Git
+cp -R examples/demo_repo workspaces/demo_repo
+git -C workspaces/demo_repo init
+git -C workspaces/demo_repo add .
+git -C workspaces/demo_repo -c user.name=Demo -c user.email=demo@example.invalid commit -m baseline
+# Linux：.env 的 REPOPILOT_HOST_UID/GID 设置为 id -u / id -g 的输出
+docker compose up -d --build --wait
+curl http://127.0.0.1:8000/health
+```
+
+包含 api、redis、postgres，配置健康检查和持久卷；仅 API 8000 端口绑定 127.0.0.1。Compose 请求 repo_path 使用 `/workspace/repos/demo_repo`，executor 使用 `local`。这个模式在 API 容器内执行代码，隔离粒度是整个服务容器；CLI 的 DockerExecutor 才是逐命令临时容器。没有挂载宿主 Docker socket。
+
+API 无用户系统和认证，不能直接暴露公网。Docker 不是绝对安全边界；可写仓库、同容器密钥和宿主 daemon 都需纳入部署考虑。文件工具拒绝越界、内部管理目录及 `.env`，shell 能访问执行器允许的资源。
+
+## 测试与评测
 
 ```bash
 python -m pytest -q
-python eval/run_benchmark.py --fake --runs 1 --require-all
-python eval/run_benchmark.py --fake --runtime langgraph --runs 1 --require-all
-python eval/run_one_shot.py --fake --runs 1 --require-all
+python eval/run_benchmark.py --fake --require-all
+python eval/run_benchmark.py --fake --runtime langgraph --tool-backend mcp --retrieval hybrid --reflection --memory --require-all --output eval/results/platform.json
+python eval/measure_retrieval.py --hybrid --json-out eval/results/retrieval.json
 ```
 
-脚本化开发集：Custom Agent、LangGraph Agent、one-shot 均 **25/25**。最终代码完整依赖 CI 为 **89 passed、5 Docker-only skipped**；Docker 独立 job **5 passed**，Windows 基础组合 **59 passed、14 optional/Docker skipped**。[代码 CI](https://github.com/Astrea-296111/RepoPilot/actions/runs/36736511730)、安装组合与实际命令见 [重构报告](docs/18-runtime-mcp-observability-refactor.md)。
+评测每次复制干净 Bug 仓库，先验证失败，再修复；最终恢复评分方拥有的测试并加入隐藏测试。自动产生同名 JSON/Markdown，包含 Task Success Rate、Average Steps、Average Token Count、Tool Calls、Failure Category。
 
-外部基准固定 3 个项目的 10 个历史 Bug，每方法每题 3 次，共 60 次真实试验；10 个公开复现 +119 个隐藏参数化用例。运行期保护 public tests，结束后在干净副本注入 hidden tests 评分；隐藏测试不进入 Agent 工作区。任务是目标模块与所需导入快照，不能外推为完整大仓库评测。
+真实模型去掉 `--fake`。金额只有显式提供 `--input-price-per-million` 和 `--output-price-per-million` 才估算；价格单位由调用者指定，embedding Token 单列。初始化失败仍计入成功率分母，缺失的步骤和 Token 不伪造为 0。
 
-**历史全量结果（2026-09-30，qwen3.8-max）：** Agent patch resolved **25/30**、completed + resolved **23/30**；one-shot **28/30**。Agent / one-shot token 中位数 **34337.5 /5003**，端到端中位数 **123.904 /36.492 秒**。[历史 run](https://github.com/Astrea-296111/RepoPilot/actions/runs/36677551664)、[原始证据](eval/evidence/2026-09-30)、[旧报告](docs/17-外部历史Bug实测结果.md) 保留不变。该结果没有证明 Agent 优于 one-shot。
+GitHub Actions 覆盖 Windows、Linux 基础/完整依赖、DockerExecutor、外部参考补丁，以及真实 PostgreSQL+Redis API、Compose。自动流程不调用付费模型，真实模型评测须显式触发。
 
-本轮预注册四个风险任务、每方法每题 3 次：Agent patch / completed 均 **12/12**，同轮 one-shot **7/12**；历史同范围为 7/12、5/12 与 10/12。随后固定 60 次全量复跑中，Agent patch 为 **27/30**、completed + resolved 为 **26/30**，one-shot 为 **28/30**；Agent / one-shot token 中位数 **32642 /4946.5**、端到端中位数 **103.693 /38.398 秒**。全量仍未证明多轮优于 one-shot；research 从定向 3/3 变为全量 0/3，参数漂移读取、连接超时与空流式正文异常全部保留。[全量 run](https://github.com/Astrea-296111/RepoPilot/actions/runs/36730079890)、[原始分片与 hash](eval/evidence/2026-09-30-refactor/full)、[本轮报告](docs/18-runtime-mcp-observability-refactor.md) 给出 commit、日期、前后指标及失败分析。不混合 targeted 与 full 分母，重复试验不能写成独立 Bug 数；模型服务别名可能变化，历史比较属于描述性对照。
+Actions 的 **Bounded real-model platform evaluation** 可手动勾选 `run_real_model`，使用 `DASHSCOPE_API_KEY` Secret 跑 3 个固定任务 × 2 种组合；每次最多 10 步、单次输出上限 4096 Token。维护者也可在 push 提交说明中加入 `[platform-real-eval]` 显式触发。普通 PR、push 和 merge 不触发这组付费请求。结果保存在每个任务的 JSON/Markdown artifact；这是小样本真实流程验证，不能替代完整基准或多次运行统计。
 
-普通 push / PR 只运行无付费模型 CI，覆盖 base/full extras、官方 MCP stdio、OTel、包装、CLI 与 Docker。真实模型 workflow 必须显式 opt-in；`workflow_dispatch` 选择 scope/runtime，或授权提交使用 `[external-targeted]` / `[external-eval]` 标记，完整 raw artifact 与严格配对报告均保存。工作流成功不等于所有补丁通过。
+## 源码入口
 
-## 阅读与面试材料
+`agent/` 保留共享状态转换；`runtime/` 选择编排；`tools/` 实现工具与后端；`mcp_server/` 负责协议；`context/` 构造地图、索引和上下文；`memory/` 与 `database/` 提供记忆和持久化；`api/` 负责队列与流；`eval/` 保留原有基准和新增报告。
 
-- [本轮架构、验证命令、评测与未验证项](docs/18-runtime-mcp-observability-refactor.md)
-- [3 条简历 bullet、90 秒介绍、runtime 追问表、10 个问题](docs/16-项目STAR与简历.md)
-- [外部评分协议](docs/15-外部历史Bug评测协议.md)；[开发集检索实验](docs/14-秋招项目讲述与量化.md)
-- [从零教程](docs/00-项目总览.md)；[第三方参考说明](THIRD_PARTY_NOTICES.md)
-
-当前优先级：新增独立任务和完整仓库集成、评估共享行为回归、完善命令策略/API 认证/持久化任务索引、大仓库增量检索。所有新策略先做对照，再决定是否保留。
+开源参考见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。旧版学习文档从 [docs/00-项目总览.md](docs/00-项目总览.md) 开始，理解升级代码请优先阅读本 README 与新交付文档。

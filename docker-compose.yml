@@ -9,6 +9,21 @@ services:
       LLM_MODEL: ${LLM_MODEL:-}
       REPOPILOT_API_ROOT: /workspace/repos
       REPOPILOT_API_ALLOW_LOCAL: "1"
+      REPOPILOT_DATABASE_URL: postgresql+psycopg://repopilot:${POSTGRES_PASSWORD:-repopilot-local}@postgres:5432/repopilot
+      REPOPILOT_REDIS_URL: redis://redis:6379/0
+      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-}
+      EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     volumes:
       - ${REPOPILOT_REPOS_DIR:-./workspaces}:/workspace/repos
     working_dir: /workspace/project
@@ -17,3 +32,29 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: repopilot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-repopilot-local}
+      POSTGRES_DB: repopilot
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U repopilot -d repopilot"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  redis-data:
+  postgres-data:
